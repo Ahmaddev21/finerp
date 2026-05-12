@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:api.supabase.com)",
+      "Bash(npm run *)"
+    ]
+  }
+}

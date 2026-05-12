@@ -1,0 +1,200 @@
+/* ─── Classic Financial ERP — Design System ─────────────────────────────────
+   Inspired by Bloomberg, SAP, and traditional accounting software.
+   Principles: legible typography, no glow effects, muted professional palette,
+   clean borders, data-first density.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* IBM Plex Sans — designed for financial/enterprise applications */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────── */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+  font-size: 16px; /* standard modern base for perfect readability */
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  letter-spacing: -0.01em;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+.dark ::-webkit-scrollbar-thumb { background: #374151; }
+
+/* ─── Theme Transitions ──────────────────────────────────────────────────── */
+body,
+.bg-white, .bg-gray-50, .bg-slate-50,
+.bg-slate-900, .bg-gray-900, .bg-gray-950,
+sidebar, aside, header, main {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* ─── Animations — Subtle only ───────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* No bounce, no translateY — just a clean fade */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes clock-tick {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.animate-fade-in-up { animation: fadeInUp 0.2s ease both; }
+.animate-fade-in    { animation: fadeIn 0.15s ease both; }
+.animate-slide-in   { animation: fadeIn 0.15s ease both; } /* simplified */
+
+/* Stagger — very minimal delay */
+.stagger > * { animation: fadeInUp 0.2s ease both; }
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 40ms; }
+.stagger > *:nth-child(3) { animation-delay: 80ms; }
+.stagger > *:nth-child(4) { animation-delay: 120ms; }
+.stagger > *:nth-child(5) { animation-delay: 160ms; }
+.stagger > *:nth-child(6) { animation-delay: 200ms; }
+
+/* Clock colon blink */
+.clock-colon { animation: clock-tick 1s step-end infinite; }
+
+/* ─── Typography — Classic Financial ─────────────────────────────────────── */
+/* NO gradient text — just solid, confident dark text */
+.gradient-text {
+  color: #1e3a5f; /* deep navy blue — professional, no gradient */
+}
+.dark .gradient-text {
+  color: #93c5fd; /* soft blue in dark mode — still legible */
+}
+
+/* ─── NO Glassmorphism ───────────────────────────────────────────────────── */
+.glass {
+  /* removed — classic apps don't blur backgrounds */
+}
+
+/* ─── Buttons — No glow ──────────────────────────────────────────────────── */
+.btn-glow:hover {
+  /* removed glow, just a border shift */
+  box-shadow: none;
+  outline: 2px solid #3b82f6;
+  outline-offset: 1px;
+}
+
+/* ─── Navigation Active State — Classic sidebar ──────────────────────────── */
+.nav-active-gradient {
+  /* Clean background, no gradient */
+  background-color: #eff6ff;
+  border-left: 3px solid #2563eb;
+}
+.dark .nav-active-gradient {
+  background-color: rgba(37, 99, 235, 0.12);
+  border-left: 3px solid #3b82f6;
+}
+
+/* ─── Card Hover — Subtle, no lift ──────────────────────────────────────── */
+.card-hover {
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.card-hover:hover {
+  /* No transform, no shadow glow — just a border color shift */
+  border-color: #93c5fd !important;
+}
+.dark .card-hover:hover {
+  border-color: #1d4ed8 !important;
+}
+
+/* ─── KPI Cards — Classic top-border accent ──────────────────────────────── */
+/* Muted, professional colors — no neon */
+.kpi-blue    { border-top: 2px solid #2563eb; }  /* classic blue */
+.kpi-emerald { border-top: 2px solid #059669; }  /* accounting green */
+.kpi-rose    { border-top: 2px solid #dc2626; }  /* classic red */
+.kpi-violet  { border-top: 2px solid #7c3aed; }  /* muted purple */
+.kpi-amber   { border-top: 2px solid #d97706; }  /* accounts receivable amber */
+
+/* ─── Status Dots ─────────────────────────────────────────────────────────── */
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* ─── Toggle Switch ──────────────────────────────────────────────────────── */
+.toggle-track {
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border: 1px solid #d1d5db;
+}
+.toggle-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+.toggle-thumb.active {
+  transform: translateX(18px);
+}
+
+/* ─── Table Typography — Dense, readable ─────────────────────────────────── */
+table {
+  border-collapse: collapse;
+}
+
+th {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+td, th {
+  line-height: 1.4;
+}
+
+/* ─── Financial Number Formatting ────────────────────────────────────────── */
+/* Tabular figures for aligned numbers in tables */
+.font-mono, td {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Focus States — Clean/Professional ──────────────────────────────────── */
+input:focus, select:focus, textarea:focus, button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+/* Override any remaining shadow effects on inputs */
+input, select, textarea {
+  box-shadow: none !important;
+}
+
+/* ─── Print-friendly text ─────────────────────────────────────────────────── */
+@media print {
+  body { font-size: 12px; }
+  .no-print { display: none; }
+}
