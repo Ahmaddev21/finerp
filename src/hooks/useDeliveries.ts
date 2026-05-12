@@ -21,6 +21,8 @@ export interface Delivery {
   passport_expiry?: string;
   car_number?: string;
   bike_number?: string;
+  bike_expiry?: string;
+  car_expiry?: string;
   mobile_number: string;
   status: DeliveryStatus;
   category: DeliveryCategory;
@@ -50,6 +52,8 @@ function mapRow(row: any): Delivery {
     passport_expiry: row.passport_expiry ?? '',
     car_number: row.car_number ?? '',
     bike_number: row.bike_number ?? '',
+    bike_expiry: row.bike_expiry ?? '',
+    car_expiry: row.car_expiry ?? '',
     mobile_number: row.mobile_number ?? '',
     status: row.status ?? 'Active',
     category,
@@ -123,6 +127,8 @@ export function useDeliveries() {
         passport_expiry: d.passport_expiry,
         car_number: d.car_number,
         bike_number: d.bike_number,
+        bike_expiry: d.bike_expiry || null,
+        car_expiry: d.car_expiry || null,
         mobile_number: d.mobile_number,
         status: d.status,
         category: d.category,

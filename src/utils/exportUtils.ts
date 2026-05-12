@@ -191,7 +191,7 @@ export async function exportProjectsPDF(projects: any[], companyName = 'FinERP')
 }
 
 export function exportFleetCSV(fleet: any[]) {
-  const headers = ['Category', 'EMP Number', 'Name', 'Company', 'Snoonu ID', 'Snoonu Email', 'QID', 'QID Expiry', 'Passport', 'Passport Expiry', 'Vehicle No.', 'Mobile', 'Status'];
+  const headers = ['Category', 'EMP Number', 'Name', 'Company', 'Snoonu ID', 'Snoonu Email', 'QID', 'QID Expiry', 'Passport', 'Passport Expiry', 'Vehicle No.', 'Vehicle Expiry', 'Mobile', 'Status'];
   const rows = fleet.map(d => [
     d.category,
     d.emp_number,
@@ -204,6 +204,7 @@ export function exportFleetCSV(fleet: any[]) {
     d.passport_number,
     d.passport_expiry || '',
     d.category === 'Rider' ? d.bike_number : d.car_number,
+    d.category === 'Rider' ? (d.bike_expiry || '') : (d.car_expiry || ''),
     d.mobile_number,
     d.status,
   ]);

@@ -40,7 +40,7 @@ export default function Delivery() {
     }
   };
   const vehicles = assets.filter(a => a.type === 'Vehicle');
-  const [categoryFilter, setCategoryFilter] = useState<'All' | 'Rider' | 'Driver' | 'Vehicles'>('All');
+  const [categoryFilter, setCategoryFilter] = useState<'All' | 'Rider' | 'Driver' | 'Vehicles' | 'Inactive'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState({
@@ -56,6 +56,8 @@ export default function Delivery() {
     passport_expiry: '',
     car_number: '',
     bike_number: '',
+    bike_expiry: '',
+    car_expiry: '',
     mobile_number: '',
     status: 'Active' as DeliveryStatus,
     category: 'Rider' as DeliveryCategory
@@ -65,11 +67,16 @@ export default function Delivery() {
   const filtered = deliveries
     .filter(d => {
       const q = searchQuery.trim().toLowerCase();
-      const matchesCategory = categoryFilter === 'All' || d.category.toLowerCase() === categoryFilter.toLowerCase();
-      const matchesSearch = !q || 
-                           d.name.toLowerCase().includes(q) || 
+      const matchesSearch = !q ||
+                           d.name.toLowerCase().includes(q) ||
                            d.emp_number.toLowerCase().includes(q) ||
                            d.delivery_code.toLowerCase().includes(q);
+      if (categoryFilter === 'Inactive') {
+        return d.status === 'Inactive' && matchesSearch;
+      }
+      // Active tabs: exclude Inactive records
+      if (d.status === 'Inactive') return false;
+      const matchesCategory = categoryFilter === 'All' || d.category.toLowerCase() === categoryFilter.toLowerCase();
       return matchesCategory && matchesSearch;
     })
     .sort((a, b) => {
@@ -98,6 +105,8 @@ export default function Delivery() {
       passport_expiry: '',
       car_number: '',
       bike_number: '',
+      bike_expiry: '',
+      car_expiry: '',
       mobile_number: '',
       status: 'Active',
       category: 'Rider'
@@ -147,6 +156,27 @@ export default function Delivery() {
           >
             <Car className="w-4 h-4" /> Vehicle List
           </button>
+          <button
+            onClick={() => setCategoryFilter('Inactive')}
+            className={cn(
+              'px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2',
+              categoryFilter === 'Inactive'
+                ? 'bg-rose-600 text-white shadow-md'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+            )}
+          >
+            <EyeOff className="w-4 h-4" /> Inactive
+            {deliveries.filter(d => d.status === 'Inactive').length > 0 && (
+              <span className={cn(
+                'ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold',
+                categoryFilter === 'Inactive'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400'
+              )}>
+                {deliveries.filter(d => d.status === 'Inactive').length}
+              </span>
+            )}
+          </button>
         </div>
 
         <div className="flex items-center gap-3 w-full lg:w-auto">
@@ -168,11 +198,11 @@ export default function Delivery() {
           </div>
           <button
             onClick={() => {
-              setForm(prev => ({ ...prev, category: (categoryFilter === 'All' || categoryFilter === 'Vehicles') ? 'Rider' : categoryFilter }));
+              setForm(prev => ({ ...prev, category: (categoryFilter === 'All' || categoryFilter === 'Vehicles' || categoryFilter === 'Inactive') ? 'Rider' : categoryFilter }));
               setIsOpen(true);
             }}
-            disabled={categoryFilter === 'All' || categoryFilter === 'Vehicles'}
-            title={categoryFilter === 'All' ? 'Select a category first' : categoryFilter === 'Vehicles' ? 'Manage vehicles in Assets' : 'Add new entry'}
+            disabled={categoryFilter === 'All' || categoryFilter === 'Vehicles' || categoryFilter === 'Inactive'}
+            title={categoryFilter === 'All' ? 'Select a category first' : categoryFilter === 'Vehicles' ? 'Manage vehicles in Assets' : categoryFilter === 'Inactive' ? 'Cannot add inactive entries directly' : 'Add new entry'}
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:-translate-y-0.5"
           >
             <Plus className="w-4 h-4" /> New Entry
@@ -254,7 +284,6 @@ export default function Delivery() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filtered.map((d, index) => {
-                  const assignedVehicle = assets.find(a => a.type === 'Vehicle' && a.moved_to === d.name);
                   return (
                     <tr key={d.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors group">
                       <td className="px-5 py-4 font-medium text-slate-400">{index + 1}</td>
@@ -301,13 +330,17 @@ export default function Delivery() {
                         )}
                       </td>
                       <td className="px-5 py-4 font-mono text-xs">
-                        {assignedVehicle?.expiry_date ? (
-                          <span className={cn(
-                            new Date(assignedVehicle.expiry_date) < new Date()
-                              ? 'text-rose-500 font-bold'
-                              : 'text-slate-600 dark:text-slate-300'
-                          )}>{assignedVehicle.expiry_date}</span>
-                        ) : <span className="text-slate-400">—</span>}
+                        {(() => {
+                          const expiry = d.category === 'Rider' ? d.bike_expiry : d.car_expiry;
+                          if (!expiry) return <span className="text-slate-400">—</span>;
+                          return (
+                            <span className={cn(
+                              new Date(expiry) < new Date()
+                                ? 'text-rose-500 font-bold'
+                                : 'text-slate-600 dark:text-slate-300'
+                            )}>{expiry}</span>
+                          );
+                        })()}
                       </td>
                       <td className="px-5 py-4 text-slate-600 dark:text-slate-300">{d.mobile_number}</td>
                       <td className="px-5 py-4">
@@ -492,12 +525,24 @@ export default function Delivery() {
                     </div>
                   </div>
                 )}
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mobile Number</label>
-                  <div className="relative">
-                    <Smartphone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input type="text" value={form.mobile_number} onChange={e => setForm({ ...form, mobile_number: e.target.value })} placeholder="+974..." className={cn(inputCls, 'pl-10')} />
+                {form.category === 'Rider' ? (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Bike Expiry Date</label>
+                    <input type="date" value={form.bike_expiry} onChange={e => setForm({ ...form, bike_expiry: e.target.value })} className={inputCls} />
                   </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Car Expiry Date</label>
+                    <input type="date" value={form.car_expiry} onChange={e => setForm({ ...form, car_expiry: e.target.value })} className={inputCls} />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mobile Number</label>
+                <div className="relative">
+                  <Smartphone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input type="text" value={form.mobile_number} onChange={e => setForm({ ...form, mobile_number: e.target.value })} placeholder="+974..." className={cn(inputCls, 'pl-10')} />
                 </div>
               </div>
             </div>
