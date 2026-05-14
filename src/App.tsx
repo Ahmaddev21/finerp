@@ -22,6 +22,7 @@ import Consultation from './pages/Consultation';
 import Merchandise from './pages/Merchandise';
 import TimeKeeping from './pages/TimeKeeping';
 import FinanceWorkflow from './pages/FinanceWorkflow';
+import BankDetails from './pages/BankDetails';
 
 /* ── Role-based route guard ──────────────────────────── */
 function roleDefaultPath(role: string | null) {
@@ -229,6 +230,11 @@ export default function App() {
           {/* Daily Visitors — owner, admin, receptionist */}
           <Route element={<RoleGuard allowed={['owner','admin','receptionist']} />}>
             <Route path="visitors" element={<DailyVisitors />} />
+          </Route>
+
+          {/* Bank Details — owner, admin only */}
+          <Route element={<RoleGuard allowed={['owner','admin']} />}>
+            <Route path="bank-details" element={<BankDetails />} />
           </Route>
 
           {/* Audit Logs — owner, admin */}

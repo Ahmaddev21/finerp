@@ -5,7 +5,7 @@ import { useThemeStore } from '../store/theme';
 import {
   LayoutDashboard, Briefcase, Calculator, Layers,
   CheckSquare, ShieldAlert, LogOut, ChevronDown,
-  Menu, X, Sun, Moon, FileText, Truck, Users, Settings, Loader2, Car, UserPlus, Package, Clock, FolderOpen
+  Menu, X, Sun, Moon, FileText, Truck, Users, Settings, Loader2, Car, UserPlus, Package, Clock, FolderOpen, Lock
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import NotificationBell from './NotificationBell';
@@ -78,6 +78,7 @@ const navItems = [
   { name: 'Finance Workflow', path: '/finance-workflow', icon: FolderOpen,  roles: ['owner', 'admin'] },
   { name: 'Daily Visitors',   path: '/visitors',         icon: UserPlus,    roles: ['owner', 'admin', 'receptionist'] },
   { name: 'Workspace Settings', path: '/settings', icon: Settings, roles: ['owner'] },
+  { name: 'Bank Details', path: '/bank-details', icon: Lock, roles: ['owner', 'admin'] },
   { name: 'Audit Logs', path: '/audit-logs', icon: ShieldAlert, roles: ['owner', 'admin'] },
 ];
 
