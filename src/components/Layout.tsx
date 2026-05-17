@@ -465,6 +465,10 @@ export default function Layout() {
     ? (pendingTransactions + safeCR)
     : 0;
 
+  // Must be before any early returns — Rules of Hooks require stable call order every render.
+  // Closing the mobile sidebar on route change is idempotent so it's safe to run even during loading.
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+
   if (!isInitialized || isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-gray-950 flex items-center justify-center">
@@ -474,8 +478,6 @@ export default function Layout() {
   }
 
   if (!user) return <Navigate to="/login" replace />;
-
-  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   const getTitle = () => {
     const seg = location.pathname.split('/').filter(Boolean);
