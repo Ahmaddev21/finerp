@@ -15,6 +15,7 @@ export interface ContractingInvoiceOut {
   issuedDate: string;
   dueDate: string;
   transactionId: number | null;
+  edit_count?: number;
 }
 
 const seed: ContractingInvoiceOut[] = [

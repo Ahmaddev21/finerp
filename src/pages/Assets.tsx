@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, X, Car, Loader2, FileText, Download, AlertCircle, Edit2 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { useAssets, Asset } from '../hooks/useAssets';
+import { useAssets, Asset, AssetStatus } from '../hooks/useAssets';
 import { useChangeRequests } from '../hooks/useChangeRequests';
 import { useAuthStore } from '../store/auth';
 import { countPriorEdits, writeAuditLog } from '../lib/audit';
@@ -75,7 +75,8 @@ export default function Assets() {
     expiry_date: '',
     ownership_type: 'Company Bought',
     remarks: '',
-    moved_to: ''
+    moved_to: '',
+    status: 'Active' as AssetStatus,
   });
 
   const handleAdd = async () => {
@@ -93,7 +94,8 @@ export default function Assets() {
       expiry_date: '',
       ownership_type: 'Company Bought',
       remarks: '',
-      moved_to: ''
+      moved_to: '',
+      status: 'Active' as AssetStatus,
     });
   };
 

@@ -142,8 +142,8 @@ export function useMerchandise() {
         for (const ret of returns) {
           const item = MERCH_ITEMS.find(i => i.type === ret.item_type);
           if (item) {
-            const cur = (updated as Record<string, number>)[item.field] ?? 0;
-            (updated as Record<string, number>)[item.field] = Math.max(0, cur - ret.qty);
+            const cur = (updated as unknown as Record<string, number>)[item.field] ?? 0;
+            (updated as unknown as Record<string, number>)[item.field] = Math.max(0, cur - ret.qty);
           }
         }
         return { ...emp, merchandise: updated };
@@ -163,7 +163,7 @@ export function useMerchandise() {
     for (const ret of returns) {
       const item = MERCH_ITEMS.find(i => i.type === ret.item_type);
       if (!item) continue;
-      const current = (m as Record<string, number>)[item.field] ?? 0;
+      const current = (m as unknown as Record<string, number>)[item.field] ?? 0;
       updatedFields[item.field] = Math.max(0, current - ret.qty);
     }
 

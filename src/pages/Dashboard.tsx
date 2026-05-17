@@ -165,7 +165,7 @@ export default function Dashboard() {
   ];
 
   const recentTx = [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
-  const openTasks = tasks.filter(t => t.status !== 'completed');
+  const openTasks = tasks.filter(t => t.status !== 'Finished');
   const isLoading = projLoading || txLoading;
 
   const statusBadge = (s: string) => {

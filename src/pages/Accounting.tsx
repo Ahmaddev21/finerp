@@ -258,6 +258,7 @@ const emptyForm = {
   amount: '',
   client_name: '',
   due_date: '',
+  status: 'draft',
 };
 type FormState = typeof emptyForm;
 
