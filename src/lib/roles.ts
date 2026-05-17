@@ -46,7 +46,7 @@ export function canAccessBankDetails(role?: string | null): boolean {
 }
 
 export function canAccessDashboard(role?: string | null): boolean {
-  return role === 'owner' || role === 'admin' || role === 'developer' || role === 'intern';
+  return role === 'owner' || role === 'admin';
 }
 
 export function roleLabel(role?: string | null): string {

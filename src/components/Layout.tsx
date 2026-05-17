@@ -58,7 +58,7 @@ const roleColors: Record<string, string> = {
 
 /* ── Nav config ─────────────────────────────────────── */
 const navItems = [
-  { name: 'Dashboard',  path: '/',           icon: LayoutDashboard, exact: true, roles: ['owner', 'admin', 'bdm', 'intern'] },
+  { name: 'Dashboard',  path: '/',           icon: LayoutDashboard, exact: true, roles: ['owner', 'admin'] },
   { name: 'Projects',   path: '/projects',   icon: Briefcase,                   roles: ['owner', 'admin'] },
   { name: 'Accounting', path: '/accounting', icon: Calculator,                  roles: ['owner', 'admin'] },
   {

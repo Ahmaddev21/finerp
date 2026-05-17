@@ -27,9 +27,11 @@ import BankDetails from './pages/BankDetails';
 /* ── Role-based route guard ──────────────────────────── */
 function roleDefaultPath(role: string | null) {
   if (role === 'receptionist') return '/visitors';
-  if (role === 'developer') return '/tasks';
-  if (role === 'engineer') return '/erp/contracting';
-  return '/';
+  if (role === 'developer')    return '/tasks';
+  if (role === 'intern')       return '/tasks';
+  if (role === 'engineer')     return '/erp/contracting';
+  if (role === 'bdm')          return '/erp/contracting';
+  return '/'; // owner and admin go to dashboard
 }
 
 function RoleGuard({ allowed }: { allowed: string[] }) {
@@ -182,8 +184,8 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="/" element={<Layout />}>
-          {/* Dashboard — owner, admin, bdm, intern */}
-          <Route element={<RoleGuard allowed={['owner','admin','bdm','intern']} />}>
+          {/* Dashboard — owner and admin only */}
+          <Route element={<RoleGuard allowed={['owner','admin']} />}>
             <Route index element={<Dashboard />} />
           </Route>
 
