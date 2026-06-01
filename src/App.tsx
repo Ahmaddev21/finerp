@@ -124,6 +124,10 @@ export default function App() {
       try {
         const me = await getMe();
         if (me) {
+          // Guard: if the signup flow already set valid auth state while this
+          // async call was in flight, don't overwrite it with potentially stale
+          // data (company_users row may not have been written yet at read time).
+          if (useAuthStore.getState().user) return;
           setAuth(
             {
               id: me.user.id,
@@ -177,6 +181,19 @@ export default function App() {
   // Not authenticated
   if (!user) {
     return isSupabaseConfigured ? <AuthPage /> : <DemoLogin />;
+  }
+
+  // Authenticated but role not resolved yet (transient race during signup —
+  // company_users row may not be readable until the RPC completes)
+  if (isSupabaseConfigured && !user.role) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-slate-400 text-sm font-medium">Setting up your workspace…</p>
+        </div>
+      </div>
+    );
   }
 
   return (
