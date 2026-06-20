@@ -510,7 +510,7 @@ export default function Delivery() {
               <div className="grid grid-cols-2 gap-5">
                 {form.category === 'Rider' ? (
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Bike Number <span className="text-blue-500">*</span></label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Bike Number</label>
                     <div className="relative">
                       <Bike className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input type="text" value={form.bike_number} onChange={e => setForm({ ...form, bike_number: e.target.value })} placeholder="Bike Plate No." className={cn(inputCls, 'pl-10')} />
@@ -518,7 +518,7 @@ export default function Delivery() {
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Car Number <span className="text-indigo-500">*</span></label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Car Number</label>
                     <div className="relative">
                       <Car className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input type="text" value={form.car_number} onChange={e => setForm({ ...form, car_number: e.target.value })} placeholder="Car Plate No." className={cn(inputCls, 'pl-10')} />
@@ -553,7 +553,7 @@ export default function Delivery() {
               </button>
               <button 
                 onClick={handleAdd} 
-                disabled={!form.emp_number || !form.name || (form.category === 'Rider' ? !form.bike_number : !form.car_number)}
+                disabled={!form.emp_number || !form.name}
                 className="px-8 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl flex items-center gap-2 shadow-lg shadow-emerald-600/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
               >
                 <Plus className="w-5 h-5" /> Save {form.category}
