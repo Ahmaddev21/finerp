@@ -81,15 +81,15 @@ export function useDeliveries() {
         .eq('company_id', company.id)
         .order('created_at', { ascending: false });
 
-      if (currentFetch !== fetchCount.current) return; // Stale request protection
+      if (currentFetch !== fetchCount.current) return; // stale — skip data update only
 
       if (error) throw error;
       setDeliveries(data ? data.map(mapRow) : []);
       setError(null);
     } catch (err: any) {
-      setError(err.message);
+      if (currentFetch === fetchCount.current) setError(err.message);
     } finally {
-      if (currentFetch === fetchCount.current) setLoading(false);
+      setLoading(false); // always clear — prevents infinite spinner
     }
   }, [company?.id]);
 
