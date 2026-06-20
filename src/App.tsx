@@ -6,23 +6,25 @@ import { isSupabaseConfigured, supabase } from './lib/supabase';
 import { getMe } from './services/auth';
 import Layout from './components/Layout';
 import AuthPage from './components/AuthPage';
-import Dashboard from './pages/Dashboard';
-import Accounting from './pages/Accounting';
-import ERP from './pages/ERP';
-import AuditLogs from './pages/AuditLogs';
-import Assets from './pages/Assets';
-import Projects from './pages/Projects';
-import ProjectDetails from './pages/ProjectDetails';
-import Tasks from './pages/Tasks';
-import Contracting from './pages/Contracting';
-import Delivery from './pages/Delivery';
-import TeamSettings from './components/TeamSettings'; 
-import DailyVisitors from './pages/DailyVisitors';
-import Consultation from './pages/Consultation';
-import Merchandise from './pages/Merchandise';
-import TimeKeeping from './pages/TimeKeeping';
-import FinanceWorkflow from './pages/FinanceWorkflow';
-import BankDetails from './pages/BankDetails';
+
+// Lazy loaded pages (Code Splitting)
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const Accounting = React.lazy(() => import('./pages/Accounting'));
+const ERP = React.lazy(() => import('./pages/ERP'));
+const AuditLogs = React.lazy(() => import('./pages/AuditLogs'));
+const Assets = React.lazy(() => import('./pages/Assets'));
+const Projects = React.lazy(() => import('./pages/Projects'));
+const ProjectDetails = React.lazy(() => import('./pages/ProjectDetails'));
+const Tasks = React.lazy(() => import('./pages/Tasks'));
+const Contracting = React.lazy(() => import('./pages/Contracting'));
+const Delivery = React.lazy(() => import('./pages/Delivery'));
+const TeamSettings = React.lazy(() => import('./components/TeamSettings')); 
+const DailyVisitors = React.lazy(() => import('./pages/DailyVisitors'));
+const Consultation = React.lazy(() => import('./pages/Consultation'));
+const Merchandise = React.lazy(() => import('./pages/Merchandise'));
+const TimeKeeping = React.lazy(() => import('./pages/TimeKeeping'));
+const FinanceWorkflow = React.lazy(() => import('./pages/FinanceWorkflow'));
+const BankDetails = React.lazy(() => import('./pages/BankDetails'));
 
 /* ── Role-based route guard ──────────────────────────── */
 function roleDefaultPath(role: string | null) {

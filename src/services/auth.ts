@@ -37,11 +37,11 @@ export async function login(email: string, password: string): Promise<AuthResult
   const user = data.user!;
   const token = data.session?.access_token ?? '';
 
-  // Fetch profile
-  const profile = await fetchProfile(user.id);
-
-  // Fetch company + role
-  const { company, role } = await fetchCompanyAndRole(user.id);
+  // Fetch profile, company + role in parallel
+  const [profile, { company, role }] = await Promise.all([
+    fetchProfile(user.id),
+    fetchCompanyAndRole(user.id)
+  ]);
 
   return { token, user, profile, company, role };
 }
@@ -130,8 +130,10 @@ export async function getMe() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const profile = await fetchProfile(user.id);
-  const { company, role } = await fetchCompanyAndRole(user.id);
+  const [profile, { company, role }] = await Promise.all([
+    fetchProfile(user.id),
+    fetchCompanyAndRole(user.id)
+  ]);
 
   return { user, profile, company, role };
 }

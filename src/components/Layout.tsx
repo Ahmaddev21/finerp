@@ -568,8 +568,14 @@ export default function Layout() {
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 p-4 sm:p-6 overflow-auto">
-          <Outlet />
+        <div className="flex-1 p-4 sm:p-6 overflow-auto relative">
+          <React.Suspense fallback={
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            </div>
+          }>
+            <Outlet />
+          </React.Suspense>
         </div>
       </main>
     </div>
