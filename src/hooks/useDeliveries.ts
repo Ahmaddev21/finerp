@@ -144,6 +144,26 @@ export function useDeliveries() {
     }
   }, [company?.id]);
 
+  const deleteDelivery = useCallback(async (id: string) => {
+    if (!isSupabaseConfigured || !company?.id) return;
+
+    setDeliveries(prev => prev.filter(d => d.id !== id));
+
+    try {
+      const { error } = await supabase
+        .from('deliveries')
+        .delete()
+        .eq('id', id)
+        .eq('company_id', company.id);
+
+      if (error) throw error;
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+      fetch();
+    }
+  }, [company?.id, fetch]);
+
   const updateDeliveryStatus = useCallback(async (id: string, status: DeliveryStatus) => {
     if (!isSupabaseConfigured || !company?.id) return;
     
@@ -164,5 +184,5 @@ export function useDeliveries() {
     }
   }, [company?.id, fetch]);
 
-  return { deliveries, loading, error, addDelivery, updateDeliveryStatus, refetch: fetch };
+  return { deliveries, loading, error, addDelivery, updateDeliveryStatus, deleteDelivery, refetch: fetch };
 }

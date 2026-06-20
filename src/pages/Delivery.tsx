@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Truck, Search, Plus, X, User, Shield, CreditCard, Smartphone, Mail, Key, MoreVertical, Filter, Bike, Car, Download, Eye, EyeOff, AlertTriangle, Hash, FolderOpen } from 'lucide-react';
+import { Truck, Search, Plus, X, User, Shield, CreditCard, Smartphone, Mail, Key, MoreVertical, Filter, Bike, Car, Download, Eye, EyeOff, AlertTriangle, Hash, FolderOpen, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useDeliveries, DeliveryStatus, DeliveryCategory } from '../hooks/useDeliveries';
 import type { Delivery as DeliveryRecord } from '../hooks/useDeliveries';
@@ -14,7 +14,7 @@ import DeliveryDocumentsModal from '../components/DeliveryDocumentsModal';
 const inputCls = 'w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-400 transition-all';
 
 export default function Delivery() {
-  const { deliveries, loading, error, addDelivery, updateDeliveryStatus } = useDeliveries();
+  const { deliveries, loading, error, addDelivery, updateDeliveryStatus, deleteDelivery } = useDeliveries();
   const { submitChangeRequest } = useChangeRequests();
   const { user } = useAuthStore();
   const { assets } = useAssets();
@@ -378,6 +378,17 @@ export default function Delivery() {
                               iconCls: 'text-slate-400',
                               onClick: () => void guardedUpdateStatus(d, 'Inactive'),
                               checked: d.status === 'Inactive'
+                            },
+                            { kind: 'divider' },
+                            {
+                              label: 'Delete',
+                              icon: <Trash2 className="w-4 h-4" />,
+                              iconCls: 'text-rose-500',
+                              onClick: () => {
+                                if (confirm(`Delete ${d.name}? This cannot be undone.`)) {
+                                  void deleteDelivery(d.id);
+                                }
+                              }
                             }
                           ]}
                         />
