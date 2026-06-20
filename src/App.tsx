@@ -110,6 +110,60 @@ function DemoLogin() {
   );
 }
 
+function NoRoleScreen() {
+  const { setAuth } = useAuthStore();
+  const [retried, setRetried] = React.useState(false);
+
+  useEffect(() => {
+    // Auto-retry once after 3 seconds — covers the signup race condition
+    const timer = setTimeout(async () => {
+      try {
+        const me = await getMe();
+        if (me?.role) {
+          setAuth(
+            { id: me.user.id, email: me.user.email ?? '', role: me.role as any, name: me.profile.username },
+            me.profile,
+            me.company ?? null
+          );
+        } else {
+          setRetried(true);
+        }
+      } catch {
+        setRetried(true);
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [setAuth]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setAuth(null, null, null);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-950">
+      <div className="text-center space-y-4">
+        {!retried ? (
+          <>
+            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-slate-400 text-sm font-medium">Setting up your workspace…</p>
+          </>
+        ) : (
+          <>
+            <p className="text-slate-400 text-sm font-medium">Could not load your workspace.</p>
+            <button
+              onClick={handleSignOut}
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-all"
+            >
+              Sign out and try again
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const { isDark } = useThemeStore();
   const { user, isLoading, isInitialized, setAuth, setInitialized } = useAuthStore();
@@ -185,17 +239,9 @@ export default function App() {
     return isSupabaseConfigured ? <AuthPage /> : <DemoLogin />;
   }
 
-  // Authenticated but role not resolved yet (transient race during signup —
-  // company_users row may not be readable until the RPC completes)
+  // Role not resolved — retry once then offer sign-out to escape
   if (isSupabaseConfigured && !user.role) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-400 text-sm font-medium">Setting up your workspace…</p>
-        </div>
-      </div>
-    );
+    return <NoRoleScreen />;
   }
 
   return (
