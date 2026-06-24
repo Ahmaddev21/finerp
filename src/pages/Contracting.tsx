@@ -675,7 +675,19 @@ export default function Contracting() {
                 <input type="date" value={qotForm.validUntil} onChange={e => setQotForm({ ...qotForm, validUntil: e.target.value })} className={inputCls} /></div>
             </div>
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Linked Project</label>
-              <select value={qotForm.projectId} onChange={e => setQotForm({ ...qotForm, projectId: e.target.value })} className={inputCls}>
+              <select
+                value={qotForm.projectId}
+                onChange={e => {
+                  const pId = e.target.value;
+                  const p = projects.find(x => x.id === pId);
+                  setQotForm({
+                    ...qotForm,
+                    projectId: pId,
+                    ...(p ? { client: qotForm.client || p.client } : {}),
+                  });
+                }}
+                className={inputCls}
+              >
                 <option value="">None</option>
                 {projects.map(p => <option key={p.id} value={p.id}>{p.id} — {p.name}</option>)}
               </select></div>
@@ -708,7 +720,19 @@ export default function Contracting() {
                   className={inputCls} 
                 /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Project</label>
-                <select value={invOutForm.projectId} onChange={e => setInvOutForm({ ...invOutForm, projectId: e.target.value })} className={inputCls}>
+                <select
+                  value={invOutForm.projectId}
+                  onChange={e => {
+                    const pId = e.target.value;
+                    const p = projects.find(x => x.id === pId);
+                    setInvOutForm({
+                      ...invOutForm,
+                      projectId: pId,
+                      ...(p ? { client: invOutForm.client || p.client } : {}),
+                    });
+                  }}
+                  className={inputCls}
+                >
                   <option value="">None</option>
                   {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select></div>
