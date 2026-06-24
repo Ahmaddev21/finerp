@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, ArrowRight, Loader2, Building2, Shield, Users, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Loader2, Building2, Shield, Users, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { login, signup } from '../services/auth';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/auth';
@@ -14,6 +14,7 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [resetSent, setResetSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [form, setForm] = useState({
     username: '',
@@ -268,13 +269,21 @@ export default function AuthPage() {
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 transition-colors group-focus-within:text-blue-400" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="Password"
                   value={form.password}
                   onChange={e => setForm({ ...form, password: e.target.value })}
-                  className={inputCls}
+                  className={inputCls.replace('pr-4', 'pr-12')}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
 
               {/* Forgot password link — login mode only */}
