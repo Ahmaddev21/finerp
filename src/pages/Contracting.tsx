@@ -584,7 +584,25 @@ export default function Contracting() {
                   className={inputCls} 
                 /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Linked Contract</label>
-                <select value={prjForm.contractId} onChange={e => setPrjForm({ ...prjForm, contractId: e.target.value })} className={inputCls}>
+                <select
+                  value={prjForm.contractId}
+                  onChange={e => {
+                    const cId = e.target.value;
+                    const c = contracts.find(x => x.id === cId);
+                    setPrjForm({
+                      ...prjForm,
+                      contractId: cId,
+                      ...(c ? {
+                        name: prjForm.name || c.title,
+                        client: c.client,
+                        value: String(c.value),
+                        startDate: prjForm.startDate || c.startDate,
+                        endDate: prjForm.endDate || c.endDate,
+                      } : {}),
+                    });
+                  }}
+                  className={inputCls}
+                >
                   <option value="">None</option>
                   {contracts.map(c => <option key={c.id} value={c.id}>{c.id} — {c.title}</option>)}
                 </select></div>
