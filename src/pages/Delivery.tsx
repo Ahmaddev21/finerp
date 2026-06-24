@@ -87,10 +87,14 @@ export default function Delivery() {
 
   const handleAdd = async () => {
     if (!form.emp_number || !form.name) return;
-    await addDelivery({
+    const newId = await addDelivery({
       ...form,
       description: `New ${form.category} added: ${form.name}`
     });
+    if (!newId) return; // failed — keep modal open so user doesn't lose data
+    if (user?.id) {
+      await writeAuditLog('CREATE', 'deliveries', newId, `Added ${form.category}: ${form.name} (${form.emp_number})`);
+    }
     setIsOpen(false);
     setForm({
       emp_number: '',
@@ -114,7 +118,16 @@ export default function Delivery() {
   };
 
   const [showPassword, setShowPassword] = useState(false);
+  const [revealedPasswords, setRevealedPasswords] = useState<Set<string>>(new Set());
   const [docsRecord, setDocsRecord] = useState<DeliveryRecord | null>(null);
+
+  const toggleRevealPassword = (id: string) => {
+    setRevealedPasswords(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto animate-fade-in-up">
@@ -303,7 +316,24 @@ export default function Delivery() {
                       <td className="px-5 py-4 text-slate-600 dark:text-slate-300">{d.company}</td>
                       <td className="px-5 py-4 text-slate-600 dark:text-slate-300 font-mono text-xs">{d.snoonu_id}</td>
                       <td className="px-5 py-4 text-slate-500 dark:text-slate-400 text-xs">{d.snoonu_email}</td>
-                      <td className="px-5 py-4 text-slate-600 dark:text-slate-300 font-mono text-xs">{d.password}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-xs text-slate-600 dark:text-slate-300 select-none">
+                            {d.password ? (revealedPasswords.has(d.id) ? d.password : '••••••••') : '—'}
+                          </span>
+                          {d.password && (
+                            <button
+                              type="button"
+                              onClick={() => toggleRevealPassword(d.id)}
+                              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                            >
+                              {revealedPasswords.has(d.id)
+                                ? <EyeOff className="w-3.5 h-3.5" />
+                                : <Eye className="w-3.5 h-3.5" />}
+                            </button>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-5 py-4">
                         <div className="flex flex-col">
                           <span className="text-slate-600 dark:text-slate-300 font-mono text-xs">{d.qid}</span>
@@ -383,10 +413,17 @@ export default function Delivery() {
                             {
                               label: 'Delete',
                               icon: <Trash2 className="w-4 h-4" />,
-                              iconCls: 'text-rose-500',
+                              iconCls: user?.role === 'owner' ? 'text-rose-500' : 'text-slate-300',
+                              disabled: user?.role !== 'owner',
                               onClick: () => {
+                                if (user?.role !== 'owner') return;
                                 if (confirm(`Delete ${d.name}? This cannot be undone.`)) {
-                                  void deleteDelivery(d.id);
+                                  void (async () => {
+                                    const ok = await deleteDelivery(d.id);
+                                    if (ok && user?.id) {
+                                      await writeAuditLog('DELETE', 'deliveries', d.id, `Deleted ${d.category}: ${d.name} (${d.emp_number})`);
+                                    }
+                                  })();
                                 }
                               }
                             }

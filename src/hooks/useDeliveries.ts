@@ -95,19 +95,19 @@ export function useDeliveries() {
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  const addDelivery = useCallback(async (d: Omit<Delivery, 'id' | 'delivery_code' | 'uuid_id'>) => {
-    if (!isSupabaseConfigured || !company?.id) return;
-    
+  const addDelivery = useCallback(async (d: Omit<Delivery, 'id' | 'delivery_code' | 'uuid_id'>): Promise<string | null> => {
+    if (!isSupabaseConfigured || !company?.id) return null;
+
     const tempId = crypto.randomUUID();
     const displayCode = `DEL-${String(Date.now()).slice(-6)}`;
-    
+
     const optimistic: Delivery = {
       ...d,
       id: tempId,
       uuid_id: '',
       delivery_code: displayCode
     };
-    
+
     setDeliveries(prev => [optimistic, ...prev]);
 
     try {
@@ -137,15 +137,16 @@ export function useDeliveries() {
 
       if (error) throw error;
       setError(null);
+      return tempId;
     } catch (err: any) {
       setError(err.message);
-      // Revert optimistic update on failure
       setDeliveries(prev => prev.filter(item => item.id !== tempId));
+      return null;
     }
   }, [company?.id]);
 
-  const deleteDelivery = useCallback(async (id: string) => {
-    if (!isSupabaseConfigured || !company?.id) return;
+  const deleteDelivery = useCallback(async (id: string): Promise<boolean> => {
+    if (!isSupabaseConfigured || !company?.id) return false;
 
     setDeliveries(prev => prev.filter(d => d.id !== id));
 
@@ -158,9 +159,11 @@ export function useDeliveries() {
 
       if (error) throw error;
       setError(null);
+      return true;
     } catch (err: any) {
       setError(err.message);
       fetch();
+      return false;
     }
   }, [company?.id, fetch]);
 

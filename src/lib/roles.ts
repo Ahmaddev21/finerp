@@ -38,7 +38,7 @@ export function isInternRole(role?: string | null): boolean {
 }
 
 export function canAccessAccounting(role?: string | null): boolean {
-  return role === 'owner' || role === 'admin' || role === 'developer';
+  return role === 'owner' || role === 'admin';
 }
 
 export function canAccessBankDetails(role?: string | null): boolean {
