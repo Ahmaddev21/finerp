@@ -17,6 +17,7 @@ export interface Company {
   join_code?: string;
   lock_date?: string;
   created_at?: string;
+  module_permissions?: Record<string, string[]> | null;
 }
 
 export type UserRole = 'owner' | 'admin' | 'bdm' | 'engineer' | 'receptionist' | 'developer' | 'intern';
@@ -178,6 +179,7 @@ async function fetchCompanyAndRole(userId: string): Promise<{ company?: Company;
           industry: createdCompany.industry,
           join_code: createdCompany.join_code,
           lock_date: createdCompany.lock_date,
+          module_permissions: createdCompany.module_permissions ?? null,
         },
         role: 'owner',
       };
@@ -205,6 +207,7 @@ async function fetchCompanyAndRole(userId: string): Promise<{ company?: Company;
       industry: companyData.industry,
       join_code: companyData.join_code,
       lock_date: companyData.lock_date,
+      module_permissions: companyData.module_permissions ?? null,
     },
     role: membership.role as UserRole,
   };
@@ -430,6 +433,17 @@ export async function updateCompanyLockDate(companyId: string, lockDate: string 
   const { error } = await supabase
     .from('companies')
     .update({ lock_date: lockDate })
+    .eq('id', companyId);
+  if (error) throw error;
+}
+
+export async function updateModulePermissions(
+  companyId: string,
+  permissions: Record<string, string[]>
+) {
+  const { error } = await supabase
+    .from('companies')
+    .update({ module_permissions: permissions })
     .eq('id', companyId);
   if (error) throw error;
 }

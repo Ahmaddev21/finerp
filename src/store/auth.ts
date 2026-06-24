@@ -21,6 +21,7 @@ interface AuthState {
   // Actions
   setUser: (user: User | null) => void;
   setAuth: (user: User | null, profile: UserProfile | null, company: Company | null) => void;
+  setCompany: (company: Company) => void;
   setLoading: (loading: boolean) => void;
   setInitialized: () => void;
   loginAs: (role: Role) => void; // Kept for demo/offline mode
@@ -48,6 +49,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setUser: (user) => set({ user, isInitialized: true, isLoading: false }),
   setAuth: (user, profile, company) => set({ user, profile, company, isInitialized: true, isLoading: false }),
+  setCompany: (company) => set({ company }),
   setLoading: (isLoading) => set({ isLoading }),
   setInitialized: () => set({ isInitialized: true, isLoading: false }),
   loginAs: (role) => set({

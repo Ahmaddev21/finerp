@@ -8,6 +8,7 @@ import {
   Menu, X, Sun, Moon, FileText, Truck, Users, Settings, Loader2, Car, UserPlus, Package, Clock, FolderOpen, Lock
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { canAccess } from '../lib/permissions';
 import NotificationBell from './NotificationBell';
 import { useNotifications } from '../hooks/useNotifications';
 import { useTransactions } from '../hooks/useTransactions';
@@ -59,27 +60,29 @@ const roleColors: Record<string, string> = {
 /* ── Nav config ─────────────────────────────────────── */
 const navItems = [
   { name: 'Dashboard',  path: '/',           icon: LayoutDashboard, exact: true, roles: ['owner', 'admin'] },
-  { name: 'Projects',   path: '/projects',   icon: Briefcase,                   roles: ['owner', 'admin'] },
-  { name: 'Accounting', path: '/accounting', icon: Calculator,                  roles: ['owner', 'admin'] },
+  { name: 'Projects',   path: '/projects',   icon: Briefcase,   module: 'projects',   roles: ['owner', 'admin'] },
+  { name: 'Accounting', path: '/accounting', icon: Calculator,  module: 'accounting', roles: ['owner', 'admin'] },
   {
     name: 'ERP',
     icon: Layers,
+    module: 'erp',
     roles: ['owner', 'admin', 'bdm', 'engineer'],
     subItems: [
-      { name: 'Contracting',  path: '/erp/contracting',  icon: FileText, roles: ['owner', 'admin', 'bdm', 'engineer'] },
-      { name: 'Consultation', path: '/erp/consultation', icon: Users,    roles: ['owner', 'admin', 'bdm'] },
-      { name: 'Delivery',     path: '/erp/delivery',     icon: Truck,    roles: ['owner', 'admin'] },
-      { name: 'Merchandise',  path: '/erp/merchandise',  icon: Package,  roles: ['owner', 'admin'] },
+      { name: 'Contracting',  path: '/erp/contracting',  icon: FileText, module: 'contracting',  roles: ['owner', 'admin', 'bdm', 'engineer'] },
+      { name: 'Consultation', path: '/erp/consultation', icon: Users,    module: 'consultation', roles: ['owner', 'admin', 'bdm'] },
+      { name: 'Delivery',     path: '/erp/delivery',     icon: Truck,    module: 'delivery',     roles: ['owner', 'admin'] },
+      { name: 'Merchandise',  path: '/erp/merchandise',  icon: Package,  module: 'merchandise',  roles: ['owner', 'admin'] },
     ],
   },
-  { name: 'Tasks',      path: '/tasks',      icon: CheckSquare, roles: ['owner', 'admin', 'bdm', 'engineer', 'receptionist', 'developer', 'intern'] },
-  { name: 'Assets',       path: '/assets',       icon: Car,   roles: ['owner', 'admin'] },
-  { name: 'Time Keeping',     path: '/time-keeping',    icon: Clock,       roles: ['owner', 'admin'] },
-  { name: 'Finance Workflow', path: '/finance-workflow', icon: FolderOpen,  roles: ['owner', 'admin'] },
-  { name: 'Daily Visitors',   path: '/visitors',         icon: UserPlus,    roles: ['owner', 'admin', 'receptionist'] },
-  { name: 'Workspace Settings', path: '/settings', icon: Settings, roles: ['owner'] },
-  { name: 'Bank Details', path: '/bank-details', icon: Lock, roles: ['owner', 'admin'] },
-  { name: 'Audit Logs', path: '/audit-logs', icon: ShieldAlert, roles: ['owner', 'admin'] },
+  { name: 'Tasks',            path: '/tasks',            icon: CheckSquare, roles: ['owner', 'admin', 'bdm', 'engineer', 'receptionist', 'developer', 'intern'] },
+  { name: 'Assets',           path: '/assets',           icon: Car,        module: 'assets',           roles: ['owner', 'admin'] },
+  { name: 'Time Keeping',     path: '/time-keeping',     icon: Clock,      module: 'time-keeping',     roles: ['owner', 'admin'] },
+  { name: 'Finance Workflow', path: '/finance-workflow', icon: FolderOpen, module: 'finance-workflow', roles: ['owner', 'admin'] },
+  { name: 'Daily Visitors',   path: '/visitors',         icon: UserPlus,   module: 'visitors',         roles: ['owner', 'admin', 'receptionist'] },
+  { name: 'Bank Details',     path: '/bank-details',     icon: Lock,       module: 'bank-details',     roles: ['owner', 'admin'] },
+  { name: 'Audit Logs',       path: '/audit-logs',       icon: ShieldAlert,module: 'audit-logs',       roles: ['owner', 'admin'] },
+  { name: 'Permissions',      path: '/permissions',      icon: ShieldAlert,roles: ['owner', 'admin'] },
+  { name: 'Workspace Settings', path: '/settings',       icon: Settings,   roles: ['owner'] },
 ];
 
 /* ── Sidebar Nav Item ───────────────────────────────── */
@@ -92,12 +95,17 @@ function NavItem({ item, user, erpOpen, onErpToggle, onClose, badge }: {
   badge?: number;
 }) {
   const location = useLocation();
+  const { company } = useAuthStore();
   const role = user.role;
-  if (!role || !item.roles.includes(role)) return null;
+  const stored = company?.module_permissions;
+
+  const hasAccess = (mod?: string, roles?: string[]) =>
+    mod ? canAccess(mod, role, stored) : !!(role && roles?.includes(role));
+
+  if (!hasAccess((item as any).module, item.roles)) return null;
 
   if ('subItems' in item && item.subItems) {
-    const role = user.role ?? '';
-    const allowed = item.subItems.filter(s => s.roles.includes(role));
+    const allowed = item.subItems.filter(s => hasAccess((s as any).module, s.roles));
     const isSubActive = allowed.some(s => location.pathname.startsWith(s.path));
 
     return (

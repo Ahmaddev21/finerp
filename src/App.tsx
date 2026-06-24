@@ -4,6 +4,7 @@ import { useThemeStore } from './store/theme';
 import { useAuthStore } from './store/auth';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 import { getMe } from './services/auth';
+import { getModuleRoles } from './lib/permissions';
 import Layout from './components/Layout';
 import AuthPage from './components/AuthPage';
 
@@ -25,6 +26,7 @@ const Merchandise = React.lazy(() => import('./pages/Merchandise'));
 const TimeKeeping = React.lazy(() => import('./pages/TimeKeeping'));
 const FinanceWorkflow = React.lazy(() => import('./pages/FinanceWorkflow'));
 const BankDetails = React.lazy(() => import('./pages/BankDetails'));
+const Permissions = React.lazy(() => import('./pages/Permissions'));
 
 /* ── Role-based route guard ──────────────────────────── */
 function roleDefaultPath(role: string | null) {
@@ -36,10 +38,16 @@ function roleDefaultPath(role: string | null) {
   return '/'; // owner and admin go to dashboard
 }
 
-function RoleGuard({ allowed }: { allowed: string[] }) {
-  const { user } = useAuthStore();
+function RoleGuard({ allowed, module: mod }: { allowed?: string[]; module?: string }) {
+  const { user, company } = useAuthStore();
   const role = user?.role ?? '';
-  if (!allowed.includes(role)) {
+  let effectiveAllowed: string[];
+  if (mod) {
+    effectiveAllowed = getModuleRoles(mod, company?.module_permissions);
+  } else {
+    effectiveAllowed = allowed ?? [];
+  }
+  if (!effectiveAllowed.includes(role)) {
     return <Navigate to={roleDefaultPath(role)} replace />;
   }
   return <Outlet />;
@@ -341,26 +349,30 @@ export default function App() {
             <Route index element={<Dashboard />} />
           </Route>
 
-          {/* Projects & Accounting — owner, admin only */}
-          <Route element={<RoleGuard allowed={['owner','admin']} />}>
+          {/* Projects & Accounting */}
+          <Route element={<RoleGuard module="projects" />}>
             <Route path="projects" element={<Projects />} />
             <Route path="projects/:id" element={<ProjectDetails />} />
+          </Route>
+          <Route element={<RoleGuard module="accounting" />}>
             <Route path="accounting" element={<Accounting />} />
           </Route>
 
           {/* ERP — role-guarded per sub-route */}
           <Route path="erp">
-            <Route element={<RoleGuard allowed={['owner','admin','bdm','engineer']} />}>
+            <Route element={<RoleGuard module="erp" />}>
               <Route index element={<ERP />} />
             </Route>
-            <Route element={<RoleGuard allowed={['owner','admin','bdm','engineer']} />}>
+            <Route element={<RoleGuard module="contracting" />}>
               <Route path="contracting" element={<Contracting />} />
             </Route>
-            <Route element={<RoleGuard allowed={['owner','admin','bdm']} />}>
+            <Route element={<RoleGuard module="consultation" />}>
               <Route path="consultation" element={<Consultation />} />
             </Route>
-            <Route element={<RoleGuard allowed={['owner','admin']} />}>
+            <Route element={<RoleGuard module="delivery" />}>
               <Route path="delivery" element={<Delivery />} />
+            </Route>
+            <Route element={<RoleGuard module="merchandise" />}>
               <Route path="merchandise" element={<Merchandise />} />
             </Route>
           </Route>
@@ -368,39 +380,44 @@ export default function App() {
           {/* Tasks — all roles */}
           <Route path="tasks" element={<Tasks />} />
 
-          {/* Assets — owner, admin */}
-          <Route element={<RoleGuard allowed={['owner','admin']} />}>
+          {/* Assets */}
+          <Route element={<RoleGuard module="assets" />}>
             <Route path="assets" element={<Assets />} />
           </Route>
 
-          {/* Time Keeping — owner, admin only */}
-          <Route element={<RoleGuard allowed={['owner','admin']} />}>
+          {/* Time Keeping */}
+          <Route element={<RoleGuard module="time-keeping" />}>
             <Route path="time-keeping" element={<TimeKeeping />} />
           </Route>
 
-          {/* Finance Workflow — owner, admin only */}
-          <Route element={<RoleGuard allowed={['owner','admin']} />}>
+          {/* Finance Workflow */}
+          <Route element={<RoleGuard module="finance-workflow" />}>
             <Route path="finance-workflow" element={<FinanceWorkflow />} />
           </Route>
 
-          {/* Daily Visitors — owner, admin, receptionist */}
-          <Route element={<RoleGuard allowed={['owner','admin','receptionist']} />}>
+          {/* Daily Visitors */}
+          <Route element={<RoleGuard module="visitors" />}>
             <Route path="visitors" element={<DailyVisitors />} />
           </Route>
 
-          {/* Bank Details — owner, admin only */}
-          <Route element={<RoleGuard allowed={['owner','admin']} />}>
+          {/* Bank Details */}
+          <Route element={<RoleGuard module="bank-details" />}>
             <Route path="bank-details" element={<BankDetails />} />
           </Route>
 
-          {/* Audit Logs — owner, admin */}
-          <Route element={<RoleGuard allowed={['owner','admin']} />}>
+          {/* Audit Logs */}
+          <Route element={<RoleGuard module="audit-logs" />}>
             <Route path="audit-logs" element={<AuditLogs />} />
           </Route>
 
-          {/* Workspace Settings — owner only */}
+          {/* Workspace Settings — owner only (not configurable) */}
           <Route element={<RoleGuard allowed={['owner']} />}>
             <Route path="settings" element={<TeamSettings />} />
+          </Route>
+
+          {/* Module Permissions — owner and admin */}
+          <Route element={<RoleGuard allowed={['owner','admin']} />}>
+            <Route path="permissions" element={<Permissions />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
