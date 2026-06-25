@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Truck, Search, Plus, X, User, Shield, CreditCard, Smartphone, Mail, Key, MoreVertical, Filter, Bike, Car, Download, Eye, EyeOff, AlertTriangle, Hash, FolderOpen, Trash2 } from 'lucide-react';
+import { Truck, Search, Plus, X, User, Shield, CreditCard, Smartphone, Mail, Key, MoreVertical, Filter, Bike, Car, Download, Eye, EyeOff, AlertTriangle, Hash, FolderOpen, Trash2, Pencil } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useDeliveries, DeliveryStatus, DeliveryCategory } from '../hooks/useDeliveries';
 import type { Delivery as DeliveryRecord } from '../hooks/useDeliveries';
@@ -14,7 +14,7 @@ import DeliveryDocumentsModal from '../components/DeliveryDocumentsModal';
 const inputCls = 'w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-400 transition-all';
 
 export default function Delivery() {
-  const { deliveries, loading, error, addDelivery, updateDeliveryStatus, deleteDelivery } = useDeliveries();
+  const { deliveries, loading, error, addDelivery, updateDelivery, updateDeliveryStatus, deleteDelivery } = useDeliveries();
   const { submitChangeRequest } = useChangeRequests();
   const { user } = useAuthStore();
   const { assets } = useAssets();
@@ -85,38 +85,38 @@ export default function Delivery() {
       return numA - numB;
     });
 
-  const handleAdd = async () => {
-    if (!form.emp_number || !form.name) return;
-    const newId = await addDelivery({
-      ...form,
-      description: `New ${form.category} added: ${form.name}`
-    });
-    if (!newId) return; // failed — keep modal open so user doesn't lose data
-    if (user?.id) {
-      await writeAuditLog('CREATE', 'deliveries', newId, `Added ${form.category}: ${form.name} (${form.emp_number})`);
-    }
-    setIsOpen(false);
-    setForm({
-      emp_number: '',
-      name: '',
-      company: '',
-      snoonu_id: '',
-      snoonu_email: '',
-      password: '',
-      qid: '',
-      qid_expiry: '',
-      passport_number: '',
-      passport_expiry: '',
-      car_number: '',
-      bike_number: '',
-      bike_expiry: '',
-      car_expiry: '',
-      mobile_number: '',
-      status: 'Active',
-      category: 'Rider'
-    });
+  const emptyForm = {
+    emp_number: '', name: '', company: '', snoonu_id: '', snoonu_email: '', password: '',
+    qid: '', qid_expiry: '', passport_number: '', passport_expiry: '',
+    car_number: '', bike_number: '', bike_expiry: '', car_expiry: '',
+    mobile_number: '', status: 'Active' as DeliveryStatus, category: 'Rider' as DeliveryCategory,
   };
 
+  const closeModal = () => {
+    setIsOpen(false);
+    setEditRecord(null);
+    setForm(emptyForm);
+  };
+
+  const handleSave = async () => {
+    if (!form.emp_number || !form.name) return;
+    if (editRecord) {
+      const ok = await updateDelivery(editRecord.id, form);
+      if (!ok) return;
+      if (user?.id) {
+        await writeAuditLog('UPDATE', 'deliveries', editRecord.id, `Edited ${form.category}: ${form.name} (${form.emp_number})`);
+      }
+    } else {
+      const newId = await addDelivery({ ...form, description: `New ${form.category} added: ${form.name}` });
+      if (!newId) return;
+      if (user?.id) {
+        await writeAuditLog('CREATE', 'deliveries', newId, `Added ${form.category}: ${form.name} (${form.emp_number})`);
+      }
+    }
+    closeModal();
+  };
+
+  const [editRecord, setEditRecord] = useState<DeliveryRecord | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [revealedPasswords, setRevealedPasswords] = useState<Set<string>>(new Set());
   const [docsRecord, setDocsRecord] = useState<DeliveryRecord | null>(null);
@@ -211,7 +211,8 @@ export default function Delivery() {
           </div>
           <button
             onClick={() => {
-              setForm(prev => ({ ...prev, category: (categoryFilter === 'All' || categoryFilter === 'Vehicles' || categoryFilter === 'Inactive') ? 'Rider' : categoryFilter }));
+              setEditRecord(null);
+              setForm({ ...emptyForm, category: (categoryFilter === 'Rider' || categoryFilter === 'Driver') ? categoryFilter : 'Rider' });
               setIsOpen(true);
             }}
             disabled={categoryFilter === 'All' || categoryFilter === 'Vehicles' || categoryFilter === 'Inactive'}
@@ -386,6 +387,35 @@ export default function Delivery() {
                       <td className="px-5 py-4 text-right">
                         <RowMenu
                           actions={[
+                            {
+                              label: 'Edit',
+                              icon: <Pencil className="w-4 h-4" />,
+                              iconCls: 'text-indigo-500',
+                              onClick: () => {
+                                setEditRecord(d);
+                                setForm({
+                                  emp_number: d.emp_number,
+                                  name: d.name,
+                                  company: d.company,
+                                  snoonu_id: d.snoonu_id,
+                                  snoonu_email: d.snoonu_email,
+                                  password: d.password ?? '',
+                                  qid: d.qid,
+                                  qid_expiry: d.qid_expiry ?? '',
+                                  passport_number: d.passport_number,
+                                  passport_expiry: d.passport_expiry ?? '',
+                                  car_number: d.car_number ?? '',
+                                  bike_number: d.bike_number ?? '',
+                                  bike_expiry: d.bike_expiry ?? '',
+                                  car_expiry: d.car_expiry ?? '',
+                                  mobile_number: d.mobile_number,
+                                  status: d.status,
+                                  category: d.category,
+                                });
+                                setIsOpen(true);
+                              },
+                            },
+                            { kind: 'divider' },
                             { kind: 'header', label: 'Documents' },
                             {
                               label: 'View / Upload Docs',
@@ -457,16 +487,20 @@ export default function Delivery() {
         />
       )}
 
-      {/* New Entry Modal */}
+      {/* Add / Edit Modal */}
       {isOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-2xl w-full p-8 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="flex justify-between items-center mb-8">
               <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Add New {form.category}</h3>
-                <p className="text-sm text-slate-500 mt-1">Complete the details below to add to the fleet.</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                  {editRecord ? `Edit ${form.category}` : `Add New ${form.category}`}
+                </h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  {editRecord ? 'Update the details below and save.' : 'Complete the details below to add to the fleet.'}
+                </p>
               </div>
-              <button onClick={() => setIsOpen(false)} className="p-2.5 rounded-2xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+              <button onClick={closeModal} className="p-2.5 rounded-2xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -596,15 +630,15 @@ export default function Delivery() {
             </div>
 
             <div className="mt-10 flex justify-end gap-4">
-              <button onClick={() => setIsOpen(false)} className="px-6 py-3 text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">
+              <button onClick={closeModal} className="px-6 py-3 text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">
                 Discard
               </button>
-              <button 
-                onClick={handleAdd} 
+              <button
+                onClick={handleSave}
                 disabled={!form.emp_number || !form.name}
                 className="px-8 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl flex items-center gap-2 shadow-lg shadow-emerald-600/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
               >
-                <Plus className="w-5 h-5" /> Save {form.category}
+                <Plus className="w-5 h-5" /> {editRecord ? 'Save Changes' : `Save ${form.category}`}
               </button>
             </div>
           </div>

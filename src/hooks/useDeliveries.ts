@@ -169,9 +169,9 @@ export function useDeliveries() {
 
   const updateDeliveryStatus = useCallback(async (id: string, status: DeliveryStatus) => {
     if (!isSupabaseConfigured || !company?.id) return;
-    
+
     setDeliveries(prev => prev.map(d => d.id === id ? { ...d, status } : d));
-    
+
     try {
       const { error } = await supabase
         .from('deliveries')
@@ -183,9 +183,34 @@ export function useDeliveries() {
       setError(null);
     } catch (err: any) {
       setError(err.message);
-      fetch(); // Refresh state on error to ensure consistency
+      fetch();
     }
   }, [company?.id, fetch]);
 
-  return { deliveries, loading, error, addDelivery, updateDeliveryStatus, deleteDelivery, refetch: fetch };
+  const updateDelivery = useCallback(async (
+    id: string,
+    data: Partial<Omit<Delivery, 'id' | 'uuid_id' | 'delivery_code'>>
+  ): Promise<boolean> => {
+    if (!isSupabaseConfigured || !company?.id) return false;
+
+    setDeliveries(prev => prev.map(d => d.id === id ? { ...d, ...data } : d));
+
+    try {
+      const { error } = await supabase
+        .from('deliveries')
+        .update(data)
+        .eq('id', id)
+        .eq('company_id', company.id);
+
+      if (error) throw error;
+      setError(null);
+      return true;
+    } catch (err: any) {
+      setError(err.message);
+      fetch();
+      return false;
+    }
+  }, [company?.id, fetch]);
+
+  return { deliveries, loading, error, addDelivery, updateDelivery, updateDeliveryStatus, deleteDelivery, refetch: fetch };
 }

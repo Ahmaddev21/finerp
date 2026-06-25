@@ -283,3 +283,53 @@ COMMIT;
 
 ALTER TABLE public.companies
   ADD COLUMN IF NOT EXISTS module_permissions JSONB;
+
+
+-- ───────────────────────────────────────────────────────────────────
+-- STEP 5: RLS Hotfix — admin infinite-loading after Step 1
+--
+-- Root cause: companies_select used is_member_of_company() which
+-- internally queries company_users. company_users_manage (FOR ALL)
+-- in turn calls is_owner_of_company() which queries companies —
+-- creating a circular RLS dependency that Supabase silently kills.
+-- The companies query returns 0 rows for admin → PGRST116 error →
+-- fetchCompanyAndRole falls back → role:null → NoRoleScreen → sign-out.
+--
+-- Fix A: Scope company_users_manage to write operations only (remove
+--        the accidental SELECT coverage of FOR ALL).
+-- Fix B: Replace is_member_of_company() in companies_select with a
+--        direct inline subquery. For admin's own row the subquery
+--        filters on user_id = auth.uid() which short-circuits the
+--        company_users RLS before is_owner_of_company is ever called,
+--        breaking the circular dependency.
+-- ───────────────────────────────────────────────────────────────────
+
+-- Fix A
+DROP POLICY IF EXISTS "company_users_manage" ON public.company_users;
+
+CREATE POLICY "company_users_insert"
+  ON public.company_users FOR INSERT
+  WITH CHECK (public.is_owner_of_company(company_id));
+
+CREATE POLICY "company_users_update"
+  ON public.company_users FOR UPDATE
+  USING  (public.is_owner_of_company(company_id))
+  WITH CHECK (public.is_owner_of_company(company_id));
+
+CREATE POLICY "company_users_delete"
+  ON public.company_users FOR DELETE
+  USING  (public.is_owner_of_company(company_id));
+
+-- Fix B
+DROP POLICY IF EXISTS "companies_select" ON public.companies;
+
+CREATE POLICY "companies_select"
+  ON public.companies FOR SELECT
+  USING (
+    user_id = auth.uid()
+    OR id IN (
+      SELECT company_id
+      FROM   public.company_users
+      WHERE  user_id = auth.uid()
+    )
+  );
