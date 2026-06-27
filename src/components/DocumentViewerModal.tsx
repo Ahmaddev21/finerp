@@ -178,7 +178,7 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
 
   // Full-screen viewer — covers sidebar, navbar, everything
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col bg-slate-900 animate-fade-in">
+    <div className="fixed inset-0 z-[9999] h-screen flex flex-col overflow-hidden bg-slate-900 animate-fade-in">
 
       {/* Header — pinned, never scrolls away */}
       <div className="shrink-0 flex items-center justify-between px-4 h-12 bg-slate-800 border-b border-slate-700">
@@ -263,26 +263,30 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
         </div>
       </div>
 
-      {/* Body — fills all remaining height */}
-      <div className="flex-1 min-h-0 flex flex-col">
+      {/* Body — flex-1 fills all height below header; w-full spans the full width */}
+      <div className="flex-1 min-h-0 w-full flex flex-col">
 
         {/* ── Uploaded File Tab ── */}
         {activeTab === 'file' && (
-          <div className="flex-1 min-h-0 flex flex-col items-center justify-center bg-slate-800">
+          // relative + flex-1 gives this div the full remaining height.
+          // Children use absolute inset-0 so they fill it precisely
+          // without depending on flex alignment (items-center would break h-full on iframe).
+          <div className="flex-1 min-h-0 w-full relative bg-slate-800">
             {loadingUrl && (
-              <div className="flex flex-col items-center gap-3 text-slate-400">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-400">
                 <Loader2 className="w-8 h-8 animate-spin" />
                 <span className="text-sm">Loading file…</span>
               </div>
             )}
             {urlError && (
-              <div className="flex flex-col items-center gap-3 text-red-400 max-w-xs text-center px-4">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-red-400 px-4 text-center">
                 <AlertCircle className="w-8 h-8" />
-                <p className="text-sm font-medium">{urlError}</p>
+                <p className="text-sm font-medium max-w-xs">{urlError}</p>
               </div>
             )}
             {signedUrl && !loadingUrl && (
               isPdf ? (
+                // absolute inset-0 guarantees the iframe fills every pixel of the container
                 <iframe
                   key={pdfZoom}
                   src={
@@ -291,10 +295,10 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
                       : `${signedUrl}#toolbar=0&zoom=${pdfZoom}`
                   }
                   title="Attached document"
-                  className="w-full h-full border-0"
+                  className="absolute inset-0 w-full h-full border-0"
                 />
               ) : isImage ? (
-                <div className="w-full h-full overflow-auto flex items-center justify-center p-6">
+                <div className="absolute inset-0 overflow-y-auto flex items-center justify-center p-6">
                   <img
                     src={signedUrl}
                     alt="Attached document"
@@ -302,7 +306,7 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
                   />
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-4 text-slate-400">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-slate-400">
                   <FileText className="w-12 h-12 text-blue-400" />
                   <p className="text-sm font-medium">Preview not available for this file type.</p>
                   <a
