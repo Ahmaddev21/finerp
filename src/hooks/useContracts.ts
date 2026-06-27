@@ -11,6 +11,7 @@ export interface Contract {
   endDate: string;
   status: 'Active' | 'Pending Signature' | 'Expiring Soon' | 'Expired';
   edit_count?: number;
+  attachment_url?: string;
 }
 
 const seed: Contract[] = [
@@ -32,6 +33,7 @@ function mapRow(row: any): Contract {
     endDate: (row.end_date ?? '').toString(),
     status: row.status ?? 'Pending Signature',
     edit_count: Number(row.edit_count || 0),
+    attachment_url: row.attachment_url ?? undefined,
   };
 }
 
@@ -107,5 +109,13 @@ export function useContracts() {
     if (error) { setError(error.message); fetch(); return; }
   }, [fetch]);
 
-  return { contracts, loading, error, addContract, updateContract, updateContractStatus, refetch: fetch };
+  const deleteContract = useCallback(async (id: string) => {
+    setContracts(prev => prev.filter(c => c.id !== id));
+    if (!isSupabaseConfigured) return;
+    const companyId = useAuthStore.getState().company?.id;
+    const { error } = await supabase.from('contracts').delete().eq('id', id).eq('company_id', companyId);
+    if (error) { setError(error.message); fetch(); }
+  }, [fetch]);
+
+  return { contracts, loading, error, addContract, updateContract, updateContractStatus, deleteContract, refetch: fetch };
 }

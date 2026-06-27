@@ -16,6 +16,7 @@ export interface ContractingInvoiceOut {
   dueDate: string;
   transactionId: number | null;
   edit_count?: number;
+  attachment_url?: string;
 }
 
 const seed: ContractingInvoiceOut[] = [
@@ -37,6 +38,7 @@ function mapRow(row: any): ContractingInvoiceOut {
     issuedDate: (row.issued_date ?? '').toString(),
     dueDate: (row.due_date ?? '').toString(),
     transactionId: row.transaction_id ?? null,
+    attachment_url: row.attachment_url ?? undefined,
   };
 }
 
@@ -154,5 +156,13 @@ export function useContractingInvoicesOut() {
     }
   }, [invoices]);
 
-  return { invoices, loading, error, addInvoice, updateInvoice, updateStatus, refetch: fetch };
+  const deleteInvoice = useCallback(async (id: string) => {
+    setInvoices(prev => prev.filter(i => i.id !== id));
+    if (!isSupabaseConfigured) return;
+    const companyId = useAuthStore.getState().company?.id;
+    const { error } = await supabase.from('contracting_invoices_out').delete().eq('id', id).eq('company_id', companyId);
+    if (error) { setError(error.message); fetch(); }
+  }, [fetch]);
+
+  return { invoices, loading, error, addInvoice, updateInvoice, updateStatus, deleteInvoice, refetch: fetch };
 }

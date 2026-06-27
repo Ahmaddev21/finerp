@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Users, Clock, Star, Plus, X, Loader2,
   Globe, Building2, ArrowDownLeft, ArrowUpRight, CreditCard,
-  Receipt, Mail, Phone,
+  Receipt, Mail, Phone, Pencil, Trash2, Paperclip,
 } from 'lucide-react';
 import { cn, formatCurrency } from '../lib/utils';
 import { useAuthStore } from '../store/auth';
@@ -13,6 +13,8 @@ import { useConsultancyClients } from '../hooks/useConsultancyClients';
 import { useConsultancyInvoicesIn, EXCHANGE_RATES, SupportedCurrency } from '../hooks/useConsultancyInvoicesIn';
 import { useConsultancyInvoicesOut } from '../hooks/useConsultancyInvoicesOut';
 import { useConsultancyPayments } from '../hooks/useConsultancyPayments';
+import { RowMenu } from '../components/RowMenu';
+import DocumentAttachmentModal from '../components/DocumentAttachmentModal';
 
 const inputCls = 'w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-400 transition-all';
 
@@ -99,11 +101,11 @@ export default function Consultation() {
   const [modal, setModal] = useState<string | null>(null);
 
   // Data hooks
-  const { engagements, loading: engLoading, addEngagement, logHours } = useEngagements();
-  const { partners, loading: ptrLoading, addPartner } = useConsultancyPartners();
-  const { clients, loading: clLoading, addClient } = useConsultancyClients();
-  const { invoices: invoicesIn, loading: iiLoading, addInvoice: addInvIn, updateStatus: updateInvInStatus } = useConsultancyInvoicesIn();
-  const { invoices: invoicesOut, loading: ioLoading, addInvoice: addInvOut, updateStatus: updateInvOutStatus } = useConsultancyInvoicesOut();
+  const { engagements, loading: engLoading, addEngagement, logHours, updateEngagement, deleteEngagement } = useEngagements();
+  const { partners, loading: ptrLoading, addPartner, updatePartner, deletePartner } = useConsultancyPartners();
+  const { clients, loading: clLoading, addClient, updateClient, deleteClient } = useConsultancyClients();
+  const { invoices: invoicesIn, loading: iiLoading, addInvoice: addInvIn, updateInvoice: updateConsInvIn, updateStatus: updateInvInStatus, deleteInvoice: deleteConsInvIn } = useConsultancyInvoicesIn();
+  const { invoices: invoicesOut, loading: ioLoading, addInvoice: addInvOut, updateInvoice: updateConsInvOut, updateStatus: updateInvOutStatus, deleteInvoice: deleteConsInvOut } = useConsultancyInvoicesOut();
   const { payments, loading: payLoading, recordPayment } = useConsultancyPayments();
   const { projects: mainProjects } = useProjects();
 
@@ -117,6 +119,16 @@ export default function Consultation() {
 
   const [logModal, setLogModal] = useState<string | null>(null);
   const [hoursInput, setHoursInput] = useState('');
+
+  // Edit IDs
+  const [editEngId, setEditEngId] = useState<string | null>(null);
+  const [editPtrId, setEditPtrId] = useState<string | null>(null);
+  const [editClId, setEditClId] = useState<string | null>(null);
+  const [editInvInId, setEditInvInId] = useState<string | null>(null);
+  const [editInvOutId, setEditInvOutId] = useState<string | null>(null);
+
+  // Attachment modal
+  const [attachTarget, setAttachTarget] = useState<{ id: string; table: string; url?: string } | null>(null);
 
   // Computed
   const totalHours = engagements.reduce((s, e) => s + e.hoursBilled, 0);
@@ -145,11 +157,15 @@ export default function Consultation() {
     'invoices-in': 'Record Invoice', 'invoices-out': 'New Invoice', payments: 'Record Payment',
   };
 
-  /* ── Add handlers ───────────────────────────────── */
-  const handleAddEngagement = async () => {
+  /* ── Save handlers ───────────────────────────────── */
+  const handleSaveEngagement = async () => {
     if (!engForm.client || !engForm.service) return;
-    await addEngagement({ client: engForm.client, consultant: engForm.consultant || user?.name || 'Unassigned', service: engForm.service, hourlyRate: parseFloat(engForm.hourlyRate) || 0, hoursBilled: 0, startDate: engForm.startDate || new Date().toISOString().split('T')[0], status: 'Active' });
-    setModal(null); setEngForm({ client: '', service: '', consultant: '', hourlyRate: '', startDate: '' });
+    if (editEngId) {
+      await updateEngagement(editEngId, { client: engForm.client, consultant: engForm.consultant || user?.name || 'Unassigned', service: engForm.service, hourlyRate: parseFloat(engForm.hourlyRate) || 0, startDate: engForm.startDate });
+    } else {
+      await addEngagement({ client: engForm.client, consultant: engForm.consultant || user?.name || 'Unassigned', service: engForm.service, hourlyRate: parseFloat(engForm.hourlyRate) || 0, hoursBilled: 0, startDate: engForm.startDate || new Date().toISOString().split('T')[0], status: 'Active' });
+    }
+    setModal(null); setEditEngId(null); setEngForm({ client: '', service: '', consultant: '', hourlyRate: '', startDate: '' });
   };
 
   const handleLogHours = async () => {
@@ -158,44 +174,74 @@ export default function Consultation() {
     setLogModal(null); setHoursInput('');
   };
 
-  const handleAddPartner = async () => {
+  const handleSavePartner = async () => {
     if (!ptrForm.name) return;
-    await addPartner({ name: ptrForm.name, country: ptrForm.country, contactPerson: ptrForm.contactPerson, contactEmail: ptrForm.contactEmail, contactPhone: ptrForm.contactPhone, status: 'active', notes: ptrForm.notes });
-    setModal(null); setPtrForm({ name: '', country: '', contactPerson: '', contactEmail: '', contactPhone: '', notes: '' });
+    if (editPtrId) {
+      await updatePartner(editPtrId, { name: ptrForm.name, country: ptrForm.country, contactPerson: ptrForm.contactPerson, contactEmail: ptrForm.contactEmail, contactPhone: ptrForm.contactPhone, notes: ptrForm.notes });
+    } else {
+      await addPartner({ name: ptrForm.name, country: ptrForm.country, contactPerson: ptrForm.contactPerson, contactEmail: ptrForm.contactEmail, contactPhone: ptrForm.contactPhone, status: 'active', notes: ptrForm.notes });
+    }
+    setModal(null); setEditPtrId(null); setPtrForm({ name: '', country: '', contactPerson: '', contactEmail: '', contactPhone: '', notes: '' });
   };
 
-  const handleAddClient = async () => {
+  const handleSaveClient = async () => {
     if (!clForm.name) return;
-    await addClient({ name: clForm.name, country: clForm.country, contactPerson: clForm.contactPerson, contactEmail: clForm.contactEmail, contactPhone: clForm.contactPhone, industry: clForm.industry, status: 'active', notes: clForm.notes });
-    setModal(null); setClForm({ name: '', country: 'Qatar', contactPerson: '', contactEmail: '', contactPhone: '', industry: '', notes: '' });
+    if (editClId) {
+      await updateClient(editClId, { name: clForm.name, country: clForm.country, contactPerson: clForm.contactPerson, contactEmail: clForm.contactEmail, contactPhone: clForm.contactPhone, industry: clForm.industry, notes: clForm.notes });
+    } else {
+      await addClient({ name: clForm.name, country: clForm.country, contactPerson: clForm.contactPerson, contactEmail: clForm.contactEmail, contactPhone: clForm.contactPhone, industry: clForm.industry, status: 'active', notes: clForm.notes });
+    }
+    setModal(null); setEditClId(null); setClForm({ name: '', country: 'Qatar', contactPerson: '', contactEmail: '', contactPhone: '', industry: '', notes: '' });
   };
 
-  const handleAddInvIn = async () => {
+  const handleSaveInvIn = async () => {
     if (!invInForm.partnerId || !invInForm.originalAmount) return;
     const partner = partners.find(p => p.id === invInForm.partnerId);
-    await addInvIn({
-      partnerId: invInForm.partnerId, partnerName: partner?.name || '',
-      projectId: invInForm.projectId, invoiceRef: invInForm.invoiceRef,
-      description: invInForm.description, currency: invInForm.currency,
-      originalAmount: parseFloat(invInForm.originalAmount) || 0,
-      exchangeRate: computedRate, convertedAmount: computedQR,
-      status: 'draft', receivedDate: invInForm.receivedDate, dueDate: invInForm.dueDate,
-      mainProjectId: invInForm.mainProjectId || null,
-    });
-    setModal(null); setInvInForm({ partnerId: '', invoiceRef: '', description: '', currency: 'EUR', originalAmount: '', projectId: '', receivedDate: '', dueDate: '', mainProjectId: '' });
+    const origAmt = parseFloat(invInForm.originalAmount) || 0;
+    if (editInvInId) {
+      await updateConsInvIn(editInvInId, {
+        partnerId: invInForm.partnerId, partnerName: partner?.name || '',
+        projectId: invInForm.projectId, invoiceRef: invInForm.invoiceRef,
+        description: invInForm.description, currency: invInForm.currency,
+        originalAmount: origAmt, exchangeRate: computedRate, convertedAmount: origAmt * computedRate,
+        receivedDate: invInForm.receivedDate, dueDate: invInForm.dueDate,
+        mainProjectId: invInForm.mainProjectId || null,
+      });
+    } else {
+      await addInvIn({
+        partnerId: invInForm.partnerId, partnerName: partner?.name || '',
+        projectId: invInForm.projectId, invoiceRef: invInForm.invoiceRef,
+        description: invInForm.description, currency: invInForm.currency,
+        originalAmount: origAmt,
+        exchangeRate: computedRate, convertedAmount: computedQR,
+        status: 'draft', receivedDate: invInForm.receivedDate, dueDate: invInForm.dueDate,
+        mainProjectId: invInForm.mainProjectId || null,
+      });
+    }
+    setModal(null); setEditInvInId(null); setInvInForm({ partnerId: '', invoiceRef: '', description: '', currency: 'EUR', originalAmount: '', projectId: '', receivedDate: '', dueDate: '', mainProjectId: '' });
   };
 
-  const handleAddInvOut = async () => {
+  const handleSaveInvOut = async () => {
     if (!invOutForm.clientId || !invOutForm.amount) return;
     const client = clients.find(c => c.id === invOutForm.clientId);
-    await addInvOut({
-      clientId: invOutForm.clientId, client: client?.name || '',
-      projectId: invOutForm.projectId, description: invOutForm.description,
-      amount: parseFloat(invOutForm.amount) || 0, status: 'draft',
-      issuedDate: invOutForm.issuedDate, dueDate: invOutForm.dueDate,
-      mainProjectId: invOutForm.mainProjectId || null,
-    });
-    setModal(null); setInvOutForm({ clientId: '', description: '', amount: '', projectId: '', issuedDate: '', dueDate: '', mainProjectId: '' });
+    if (editInvOutId) {
+      await updateConsInvOut(editInvOutId, {
+        clientId: invOutForm.clientId, client: client?.name || '',
+        projectId: invOutForm.projectId, description: invOutForm.description,
+        amount: parseFloat(invOutForm.amount) || 0,
+        issuedDate: invOutForm.issuedDate, dueDate: invOutForm.dueDate,
+        mainProjectId: invOutForm.mainProjectId || null,
+      });
+    } else {
+      await addInvOut({
+        clientId: invOutForm.clientId, client: client?.name || '',
+        projectId: invOutForm.projectId, description: invOutForm.description,
+        amount: parseFloat(invOutForm.amount) || 0, status: 'draft',
+        issuedDate: invOutForm.issuedDate, dueDate: invOutForm.dueDate,
+        mainProjectId: invOutForm.mainProjectId || null,
+      });
+    }
+    setModal(null); setEditInvOutId(null); setInvOutForm({ clientId: '', description: '', amount: '', projectId: '', issuedDate: '', dueDate: '', mainProjectId: '' });
   };
 
   const handleRecordPayment = async () => {
@@ -217,7 +263,15 @@ export default function Consultation() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Consultancy</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Advisory services, partners, clients, and financials.</p>
         </div>
-        <button onClick={() => setModal(activeTab)} className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:-translate-y-0.5">
+        <button onClick={() => {
+          // Clear edit state when opening new entry
+          if (activeTab === 'engagements') { setEditEngId(null); setEngForm({ client: '', service: '', consultant: '', hourlyRate: '', startDate: '' }); }
+          if (activeTab === 'partners') { setEditPtrId(null); setPtrForm({ name: '', country: '', contactPerson: '', contactEmail: '', contactPhone: '', notes: '' }); }
+          if (activeTab === 'clients') { setEditClId(null); setClForm({ name: '', country: 'Qatar', contactPerson: '', contactEmail: '', contactPhone: '', industry: '', notes: '' }); }
+          if (activeTab === 'invoices-in') { setEditInvInId(null); setInvInForm({ partnerId: '', invoiceRef: '', description: '', currency: 'EUR', originalAmount: '', projectId: '', receivedDate: '', dueDate: '', mainProjectId: '' }); }
+          if (activeTab === 'invoices-out') { setEditInvOutId(null); setInvOutForm({ clientId: '', description: '', amount: '', projectId: '', issuedDate: '', dueDate: '', mainProjectId: '' }); }
+          setModal(activeTab);
+        }} className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:-translate-y-0.5">
           <Plus className="w-4 h-4" />{addLabel[activeTab]}
         </button>
       </div>
@@ -267,12 +321,19 @@ export default function Consultation() {
                         <td className={cn(td, 'font-bold text-emerald-600 dark:text-emerald-400')}>{formatCurrency(e.hoursBilled * e.hourlyRate)}</td>
                         <td className={td}><StatusBadge status={e.status} /></td>
                         <td className={td}>
-                          {e.status === 'Active' && (
-                            <button onClick={() => { setLogModal(e.id); setHoursInput(''); }}
-                              className="text-xs font-bold text-violet-600 dark:text-violet-400 hover:text-violet-500 px-2 py-1 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-950/30">
-                              + Log Hours
-                            </button>
-                          )}
+                          <div className="flex items-center gap-1">
+                            {e.status === 'Active' && (
+                              <button onClick={() => { setLogModal(e.id); setHoursInput(''); }}
+                                className="text-xs font-bold text-violet-600 dark:text-violet-400 hover:text-violet-500 px-2 py-1 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-950/30">
+                                + Log Hours
+                              </button>
+                            )}
+                            <RowMenu actions={[
+                              { label: 'Edit', icon: <Pencil className="w-4 h-4" />, iconCls: 'text-indigo-500', onClick: () => { setEngForm({ client: e.client, service: e.service, consultant: e.consultant, hourlyRate: String(e.hourlyRate), startDate: e.startDate }); setEditEngId(e.id); setModal('engagements'); } },
+                              { label: 'Attach File', icon: <Paperclip className="w-4 h-4" />, iconCls: 'text-blue-500', onClick: () => setAttachTarget({ id: e.id, table: 'engagements', url: e.attachment_url }) },
+                              { label: 'Delete', icon: <Trash2 className="w-4 h-4" />, iconCls: 'text-red-500', danger: true, onClick: () => { if (window.confirm('Delete this engagement?')) deleteEngagement(e.id); } },
+                            ]} />
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -298,7 +359,7 @@ export default function Consultation() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left whitespace-nowrap">
                   <thead className="bg-slate-50/60 dark:bg-slate-800/40"><tr>
-                    {['ID', 'Partner', 'Country', 'Contact', 'Email', 'Phone', 'Status'].map(h => <th key={h} className={th}>{h}</th>)}
+                    {['ID', 'Partner', 'Country', 'Contact', 'Email', 'Phone', 'Status', 'Actions'].map(h => <th key={h} className={th}>{h}</th>)}
                   </tr></thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {partners.map(p => (
@@ -314,6 +375,13 @@ export default function Consultation() {
                         <td className={cn(td, 'text-slate-500 dark:text-slate-400 text-xs')}>{p.contactEmail || '—'}</td>
                         <td className={cn(td, 'text-slate-500 dark:text-slate-400 text-xs')}>{p.contactPhone || '—'}</td>
                         <td className={td}><StatusBadge status={p.status} /></td>
+                        <td className={td}>
+                          <RowMenu actions={[
+                            { label: 'Edit', icon: <Pencil className="w-4 h-4" />, iconCls: 'text-indigo-500', onClick: () => { setPtrForm({ name: p.name, country: p.country, contactPerson: p.contactPerson, contactEmail: p.contactEmail, contactPhone: p.contactPhone, notes: p.notes }); setEditPtrId(p.id); setModal('partners'); } },
+                            { label: 'Attach File', icon: <Paperclip className="w-4 h-4" />, iconCls: 'text-blue-500', onClick: () => setAttachTarget({ id: p.id, table: 'consultancy_partners', url: p.attachment_url }) },
+                            { label: 'Delete', icon: <Trash2 className="w-4 h-4" />, iconCls: 'text-red-500', danger: true, onClick: () => { if (window.confirm('Delete this partner?')) deletePartner(p.id); } },
+                          ]} />
+                        </td>
                       </tr>
                     ))}
                     {partners.length === 0 && <EmptyState msg="No partners yet." />}
@@ -338,7 +406,7 @@ export default function Consultation() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left whitespace-nowrap">
                   <thead className="bg-slate-50/60 dark:bg-slate-800/40"><tr>
-                    {['ID', 'Client', 'Industry', 'Country', 'Contact', 'Email', 'Status'].map(h => <th key={h} className={th}>{h}</th>)}
+                    {['ID', 'Client', 'Industry', 'Country', 'Contact', 'Email', 'Status', 'Actions'].map(h => <th key={h} className={th}>{h}</th>)}
                   </tr></thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {clients.map(c => (
@@ -350,6 +418,13 @@ export default function Consultation() {
                         <td className={cn(td, 'text-slate-600 dark:text-slate-300')}>{c.contactPerson || '—'}</td>
                         <td className={cn(td, 'text-slate-500 dark:text-slate-400 text-xs')}>{c.contactEmail || '—'}</td>
                         <td className={td}><StatusBadge status={c.status} /></td>
+                        <td className={td}>
+                          <RowMenu actions={[
+                            { label: 'Edit', icon: <Pencil className="w-4 h-4" />, iconCls: 'text-indigo-500', onClick: () => { setClForm({ name: c.name, country: c.country, contactPerson: c.contactPerson, contactEmail: c.contactEmail, contactPhone: c.contactPhone, industry: c.industry, notes: c.notes }); setEditClId(c.id); setModal('clients'); } },
+                            { label: 'Attach File', icon: <Paperclip className="w-4 h-4" />, iconCls: 'text-blue-500', onClick: () => setAttachTarget({ id: c.id, table: 'consultancy_clients', url: c.attachment_url }) },
+                            { label: 'Delete', icon: <Trash2 className="w-4 h-4" />, iconCls: 'text-red-500', danger: true, onClick: () => { if (window.confirm('Delete this client?')) deleteClient(c.id); } },
+                          ]} />
+                        </td>
                       </tr>
                     ))}
                     {clients.length === 0 && <EmptyState msg="No clients yet." />}
@@ -393,10 +468,17 @@ export default function Consultation() {
                         <td className={cn(td, 'font-bold text-slate-700 dark:text-slate-300')}>-{formatCurrency(i.convertedAmount)}</td>
                         <td className={td}><StatusBadge status={i.status} /></td>
                         <td className={td}>
-                          <WorkflowActions
-                            status={i.status}
-                            onApprove={() => updateInvInStatus(i.id, i.status === 'draft' ? 'pending' : i.status === 'pending' ? 'approved' : 'paid')}
-                          />
+                          <div className="flex items-center gap-1">
+                            <WorkflowActions
+                              status={i.status}
+                              onApprove={() => updateInvInStatus(i.id, i.status === 'draft' ? 'pending' : i.status === 'pending' ? 'approved' : 'paid')}
+                            />
+                            <RowMenu actions={[
+                              { label: 'Edit', icon: <Pencil className="w-4 h-4" />, iconCls: 'text-indigo-500', onClick: () => { setInvInForm({ partnerId: i.partnerId || '', invoiceRef: i.invoiceRef, description: i.description, currency: i.currency, originalAmount: String(i.originalAmount), projectId: i.projectId, receivedDate: i.receivedDate, dueDate: i.dueDate, mainProjectId: i.mainProjectId || '' }); setEditInvInId(i.id); setModal('invoices-in'); } },
+                              { label: 'Attach File', icon: <Paperclip className="w-4 h-4" />, iconCls: 'text-blue-500', onClick: () => setAttachTarget({ id: i.id, table: 'consultancy_invoices_in', url: i.attachment_url }) },
+                              { label: 'Delete', icon: <Trash2 className="w-4 h-4" />, iconCls: 'text-red-500', danger: true, onClick: () => { if (window.confirm('Delete this invoice?')) deleteConsInvIn(i.id); } },
+                            ]} />
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -436,10 +518,17 @@ export default function Consultation() {
                         <td className={cn(td, 'text-slate-500 dark:text-slate-400 text-xs')}>{i.dueDate || '—'}</td>
                         <td className={td}><StatusBadge status={i.status} /></td>
                         <td className={td}>
-                          <WorkflowActions
-                            status={i.status}
-                            onApprove={() => updateInvOutStatus(i.id, i.status === 'draft' ? 'pending' : i.status === 'pending' ? 'approved' : 'paid')}
-                          />
+                          <div className="flex items-center gap-1">
+                            <WorkflowActions
+                              status={i.status}
+                              onApprove={() => updateInvOutStatus(i.id, i.status === 'draft' ? 'pending' : i.status === 'pending' ? 'approved' : 'paid')}
+                            />
+                            <RowMenu actions={[
+                              { label: 'Edit', icon: <Pencil className="w-4 h-4" />, iconCls: 'text-indigo-500', onClick: () => { setInvOutForm({ clientId: i.clientId || '', description: i.description, amount: String(i.amount), projectId: i.projectId, issuedDate: i.issuedDate, dueDate: i.dueDate, mainProjectId: i.mainProjectId || '' }); setEditInvOutId(i.id); setModal('invoices-out'); } },
+                              { label: 'Attach File', icon: <Paperclip className="w-4 h-4" />, iconCls: 'text-blue-500', onClick: () => setAttachTarget({ id: i.id, table: 'consultancy_invoices_out', url: i.attachment_url }) },
+                              { label: 'Delete', icon: <Trash2 className="w-4 h-4" />, iconCls: 'text-red-500', danger: true, onClick: () => { if (window.confirm('Delete this invoice?')) deleteConsInvOut(i.id); } },
+                            ]} />
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -493,7 +582,7 @@ export default function Consultation() {
 
       {/* Engagement */}
       {modal === 'engagements' && (
-        <Modal title="New Engagement" onClose={() => setModal(null)}>
+        <Modal title={editEngId ? 'Edit Engagement' : 'New Engagement'} onClose={() => { setModal(null); setEditEngId(null); }}>
           <div className="space-y-3">
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Client <span className="text-rose-400">*</span></label>
               <input type="text" value={engForm.client} onChange={e => setEngForm({ ...engForm, client: e.target.value })} className={inputCls} /></div>
@@ -503,31 +592,31 @@ export default function Consultation() {
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Consultant</label>
                 <input type="text" value={engForm.consultant} onChange={e => setEngForm({ ...engForm, consultant: e.target.value })} placeholder={user?.name} className={inputCls} /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Rate/hr (QR)</label>
-                <input 
+                <input
                   type="text"
                   inputMode="decimal"
-                  value={engForm.hourlyRate} 
+                  value={engForm.hourlyRate}
                   onChange={e => {
                     let val = e.target.value.replace(',', '.');
                     if (val === '' || /^\d*\.?\d*$/.test(val)) setEngForm({ ...engForm, hourlyRate: val });
-                  }} 
-                  placeholder="0.00" 
-                  className={inputCls} 
+                  }}
+                  placeholder="0.00"
+                  className={inputCls}
                 /></div>
             </div>
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Start Date</label>
               <input type="date" value={engForm.startDate} onChange={e => setEngForm({ ...engForm, startDate: e.target.value })} className={inputCls} /></div>
           </div>
           <div className="mt-5 flex justify-end gap-3">
-            <button onClick={() => setModal(null)} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
-            <button onClick={handleAddEngagement} disabled={!engForm.client || !engForm.service} className="px-4 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-xl">Add Engagement</button>
+            <button onClick={() => { setModal(null); setEditEngId(null); }} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
+            <button onClick={handleSaveEngagement} disabled={!engForm.client || !engForm.service} className="px-4 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-xl">{editEngId ? 'Save Changes' : 'Add Engagement'}</button>
           </div>
         </Modal>
       )}
 
       {/* Partner */}
       {modal === 'partners' && (
-        <Modal title="New European Partner" onClose={() => setModal(null)}>
+        <Modal title={editPtrId ? 'Edit Partner' : 'New European Partner'} onClose={() => { setModal(null); setEditPtrId(null); }}>
           <div className="space-y-3">
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Company Name <span className="text-rose-400">*</span></label>
               <input type="text" value={ptrForm.name} onChange={e => setPtrForm({ ...ptrForm, name: e.target.value })} className={inputCls} /></div>
@@ -545,15 +634,15 @@ export default function Consultation() {
               <input type="text" value={ptrForm.notes} onChange={e => setPtrForm({ ...ptrForm, notes: e.target.value })} className={inputCls} /></div>
           </div>
           <div className="mt-5 flex justify-end gap-3">
-            <button onClick={() => setModal(null)} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
-            <button onClick={handleAddPartner} disabled={!ptrForm.name} className="px-4 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-xl">Add Partner</button>
+            <button onClick={() => { setModal(null); setEditPtrId(null); }} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
+            <button onClick={handleSavePartner} disabled={!ptrForm.name} className="px-4 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-xl">{editPtrId ? 'Save Changes' : 'Add Partner'}</button>
           </div>
         </Modal>
       )}
 
       {/* Client */}
       {modal === 'clients' && (
-        <Modal title="New Client" onClose={() => setModal(null)}>
+        <Modal title={editClId ? 'Edit Client' : 'New Client'} onClose={() => { setModal(null); setEditClId(null); }}>
           <div className="space-y-3">
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Company Name <span className="text-rose-400">*</span></label>
               <input type="text" value={clForm.name} onChange={e => setClForm({ ...clForm, name: e.target.value })} className={inputCls} /></div>
@@ -573,15 +662,15 @@ export default function Consultation() {
             </div>
           </div>
           <div className="mt-5 flex justify-end gap-3">
-            <button onClick={() => setModal(null)} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
-            <button onClick={handleAddClient} disabled={!clForm.name} className="px-4 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-xl">Add Client</button>
+            <button onClick={() => { setModal(null); setEditClId(null); }} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
+            <button onClick={handleSaveClient} disabled={!clForm.name} className="px-4 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-xl">{editClId ? 'Save Changes' : 'Add Client'}</button>
           </div>
         </Modal>
       )}
 
       {/* Invoice In (from partner — multi-currency) */}
       {modal === 'invoices-in' && (
-        <Modal title="Record Partner Invoice" onClose={() => setModal(null)}>
+        <Modal title={editInvInId ? 'Edit Partner Invoice' : 'Record Partner Invoice'} onClose={() => { setModal(null); setEditInvInId(null); }}>
           <div className="space-y-3">
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Partner <span className="text-rose-400">*</span></label>
               <select value={invInForm.partnerId} onChange={e => setInvInForm({ ...invInForm, partnerId: e.target.value })} className={inputCls}>
@@ -609,16 +698,16 @@ export default function Consultation() {
                     <option value="QR">QR</option>
                   </select></div>
                 <div><label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Amount <span className="text-rose-400">*</span></label>
-                  <input 
+                  <input
                     type="text"
                     inputMode="decimal"
-                    value={invInForm.originalAmount} 
+                    value={invInForm.originalAmount}
                     onChange={e => {
                       let val = e.target.value.replace(',', '.');
                       if (val === '' || /^\d*\.?\d*$/.test(val)) setInvInForm({ ...invInForm, originalAmount: val });
-                    }} 
-                    placeholder="0.00" 
-                    className={inputCls} 
+                    }}
+                    placeholder="0.00"
+                    className={inputCls}
                   /></div>
                 <div><label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Rate → QR</label>
                   <input type="text" value={computedRate.toFixed(4)} readOnly className={cn(inputCls, 'bg-slate-100 dark:bg-slate-700 cursor-not-allowed')} /></div>
@@ -642,15 +731,15 @@ export default function Consultation() {
               </select></div>
           </div>
           <div className="mt-5 flex justify-end gap-3">
-            <button onClick={() => setModal(null)} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
-            <button onClick={handleAddInvIn} disabled={!invInForm.partnerId || !invInForm.originalAmount} className="px-4 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-xl">Record Invoice</button>
+            <button onClick={() => { setModal(null); setEditInvInId(null); }} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
+            <button onClick={handleSaveInvIn} disabled={!invInForm.partnerId || !invInForm.originalAmount} className="px-4 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-xl">{editInvInId ? 'Save Changes' : 'Record Invoice'}</button>
           </div>
         </Modal>
       )}
 
       {/* Invoice Out (to client) */}
       {modal === 'invoices-out' && (
-        <Modal title="New Invoice to Client" onClose={() => setModal(null)}>
+        <Modal title={editInvOutId ? 'Edit Invoice to Client' : 'New Invoice to Client'} onClose={() => { setModal(null); setEditInvOutId(null); }}>
           <div className="space-y-3">
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Client <span className="text-rose-400">*</span></label>
               <select value={invOutForm.clientId} onChange={e => setInvOutForm({ ...invOutForm, clientId: e.target.value })} className={inputCls}>
@@ -661,16 +750,16 @@ export default function Consultation() {
               <input type="text" value={invOutForm.description} onChange={e => setInvOutForm({ ...invOutForm, description: e.target.value })} className={inputCls} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (QR) <span className="text-rose-400">*</span></label>
-                <input 
+                <input
                   type="text"
                   inputMode="decimal"
-                  value={invOutForm.amount} 
+                  value={invOutForm.amount}
                   onChange={e => {
                     let val = e.target.value.replace(',', '.');
                     if (val === '' || /^\d*\.?\d*$/.test(val)) setInvOutForm({ ...invOutForm, amount: val });
-                  }} 
-                  placeholder="0.00" 
-                  className={inputCls} 
+                  }}
+                  placeholder="0.00"
+                  className={inputCls}
                 /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Project</label>
                 <input type="text" value={invOutForm.projectId} onChange={e => setInvOutForm({ ...invOutForm, projectId: e.target.value })} placeholder="e.g. IT Strategy" className={inputCls} /></div>
@@ -688,8 +777,8 @@ export default function Consultation() {
               </select></div>
           </div>
           <div className="mt-5 flex justify-end gap-3">
-            <button onClick={() => setModal(null)} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
-            <button onClick={handleAddInvOut} disabled={!invOutForm.clientId || !invOutForm.amount} className="px-4 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-xl">Create Invoice</button>
+            <button onClick={() => { setModal(null); setEditInvOutId(null); }} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
+            <button onClick={handleSaveInvOut} disabled={!invOutForm.clientId || !invOutForm.amount} className="px-4 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-xl">{editInvOutId ? 'Save Changes' : 'Create Invoice'}</button>
           </div>
         </Modal>
       )}
@@ -713,16 +802,16 @@ export default function Consultation() {
               </select></div>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (QR) <span className="text-rose-400">*</span></label>
-                <input 
+                <input
                   type="text"
                   inputMode="decimal"
-                  value={payForm.amount} 
+                  value={payForm.amount}
                   onChange={e => {
                     let val = e.target.value.replace(',', '.');
                     if (val === '' || /^\d*\.?\d*$/.test(val)) setPayForm({ ...payForm, amount: val });
-                  }} 
-                  placeholder="0.00" 
-                  className={inputCls} 
+                  }}
+                  placeholder="0.00"
+                  className={inputCls}
                 /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Date</label>
                 <input type="date" value={payForm.paymentDate} onChange={e => setPayForm({ ...payForm, paymentDate: e.target.value })} className={inputCls} /></div>
@@ -748,17 +837,17 @@ export default function Consultation() {
         <Modal title="Log Hours" onClose={() => setLogModal(null)}>
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Hours to add <span className="text-rose-400">*</span></label>
-            <input 
-              autoFocus 
+            <input
+              autoFocus
               type="text"
               inputMode="decimal"
-              value={hoursInput} 
+              value={hoursInput}
               onChange={e => {
                 let val = e.target.value.replace(',', '.');
                 if (val === '' || /^\d*\.?\d*$/.test(val)) setHoursInput(val);
-              }} 
-              placeholder="e.g. 4.5" 
-              className={inputCls} 
+              }}
+              placeholder="e.g. 4.5"
+              className={inputCls}
             />
           </div>
           <div className="mt-5 flex justify-end gap-3">
@@ -768,6 +857,20 @@ export default function Consultation() {
             </button>
           </div>
         </Modal>
+      )}
+
+      {/* Document Attachment Modal */}
+      {attachTarget && (
+        <DocumentAttachmentModal
+          isOpen={true}
+          onClose={() => setAttachTarget(null)}
+          recordId={attachTarget.id}
+          tableName={attachTarget.table}
+          currentAttachmentUrl={attachTarget.url}
+          onUploadSuccess={url => {
+            setAttachTarget(prev => prev ? { ...prev, url } : null);
+          }}
+        />
       )}
     </div>
   );

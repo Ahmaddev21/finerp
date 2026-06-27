@@ -12,6 +12,7 @@ export interface ConsultancyClient {
   industry: string;
   status: 'active' | 'inactive';
   notes: string;
+  attachment_url?: string;
 }
 
 const seed: ConsultancyClient[] = [
@@ -33,6 +34,7 @@ function mapRow(row: any): ConsultancyClient {
     industry: row.industry ?? '',
     status: row.status ?? 'active',
     notes: row.notes ?? '',
+    attachment_url: row.attachment_url ?? undefined,
   };
 }
 
@@ -93,5 +95,13 @@ export function useConsultancyClients() {
     if (error) { setError(error.message); fetch(); return; }
   }, [fetch]);
 
-  return { clients, loading, error, addClient, updateClient, refetch: fetch };
+  const deleteClient = useCallback(async (id: string) => {
+    setClients(prev => prev.filter(c => c.id !== id));
+    if (!isSupabaseConfigured) return;
+    const companyId = useAuthStore.getState().company?.id;
+    const { error } = await supabase.from('consultancy_clients').delete().eq('id', id).eq('company_id', companyId);
+    if (error) { setError(error.message); fetch(); }
+  }, [fetch]);
+
+  return { clients, loading, error, addClient, updateClient, deleteClient, refetch: fetch };
 }

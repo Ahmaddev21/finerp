@@ -7,14 +7,15 @@ import { useAuthStore } from '../store/auth';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  recordId: number;
+  recordId: string | number;
+  tableName?: string;
   currentAttachmentUrl?: string;
   onUploadSuccess: (url: string) => void;
   readonly?: boolean;
 }
 
 export default function DocumentAttachmentModal({
-  isOpen, onClose, recordId, currentAttachmentUrl, onUploadSuccess, readonly = false
+  isOpen, onClose, recordId, tableName = 'transactions', currentAttachmentUrl, onUploadSuccess, readonly = false
 }: Props) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,9 +65,9 @@ export default function DocumentAttachmentModal({
 
       const path = await uploadAttachment(file, 'transaction', String(recordId), company.id);
 
-      // Update the transaction record
+      // Update the record
       const { error: dbError } = await supabase
-        .from('transactions')
+        .from(tableName)
         .update({ attachment_url: path })
         .eq('id', recordId);
 
@@ -87,7 +88,7 @@ export default function DocumentAttachmentModal({
       setUploading(true);
       if (isSupabaseConfigured) {
         const { error: dbError } = await supabase
-          .from('transactions')
+          .from(tableName)
           .update({ attachment_url: null })
           .eq('id', recordId);
         if (dbError) throw dbError;

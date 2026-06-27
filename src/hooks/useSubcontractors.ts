@@ -10,6 +10,7 @@ export interface Subcontractor {
   email: string;
   companyDetails: string;
   status: 'active' | 'inactive';
+  attachment_url?: string;
 }
 
 const seed: Subcontractor[] = [
@@ -28,6 +29,7 @@ function mapRow(row: any): Subcontractor {
     email: row.email ?? '',
     companyDetails: row.company_details ?? '',
     status: row.status ?? 'active',
+    attachment_url: row.attachment_url ?? undefined,
   };
 }
 
@@ -86,5 +88,13 @@ export function useSubcontractors() {
     if (error) { setError(error.message); fetch(); return; }
   }, [fetch]);
 
-  return { subcontractors, loading, error, addSubcontractor, updateSubcontractor, refetch: fetch };
+  const deleteSubcontractor = useCallback(async (id: string) => {
+    setSubcontractors(prev => prev.filter(s => s.id !== id));
+    if (!isSupabaseConfigured) return;
+    const companyId = useAuthStore.getState().company?.id;
+    const { error } = await supabase.from('contracting_subcontractors').delete().eq('id', id).eq('company_id', companyId);
+    if (error) { setError(error.message); fetch(); }
+  }, [fetch]);
+
+  return { subcontractors, loading, error, addSubcontractor, updateSubcontractor, deleteSubcontractor, refetch: fetch };
 }

@@ -333,3 +333,16 @@ CREATE POLICY "companies_select"
       WHERE  user_id = auth.uid()
     )
   );
+
+-- STEP 6: attachment_url column for contracting & consultation tables
+ALTER TABLE public.contracts                  ADD COLUMN IF NOT EXISTS attachment_url TEXT;
+ALTER TABLE public.contracting_projects       ADD COLUMN IF NOT EXISTS attachment_url TEXT;
+ALTER TABLE public.contracting_quotations     ADD COLUMN IF NOT EXISTS attachment_url TEXT;
+ALTER TABLE public.contracting_invoices_out   ADD COLUMN IF NOT EXISTS attachment_url TEXT;
+ALTER TABLE public.contracting_invoices_in    ADD COLUMN IF NOT EXISTS attachment_url TEXT;
+ALTER TABLE public.contracting_subcontractors ADD COLUMN IF NOT EXISTS attachment_url TEXT;
+ALTER TABLE public.engagements                ADD COLUMN IF NOT EXISTS attachment_url TEXT;
+ALTER TABLE public.consultancy_partners       ADD COLUMN IF NOT EXISTS attachment_url TEXT;
+ALTER TABLE public.consultancy_clients        ADD COLUMN IF NOT EXISTS attachment_url TEXT;
+ALTER TABLE public.consultancy_invoices_out   ADD COLUMN IF NOT EXISTS attachment_url TEXT;
+ALTER TABLE public.consultancy_invoices_in    ADD COLUMN IF NOT EXISTS attachment_url TEXT;

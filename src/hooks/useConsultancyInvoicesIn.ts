@@ -20,6 +20,7 @@ export interface ConsultancyInvoiceIn {
   dueDate: string;
   transactionId: number | null;
   mainProjectId: string | null;
+  attachment_url?: string;
 }
 
 // Default exchange rates (to QR)
@@ -53,6 +54,7 @@ function mapRow(row: any): ConsultancyInvoiceIn {
     dueDate: (row.due_date ?? '').toString(),
     transactionId: row.transaction_id ?? null,
     mainProjectId: row.main_project_id ?? null,
+    attachment_url: row.attachment_url ?? undefined,
   };
 }
 
@@ -139,5 +141,33 @@ export function useConsultancyInvoicesIn() {
     }
   }, [invoices]);
 
-  return { invoices, loading, error, addInvoice, updateStatus, refetch: fetch };
+  const updateInvoice = useCallback(async (id: string, updates: Partial<ConsultancyInvoiceIn>) => {
+    setInvoices(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i));
+    if (!isSupabaseConfigured) return;
+    const payload: Record<string, any> = {};
+    if (updates.partnerId !== undefined) payload.partner_id = updates.partnerId;
+    if (updates.projectId !== undefined) payload.project_id = updates.projectId;
+    if (updates.invoiceRef !== undefined) payload.invoice_ref = updates.invoiceRef;
+    if (updates.description !== undefined) payload.description = updates.description;
+    if (updates.currency !== undefined) payload.currency = updates.currency;
+    if (updates.originalAmount !== undefined) payload.original_amount = updates.originalAmount;
+    if (updates.exchangeRate !== undefined) payload.exchange_rate = updates.exchangeRate;
+    if (updates.convertedAmount !== undefined) payload.converted_amount = updates.convertedAmount;
+    if (updates.status !== undefined) payload.status = updates.status;
+    if (updates.receivedDate !== undefined) payload.received_date = updates.receivedDate;
+    if (updates.dueDate !== undefined) payload.due_date = updates.dueDate;
+    if (updates.mainProjectId !== undefined) payload.main_project_id = updates.mainProjectId;
+    const { error } = await supabase.from('consultancy_invoices_in').update(payload).eq('id', id);
+    if (error) { setError(error.message); fetch(); }
+  }, [fetch]);
+
+  const deleteInvoice = useCallback(async (id: string) => {
+    setInvoices(prev => prev.filter(i => i.id !== id));
+    if (!isSupabaseConfigured) return;
+    const companyId = useAuthStore.getState().company?.id;
+    const { error } = await supabase.from('consultancy_invoices_in').delete().eq('id', id).eq('company_id', companyId);
+    if (error) { setError(error.message); fetch(); }
+  }, [fetch]);
+
+  return { invoices, loading, error, addInvoice, updateInvoice, updateStatus, deleteInvoice, refetch: fetch };
 }

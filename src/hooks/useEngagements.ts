@@ -13,6 +13,7 @@ export interface Engagement {
   hoursBilled: number;
   startDate: string;
   status: EngagementStatus;
+  attachment_url?: string;
 }
 
 const seed: Engagement[] = [
@@ -33,6 +34,7 @@ function mapRow(row: any): Engagement {
     hoursBilled: Number(row.hours_billed ?? 0),
     startDate: (row.start_date ?? row.consultation_date ?? '').toString(),
     status: row.status ?? 'Active',
+    attachment_url: row.attachment_url ?? undefined,
   };
 }
 
@@ -96,5 +98,27 @@ export function useEngagements() {
     if (error) { setError(error.message); fetch(); return; }
   }, [fetch]);
 
-  return { engagements, loading, error, addEngagement, logHours, updateStatus, refetch: fetch };
+  const updateEngagement = useCallback(async (id: string, updates: Partial<Engagement>) => {
+    setEngagements(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+    if (!isSupabaseConfigured) return;
+    const payload: Record<string, any> = {};
+    if (updates.client !== undefined) payload.client = updates.client;
+    if (updates.consultant !== undefined) payload.consultant = updates.consultant;
+    if (updates.service !== undefined) payload.service = updates.service;
+    if (updates.hourlyRate !== undefined) payload.hourly_rate = updates.hourlyRate;
+    if (updates.startDate !== undefined) payload.start_date = updates.startDate;
+    if (updates.status !== undefined) payload.status = updates.status;
+    const { error } = await supabase.from('engagements').update(payload).eq('id', id);
+    if (error) { setError(error.message); fetch(); }
+  }, [fetch]);
+
+  const deleteEngagement = useCallback(async (id: string) => {
+    setEngagements(prev => prev.filter(e => e.id !== id));
+    if (!isSupabaseConfigured) return;
+    const companyId = useAuthStore.getState().company?.id;
+    const { error } = await supabase.from('engagements').delete().eq('id', id).eq('company_id', companyId);
+    if (error) { setError(error.message); fetch(); }
+  }, [fetch]);
+
+  return { engagements, loading, error, addEngagement, logHours, updateEngagement, updateStatus, deleteEngagement, refetch: fetch };
 }

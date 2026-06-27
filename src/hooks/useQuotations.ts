@@ -11,6 +11,7 @@ export interface Quotation {
   status: 'draft' | 'pending' | 'approved' | 'rejected';
   validUntil: string;
   notes: string;
+  attachment_url?: string;
 }
 
 const seed: Quotation[] = [
@@ -31,6 +32,7 @@ function mapRow(row: any): Quotation {
     status: row.status ?? 'draft',
     validUntil: (row.valid_until ?? '').toString(),
     notes: row.notes ?? '',
+    attachment_url: row.attachment_url ?? undefined,
   };
 }
 
@@ -82,5 +84,28 @@ export function useQuotations() {
     if (error) { setError(error.message); fetch(); return; }
   }, [fetch]);
 
-  return { quotations, loading, error, addQuotation, updateStatus, refetch: fetch };
+  const updateQuotation = useCallback(async (id: string, updates: Partial<Quotation>) => {
+    setQuotations(prev => prev.map(q => q.id === id ? { ...q, ...updates } : q));
+    if (!isSupabaseConfigured) return;
+    const payload: Record<string, any> = {};
+    if (updates.client !== undefined) payload.client = updates.client;
+    if (updates.description !== undefined) payload.description = updates.description;
+    if (updates.amount !== undefined) payload.amount = updates.amount;
+    if (updates.validUntil !== undefined) payload.valid_until = updates.validUntil;
+    if (updates.projectId !== undefined) payload.project_id = updates.projectId;
+    if (updates.notes !== undefined) payload.notes = updates.notes;
+    if (updates.status !== undefined) payload.status = updates.status;
+    const { error } = await supabase.from('contracting_quotations').update(payload).eq('id', id);
+    if (error) { setError(error.message); fetch(); }
+  }, [fetch]);
+
+  const deleteQuotation = useCallback(async (id: string) => {
+    setQuotations(prev => prev.filter(q => q.id !== id));
+    if (!isSupabaseConfigured) return;
+    const companyId = useAuthStore.getState().company?.id;
+    const { error } = await supabase.from('contracting_quotations').delete().eq('id', id).eq('company_id', companyId);
+    if (error) { setError(error.message); fetch(); }
+  }, [fetch]);
+
+  return { quotations, loading, error, addQuotation, updateStatus, updateQuotation, deleteQuotation, refetch: fetch };
 }

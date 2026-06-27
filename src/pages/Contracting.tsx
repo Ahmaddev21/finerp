@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   FileText, AlertTriangle, CheckCircle, Clock, Plus, X, Loader2,
   Briefcase, Receipt, CreditCard, Send, ShieldCheck, Ban, Users2,
-  ArrowDownLeft, ArrowUpRight, Building2,
+  ArrowDownLeft, ArrowUpRight, Building2, Pencil, Trash2, Paperclip,
 } from 'lucide-react';
 import { cn, formatCurrency } from '../lib/utils';
 import { useContracts, Contract } from '../hooks/useContracts';
@@ -14,6 +14,8 @@ import { useContractingPayments } from '../hooks/useContractingPayments';
 import { useSubcontractors } from '../hooks/useSubcontractors';
 import { useAuthStore } from '../store/auth';
 import { useProjects } from '../hooks/useProjects';
+import { RowMenu } from '../components/RowMenu';
+import DocumentAttachmentModal from '../components/DocumentAttachmentModal';
 
 const inputCls = 'w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 transition-all';
 
@@ -95,82 +97,117 @@ export default function Contracting() {
   const [modal, setModal] = useState<string | null>(null);
 
   // Data hooks
-  const { contracts, loading: ctrLoading, addContract } = useContracts();
-  const { projects, loading: prjLoading, addProject } = useContractingProjects();
+  const { contracts, loading: ctrLoading, addContract, updateContract, deleteContract } = useContracts();
+  const { projects, loading: prjLoading, addProject, updateProject, deleteProject } = useContractingProjects();
   const { projects: mainProjects } = useProjects();
-  const { subcontractors, loading: subLoading, addSubcontractor } = useSubcontractors();
-  const { quotations, loading: qLoading, addQuotation, updateStatus: updateQuotStatus } = useQuotations();
-  const { invoices: invoicesOut, loading: ioLoading, addInvoice: addInvOut, updateStatus: updateInvOutStatus } = useContractingInvoicesOut();
-  const { invoices: invoicesIn, loading: iiLoading, addInvoice: addInvIn, updateStatus: updateInvInStatus } = useContractingInvoicesIn();
+  const { subcontractors, loading: subLoading, addSubcontractor, updateSubcontractor, deleteSubcontractor } = useSubcontractors();
+  const { quotations, loading: qLoading, addQuotation, updateStatus: updateQuotStatus, updateQuotation, deleteQuotation } = useQuotations();
+  const { invoices: invoicesOut, loading: ioLoading, addInvoice: addInvOut, updateInvoice: updateInvOut, updateStatus: updateInvOutStatus, deleteInvoice: deleteInvOut } = useContractingInvoicesOut();
+  const { invoices: invoicesIn, loading: iiLoading, addInvoice: addInvIn, updateInvoice: updateInvIn, updateStatus: updateInvInStatus, deleteInvoice: deleteInvIn } = useContractingInvoicesIn();
   const { payments, loading: payLoading, recordPayment } = useContractingPayments();
 
   // Forms
   const [ctrForm, setCtrForm] = useState({ title: '', client: '', value: '', startDate: '', endDate: '' });
-  const [prjForm, setPrjForm] = useState({ name: '', client: '', value: '', status: 'Active' as const, startDate: '', endDate: '', description: '', contractId: '', mainProjectId: '' });
+  const [prjForm, setPrjForm] = useState<{ name: string; client: string; value: string; status: 'Active' | 'Planning' | 'Completed' | 'On Hold'; startDate: string; endDate: string; description: string; contractId: string; mainProjectId: string }>({ name: '', client: '', value: '', status: 'Active', startDate: '', endDate: '', description: '', contractId: '', mainProjectId: '' });
   const [subForm, setSubForm] = useState({ name: '', contactPerson: '', phone: '', email: '', companyDetails: '' });
   const [qotForm, setQotForm] = useState({ client: '', description: '', amount: '', validUntil: '', projectId: '', notes: '' });
   const [invOutForm, setInvOutForm] = useState({ client: '', description: '', amount: '', issuedDate: '', dueDate: '', projectId: '' });
   const [invInForm, setInvInForm] = useState({ subcontractor: '', subcontractorId: '', invoiceRef: '', description: '', amount: '', receivedDate: '', dueDate: '', projectId: '' });
   const [payForm, setPayForm] = useState({ direction: 'in' as 'in' | 'out', amount: '', paymentDate: '', method: 'Bank Transfer', reference: '', notes: '', projectId: '', invoiceId: '' });
 
+  // Edit IDs
+  const [editCtrId, setEditCtrId] = useState<string | null>(null);
+  const [editPrjId, setEditPrjId] = useState<string | null>(null);
+  const [editSubId, setEditSubId] = useState<string | null>(null);
+  const [editQotId, setEditQotId] = useState<string | null>(null);
+  const [editInvOutId, setEditInvOutId] = useState<string | null>(null);
+  const [editInvInId, setEditInvInId] = useState<string | null>(null);
+
+  // Attachment modal
+  const [attachTarget, setAttachTarget] = useState<{ id: string; table: string; url?: string } | null>(null);
+
   const loading = ctrLoading || prjLoading || subLoading || qLoading || ioLoading || iiLoading || payLoading;
 
-  /* ── Add handlers ───────────────────────────────── */
-  const handleAddContract = async () => {
+  /* ── Save handlers ───────────────────────────────── */
+  const handleSaveContract = async () => {
     if (!ctrForm.title || !ctrForm.client) return;
     const val = parseFloat(ctrForm.value) || 0;
-    const initialStatus: Contract['status'] = user?.role === 'owner' ? 'Active' : 'Pending Signature';
-    await addContract({ title: ctrForm.title, client: ctrForm.client, value: val, startDate: ctrForm.startDate, endDate: ctrForm.endDate, status: initialStatus });
-    setModal(null); setCtrForm({ title: '', client: '', value: '', startDate: '', endDate: '' });
+    if (editCtrId) {
+      await updateContract(editCtrId, { title: ctrForm.title, client: ctrForm.client, value: val, startDate: ctrForm.startDate, endDate: ctrForm.endDate });
+    } else {
+      const initialStatus: Contract['status'] = user?.role === 'owner' ? 'Active' : 'Pending Signature';
+      await addContract({ title: ctrForm.title, client: ctrForm.client, value: val, startDate: ctrForm.startDate, endDate: ctrForm.endDate, status: initialStatus });
+    }
+    setModal(null); setEditCtrId(null); setCtrForm({ title: '', client: '', value: '', startDate: '', endDate: '' });
   };
 
-  const handleAddProject = async () => {
+  const handleSaveProject = async () => {
     if (!prjForm.name || !prjForm.client) return;
     const val = parseFloat(prjForm.value) || 0;
-    await addProject({ name: prjForm.name, client: prjForm.client, value: val, status: prjForm.status, startDate: prjForm.startDate, endDate: prjForm.endDate, description: prjForm.description, contractId: prjForm.contractId || null, mainProjectId: prjForm.mainProjectId || null });
-    setModal(null); setPrjForm({ name: '', client: '', value: '', status: 'Active', startDate: '', endDate: '', description: '', contractId: '', mainProjectId: '' });
+    if (editPrjId) {
+      await updateProject(editPrjId, { name: prjForm.name, client: prjForm.client, value: val, status: prjForm.status, startDate: prjForm.startDate, endDate: prjForm.endDate, description: prjForm.description, contractId: prjForm.contractId || null, mainProjectId: prjForm.mainProjectId || null });
+    } else {
+      await addProject({ name: prjForm.name, client: prjForm.client, value: val, status: prjForm.status, startDate: prjForm.startDate, endDate: prjForm.endDate, description: prjForm.description, contractId: prjForm.contractId || null, mainProjectId: prjForm.mainProjectId || null });
+    }
+    setModal(null); setEditPrjId(null); setPrjForm({ name: '', client: '', value: '', status: 'Active', startDate: '', endDate: '', description: '', contractId: '', mainProjectId: '' });
   };
 
-  const handleAddSubcontractor = async () => {
+  const handleSaveSubcontractor = async () => {
     if (!subForm.name) return;
-    await addSubcontractor({ name: subForm.name, contactPerson: subForm.contactPerson, phone: subForm.phone, email: subForm.email, companyDetails: subForm.companyDetails, status: 'active' });
-    setModal(null); setSubForm({ name: '', contactPerson: '', phone: '', email: '', companyDetails: '' });
+    if (editSubId) {
+      await updateSubcontractor(editSubId, { name: subForm.name, contactPerson: subForm.contactPerson, phone: subForm.phone, email: subForm.email, companyDetails: subForm.companyDetails });
+    } else {
+      await addSubcontractor({ name: subForm.name, contactPerson: subForm.contactPerson, phone: subForm.phone, email: subForm.email, companyDetails: subForm.companyDetails, status: 'active' });
+    }
+    setModal(null); setEditSubId(null); setSubForm({ name: '', contactPerson: '', phone: '', email: '', companyDetails: '' });
   };
 
-  const handleAddQuotation = async () => {
+  const handleSaveQuotation = async () => {
     if (!qotForm.client || !qotForm.description) return;
     const val = parseFloat(qotForm.amount) || 0;
-    await addQuotation({ client: qotForm.client, description: qotForm.description, amount: val, validUntil: qotForm.validUntil, projectId: qotForm.projectId || null, notes: qotForm.notes, status: 'draft' });
-    setModal(null); setQotForm({ client: '', description: '', amount: '', validUntil: '', projectId: '', notes: '' });
+    if (editQotId) {
+      await updateQuotation(editQotId, { client: qotForm.client, description: qotForm.description, amount: val, validUntil: qotForm.validUntil, projectId: qotForm.projectId || null, notes: qotForm.notes });
+    } else {
+      await addQuotation({ client: qotForm.client, description: qotForm.description, amount: val, validUntil: qotForm.validUntil, projectId: qotForm.projectId || null, notes: qotForm.notes, status: 'draft' });
+    }
+    setModal(null); setEditQotId(null); setQotForm({ client: '', description: '', amount: '', validUntil: '', projectId: '', notes: '' });
   };
 
-  const handleAddInvOut = async () => {
+  const handleSaveInvOut = async () => {
     if (!invOutForm.client || !invOutForm.amount) return;
     const val = parseFloat(invOutForm.amount) || 0;
-    await addInvOut({ client: invOutForm.client, description: invOutForm.description, amount: val, issuedDate: invOutForm.issuedDate, dueDate: invOutForm.dueDate, projectId: invOutForm.projectId || null, status: 'draft' });
-    setModal(null); setInvOutForm({ client: '', description: '', amount: '', issuedDate: '', dueDate: '', projectId: '' });
+    if (editInvOutId) {
+      await updateInvOut(editInvOutId, { client: invOutForm.client, description: invOutForm.description, amount: val, issuedDate: invOutForm.issuedDate, dueDate: invOutForm.dueDate, projectId: invOutForm.projectId || null });
+    } else {
+      await addInvOut({ client: invOutForm.client, description: invOutForm.description, amount: val, issuedDate: invOutForm.issuedDate, dueDate: invOutForm.dueDate, projectId: invOutForm.projectId || null, status: 'draft' });
+    }
+    setModal(null); setEditInvOutId(null); setInvOutForm({ client: '', description: '', amount: '', issuedDate: '', dueDate: '', projectId: '' });
   };
 
-  const handleAddInvIn = async () => {
+  const handleSaveInvIn = async () => {
     if (!invInForm.subcontractor || !invInForm.amount) return;
     const val = parseFloat(invInForm.amount) || 0;
-    await addInvIn({ subcontractor: invInForm.subcontractor, subcontractorId: invInForm.subcontractorId || null, invoiceRef: invInForm.invoiceRef, description: invInForm.description, amount: val, receivedDate: invInForm.receivedDate, dueDate: invInForm.dueDate, projectId: invInForm.projectId || null, status: 'draft' });
-    setModal(null); setInvInForm({ subcontractor: '', subcontractorId: '', invoiceRef: '', description: '', amount: '', receivedDate: '', dueDate: '', projectId: '' });
+    if (editInvInId) {
+      await updateInvIn(editInvInId, { subcontractor: invInForm.subcontractor, subcontractorId: invInForm.subcontractorId || null, invoiceRef: invInForm.invoiceRef, description: invInForm.description, amount: val, receivedDate: invInForm.receivedDate, dueDate: invInForm.dueDate, projectId: invInForm.projectId || null });
+    } else {
+      await addInvIn({ subcontractor: invInForm.subcontractor, subcontractorId: invInForm.subcontractorId || null, invoiceRef: invInForm.invoiceRef, description: invInForm.description, amount: val, receivedDate: invInForm.receivedDate, dueDate: invInForm.dueDate, projectId: invInForm.projectId || null, status: 'draft' });
+    }
+    setModal(null); setEditInvInId(null); setInvInForm({ subcontractor: '', subcontractorId: '', invoiceRef: '', description: '', amount: '', receivedDate: '', dueDate: '', projectId: '' });
   };
 
   const handleRecordPayment = async () => {
     if (!payForm.amount) return;
     const val = parseFloat(payForm.amount) || 0;
-    await recordPayment({ 
-      direction: payForm.direction, 
-      amount: val, 
-      paymentDate: payForm.paymentDate || new Date().toISOString().split('T')[0], 
-      method: payForm.method, 
-      reference: payForm.reference, 
-      notes: payForm.notes, 
-      projectId: payForm.projectId || null, 
-      invoiceId: payForm.invoiceId || null, 
-      status: 'completed' 
+    await recordPayment({
+      direction: payForm.direction,
+      amount: val,
+      paymentDate: payForm.paymentDate || new Date().toISOString().split('T')[0],
+      method: payForm.method,
+      reference: payForm.reference,
+      notes: payForm.notes,
+      projectId: payForm.projectId || null,
+      invoiceId: payForm.invoiceId || null,
+      status: 'completed'
     });
     setModal(null); setPayForm({ direction: 'in', amount: '', paymentDate: '', method: 'Bank Transfer', reference: '', notes: '', projectId: '', invoiceId: '' });
   };
@@ -220,7 +257,16 @@ export default function Contracting() {
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage contracts, projects, invoices, and payments.</p>
         </div>
         {!isEngineer && (
-          <button onClick={() => setModal(activeTab)} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:-translate-y-0.5">
+          <button onClick={() => {
+            // Clear edit state when opening new entry
+            if (activeTab === 'contracts') { setEditCtrId(null); setCtrForm({ title: '', client: '', value: '', startDate: '', endDate: '' }); }
+            if (activeTab === 'projects') { setEditPrjId(null); setPrjForm({ name: '', client: '', value: '', status: 'Active', startDate: '', endDate: '', description: '', contractId: '', mainProjectId: '' }); }
+            if (activeTab === 'subcontractors') { setEditSubId(null); setSubForm({ name: '', contactPerson: '', phone: '', email: '', companyDetails: '' }); }
+            if (activeTab === 'quotations') { setEditQotId(null); setQotForm({ client: '', description: '', amount: '', validUntil: '', projectId: '', notes: '' }); }
+            if (activeTab === 'invoices-out') { setEditInvOutId(null); setInvOutForm({ client: '', description: '', amount: '', issuedDate: '', dueDate: '', projectId: '' }); }
+            if (activeTab === 'invoices-in') { setEditInvInId(null); setInvInForm({ subcontractor: '', subcontractorId: '', invoiceRef: '', description: '', amount: '', receivedDate: '', dueDate: '', projectId: '' }); }
+            setModal(activeTab);
+          }} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:-translate-y-0.5">
             <Plus className="w-4 h-4" />{addLabel[activeTab]}
           </button>
         )}
@@ -257,7 +303,7 @@ export default function Contracting() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left whitespace-nowrap">
                   <thead className="bg-slate-50/60 dark:bg-slate-800/40"><tr>
-                    {['ID', 'Title', 'Client', 'Value', 'Start', 'End', 'Status'].map(h => <th key={h} className={th}>{h}</th>)}
+                    {['ID', 'Title', 'Client', 'Value', 'Start', 'End', 'Status', 'Actions'].map(h => <th key={h} className={th}>{h}</th>)}
                   </tr></thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {contracts.map(c => (
@@ -269,6 +315,13 @@ export default function Contracting() {
                         <td className={cn(td, 'text-slate-500 dark:text-slate-400 text-xs')}>{c.startDate}</td>
                         <td className={cn(td, 'text-slate-500 dark:text-slate-400 text-xs')}>{c.endDate}</td>
                         <td className={td}><StatusBadge status={c.status} /></td>
+                        <td className={td}>
+                          <RowMenu actions={[
+                            { label: 'Edit', icon: <Pencil className="w-4 h-4" />, iconCls: 'text-indigo-500', onClick: () => { setCtrForm({ title: c.title, client: c.client, value: String(c.value), startDate: c.startDate, endDate: c.endDate }); setEditCtrId(c.id); setModal('contracts'); } },
+                            { label: 'Attach File', icon: <Paperclip className="w-4 h-4" />, iconCls: 'text-blue-500', onClick: () => setAttachTarget({ id: c.id, table: 'contracts', url: c.attachment_url }) },
+                            { label: 'Delete', icon: <Trash2 className="w-4 h-4" />, iconCls: 'text-red-500', danger: true, onClick: () => { if (window.confirm('Delete this contract?')) deleteContract(c.id); } },
+                          ]} />
+                        </td>
                       </tr>
                     ))}
                     {contracts.length === 0 && <EmptyState msg="No contracts yet." />}
@@ -294,7 +347,7 @@ export default function Contracting() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left whitespace-nowrap">
                   <thead className="bg-slate-50/60 dark:bg-slate-800/40"><tr>
-                    {['ID', 'Project', 'Client', 'Value', 'Contract', 'Start', 'End', 'Status'].map(h => <th key={h} className={th}>{h}</th>)}
+                    {['ID', 'Project', 'Client', 'Value', 'Contract', 'Start', 'End', 'Status', 'Actions'].map(h => <th key={h} className={th}>{h}</th>)}
                   </tr></thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {projects.map(p => (
@@ -307,6 +360,13 @@ export default function Contracting() {
                         <td className={cn(td, 'text-slate-500 dark:text-slate-400 text-xs')}>{p.startDate || '—'}</td>
                         <td className={cn(td, 'text-slate-500 dark:text-slate-400 text-xs')}>{p.endDate || '—'}</td>
                         <td className={td}><StatusBadge status={p.status} /></td>
+                        <td className={td}>
+                          <RowMenu actions={[
+                            { label: 'Edit', icon: <Pencil className="w-4 h-4" />, iconCls: 'text-indigo-500', onClick: () => { setPrjForm({ name: p.name, client: p.client, value: String(p.value), status: p.status, startDate: p.startDate, endDate: p.endDate, description: p.description, contractId: p.contractId || '', mainProjectId: p.mainProjectId || '' }); setEditPrjId(p.id); setModal('projects'); } },
+                            { label: 'Attach File', icon: <Paperclip className="w-4 h-4" />, iconCls: 'text-blue-500', onClick: () => setAttachTarget({ id: p.id, table: 'contracting_projects', url: p.attachment_url }) },
+                            { label: 'Delete', icon: <Trash2 className="w-4 h-4" />, iconCls: 'text-red-500', danger: true, onClick: () => { if (window.confirm('Delete this project?')) deleteProject(p.id); } },
+                          ]} />
+                        </td>
                       </tr>
                     ))}
                     {projects.length === 0 && <EmptyState msg="No projects yet." />}
@@ -331,7 +391,7 @@ export default function Contracting() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left whitespace-nowrap">
                   <thead className="bg-slate-50/60 dark:bg-slate-800/40"><tr>
-                    {['ID', 'Company', 'Contact', 'Phone', 'Email', 'Detail', 'Status'].map(h => <th key={h} className={th}>{h}</th>)}
+                    {['ID', 'Company', 'Contact', 'Phone', 'Email', 'Detail', 'Status', 'Actions'].map(h => <th key={h} className={th}>{h}</th>)}
                   </tr></thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {subcontractors.map(s => (
@@ -343,6 +403,13 @@ export default function Contracting() {
                         <td className={cn(td, 'text-slate-500 dark:text-slate-400 text-xs')}>{s.email || '—'}</td>
                         <td className={cn(td, 'text-slate-500 dark:text-slate-400 text-xs max-w-[200px] truncate')}>{s.companyDetails || '—'}</td>
                         <td className={td}><StatusBadge status={s.status} /></td>
+                        <td className={td}>
+                          <RowMenu actions={[
+                            { label: 'Edit', icon: <Pencil className="w-4 h-4" />, iconCls: 'text-indigo-500', onClick: () => { setSubForm({ name: s.name, contactPerson: s.contactPerson, phone: s.phone, email: s.email, companyDetails: s.companyDetails }); setEditSubId(s.id); setModal('subcontractors'); } },
+                            { label: 'Attach File', icon: <Paperclip className="w-4 h-4" />, iconCls: 'text-blue-500', onClick: () => setAttachTarget({ id: s.id, table: 'contracting_subcontractors', url: s.attachment_url }) },
+                            { label: 'Delete', icon: <Trash2 className="w-4 h-4" />, iconCls: 'text-red-500', danger: true, onClick: () => { if (window.confirm('Delete this subcontractor?')) deleteSubcontractor(s.id); } },
+                          ]} />
+                        </td>
                       </tr>
                     ))}
                     {subcontractors.length === 0 && <EmptyState msg="No subcontractors yet." />}
@@ -381,11 +448,18 @@ export default function Contracting() {
                         <td className={cn(td, 'text-xs text-blue-600 dark:text-blue-400 font-mono')}>{q.projectId || '—'}</td>
                         <td className={td}><StatusBadge status={q.status} /></td>
                         <td className={td}>
-                          <WorkflowActions
-                            status={q.status}
-                            onApprove={() => updateQuotStatus(q.id, q.status === 'draft' ? 'pending' : 'approved')}
-                            onReject={() => updateQuotStatus(q.id, 'rejected')}
-                          />
+                          <div className="flex items-center gap-1">
+                            <WorkflowActions
+                              status={q.status}
+                              onApprove={() => updateQuotStatus(q.id, q.status === 'draft' ? 'pending' : 'approved')}
+                              onReject={() => updateQuotStatus(q.id, 'rejected')}
+                            />
+                            <RowMenu actions={[
+                              { label: 'Edit', icon: <Pencil className="w-4 h-4" />, iconCls: 'text-indigo-500', onClick: () => { setQotForm({ client: q.client, description: q.description, amount: String(q.amount), validUntil: q.validUntil, projectId: q.projectId || '', notes: q.notes }); setEditQotId(q.id); setModal('quotations'); } },
+                              { label: 'Attach File', icon: <Paperclip className="w-4 h-4" />, iconCls: 'text-blue-500', onClick: () => setAttachTarget({ id: q.id, table: 'contracting_quotations', url: q.attachment_url }) },
+                              { label: 'Delete', icon: <Trash2 className="w-4 h-4" />, iconCls: 'text-red-500', danger: true, onClick: () => { if (window.confirm('Delete this quotation?')) deleteQuotation(q.id); } },
+                            ]} />
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -425,10 +499,17 @@ export default function Contracting() {
                         <td className={cn(td, 'text-slate-500 dark:text-slate-400 text-xs')}>{i.dueDate || '—'}</td>
                         <td className={td}><StatusBadge status={i.status} /></td>
                         <td className={td}>
-                          <WorkflowActions
-                            status={i.status}
-                            onApprove={() => updateInvOutStatus(i.id, i.status === 'draft' ? 'pending' : i.status === 'pending' ? 'approved' : 'paid')}
-                          />
+                          <div className="flex items-center gap-1">
+                            <WorkflowActions
+                              status={i.status}
+                              onApprove={() => updateInvOutStatus(i.id, i.status === 'draft' ? 'pending' : i.status === 'pending' ? 'approved' : 'paid')}
+                            />
+                            <RowMenu actions={[
+                              { label: 'Edit', icon: <Pencil className="w-4 h-4" />, iconCls: 'text-indigo-500', onClick: () => { setInvOutForm({ client: i.client, description: i.description, amount: String(i.amount), issuedDate: i.issuedDate, dueDate: i.dueDate, projectId: i.projectId || '' }); setEditInvOutId(i.id); setModal('invoices-out'); } },
+                              { label: 'Attach File', icon: <Paperclip className="w-4 h-4" />, iconCls: 'text-blue-500', onClick: () => setAttachTarget({ id: i.id, table: 'contracting_invoices_out', url: i.attachment_url }) },
+                              { label: 'Delete', icon: <Trash2 className="w-4 h-4" />, iconCls: 'text-red-500', danger: true, onClick: () => { if (window.confirm('Delete this invoice?')) deleteInvOut(i.id); } },
+                            ]} />
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -468,10 +549,17 @@ export default function Contracting() {
                         <td className={cn(td, 'text-slate-500 dark:text-slate-400 text-xs')}>{i.dueDate || '—'}</td>
                         <td className={td}><StatusBadge status={i.status} /></td>
                         <td className={td}>
-                          <WorkflowActions
-                            status={i.status}
-                            onApprove={() => updateInvInStatus(i.id, i.status === 'draft' ? 'pending' : i.status === 'pending' ? 'approved' : 'paid')}
-                          />
+                          <div className="flex items-center gap-1">
+                            <WorkflowActions
+                              status={i.status}
+                              onApprove={() => updateInvInStatus(i.id, i.status === 'draft' ? 'pending' : i.status === 'pending' ? 'approved' : 'paid')}
+                            />
+                            <RowMenu actions={[
+                              { label: 'Edit', icon: <Pencil className="w-4 h-4" />, iconCls: 'text-indigo-500', onClick: () => { setInvInForm({ subcontractor: i.subcontractor, subcontractorId: i.subcontractorId || '', invoiceRef: i.invoiceRef, description: i.description, amount: String(i.amount), receivedDate: i.receivedDate, dueDate: i.dueDate, projectId: i.projectId || '' }); setEditInvInId(i.id); setModal('invoices-in'); } },
+                              { label: 'Attach File', icon: <Paperclip className="w-4 h-4" />, iconCls: 'text-blue-500', onClick: () => setAttachTarget({ id: i.id, table: 'contracting_invoices_in', url: i.attachment_url }) },
+                              { label: 'Delete', icon: <Trash2 className="w-4 h-4" />, iconCls: 'text-red-500', danger: true, onClick: () => { if (window.confirm('Delete this invoice?')) deleteInvIn(i.id); } },
+                            ]} />
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -531,23 +619,23 @@ export default function Contracting() {
 
       {/* ═══ MODALS ═══ */}
       {modal === 'contracts' && (
-        <Modal title="New Contract" onClose={() => setModal(null)}>
+        <Modal title={editCtrId ? 'Edit Contract' : 'New Contract'} onClose={() => { setModal(null); setEditCtrId(null); }}>
           <div className="space-y-3">
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Title <span className="text-rose-400">*</span></label>
               <input type="text" value={ctrForm.title} onChange={e => setCtrForm({ ...ctrForm, title: e.target.value })} placeholder="Contract title" className={inputCls} /></div>
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Client <span className="text-rose-400">*</span></label>
               <input type="text" value={ctrForm.client} onChange={e => setCtrForm({ ...ctrForm, client: e.target.value })} placeholder="Client name" className={inputCls} /></div>
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Value (QR)</label>
-              <input 
+              <input
                 type="text"
                 inputMode="decimal"
-                value={ctrForm.value} 
+                value={ctrForm.value}
                 onChange={e => {
                   let val = e.target.value.replace(',', '.');
                   if (val === '' || /^\d*\.?\d*$/.test(val)) setCtrForm({ ...ctrForm, value: val });
-                }} 
-                placeholder="0.00" 
-                className={inputCls} 
+                }}
+                placeholder="0.00"
+                className={inputCls}
               /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Start</label>
@@ -557,14 +645,14 @@ export default function Contracting() {
             </div>
           </div>
           <div className="mt-5 flex justify-end gap-3">
-            <button onClick={() => setModal(null)} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
-            <button onClick={handleAddContract} disabled={!ctrForm.title || !ctrForm.client} className="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl">Add Contract</button>
+            <button onClick={() => { setModal(null); setEditCtrId(null); }} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
+            <button onClick={handleSaveContract} disabled={!ctrForm.title || !ctrForm.client} className="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl">{editCtrId ? 'Save Changes' : 'Add Contract'}</button>
           </div>
         </Modal>
       )}
 
       {modal === 'projects' && (
-        <Modal title="New Contracting Project" onClose={() => setModal(null)}>
+        <Modal title={editPrjId ? 'Edit Project' : 'New Contracting Project'} onClose={() => { setModal(null); setEditPrjId(null); }}>
           <div className="space-y-3">
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Project Name <span className="text-rose-400">*</span></label>
               <input type="text" value={prjForm.name} onChange={e => setPrjForm({ ...prjForm, name: e.target.value })} className={inputCls} /></div>
@@ -572,16 +660,16 @@ export default function Contracting() {
               <input type="text" value={prjForm.client} onChange={e => setPrjForm({ ...prjForm, client: e.target.value })} className={inputCls} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Value (QR)</label>
-                <input 
+                <input
                   type="text"
                   inputMode="decimal"
-                  value={prjForm.value} 
+                  value={prjForm.value}
                   onChange={e => {
                     let val = e.target.value.replace(',', '.');
                     if (val === '' || /^\d*\.?\d*$/.test(val)) setPrjForm({ ...prjForm, value: val });
-                  }} 
-                  placeholder="0.00" 
-                  className={inputCls} 
+                  }}
+                  placeholder="0.00"
+                  className={inputCls}
                 /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Linked Contract</label>
                 <select
@@ -622,14 +710,14 @@ export default function Contracting() {
               </select></div>
           </div>
           <div className="mt-5 flex justify-end gap-3">
-            <button onClick={() => setModal(null)} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
-            <button onClick={handleAddProject} disabled={!prjForm.name || !prjForm.client} className="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl">Add Project</button>
+            <button onClick={() => { setModal(null); setEditPrjId(null); }} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
+            <button onClick={handleSaveProject} disabled={!prjForm.name || !prjForm.client} className="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl">{editPrjId ? 'Save Changes' : 'Add Project'}</button>
           </div>
         </Modal>
       )}
 
       {modal === 'subcontractors' && (
-        <Modal title="New Subcontractor" onClose={() => setModal(null)}>
+        <Modal title={editSubId ? 'Edit Subcontractor' : 'New Subcontractor'} onClose={() => { setModal(null); setEditSubId(null); }}>
           <div className="space-y-3">
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Company Name <span className="text-rose-400">*</span></label>
               <input type="text" value={subForm.name} onChange={e => setSubForm({ ...subForm, name: e.target.value })} className={inputCls} /></div>
@@ -645,14 +733,14 @@ export default function Contracting() {
               <input type="text" value={subForm.companyDetails} onChange={e => setSubForm({ ...subForm, companyDetails: e.target.value })} placeholder="e.g. Civil works, fleet maintenance" className={inputCls} /></div>
           </div>
           <div className="mt-5 flex justify-end gap-3">
-            <button onClick={() => setModal(null)} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
-            <button onClick={handleAddSubcontractor} disabled={!subForm.name} className="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl">Add Subcontractor</button>
+            <button onClick={() => { setModal(null); setEditSubId(null); }} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
+            <button onClick={handleSaveSubcontractor} disabled={!subForm.name} className="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl">{editSubId ? 'Save Changes' : 'Add Subcontractor'}</button>
           </div>
         </Modal>
       )}
 
       {modal === 'quotations' && (
-        <Modal title="New Quotation" onClose={() => setModal(null)}>
+        <Modal title={editQotId ? 'Edit Quotation' : 'New Quotation'} onClose={() => { setModal(null); setEditQotId(null); }}>
           <div className="space-y-3">
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Client <span className="text-rose-400">*</span></label>
               <input type="text" value={qotForm.client} onChange={e => setQotForm({ ...qotForm, client: e.target.value })} className={inputCls} /></div>
@@ -660,16 +748,16 @@ export default function Contracting() {
               <input type="text" value={qotForm.description} onChange={e => setQotForm({ ...qotForm, description: e.target.value })} className={inputCls} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (QR)</label>
-                <input 
+                <input
                   type="text"
                   inputMode="decimal"
-                  value={qotForm.amount} 
+                  value={qotForm.amount}
                   onChange={e => {
                     let val = e.target.value.replace(',', '.');
                     if (val === '' || /^\d*\.?\d*$/.test(val)) setQotForm({ ...qotForm, amount: val });
-                  }} 
-                  placeholder="0.00" 
-                  className={inputCls} 
+                  }}
+                  placeholder="0.00"
+                  className={inputCls}
                 /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Valid Until</label>
                 <input type="date" value={qotForm.validUntil} onChange={e => setQotForm({ ...qotForm, validUntil: e.target.value })} className={inputCls} /></div>
@@ -693,14 +781,14 @@ export default function Contracting() {
               </select></div>
           </div>
           <div className="mt-5 flex justify-end gap-3">
-            <button onClick={() => setModal(null)} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
-            <button onClick={handleAddQuotation} disabled={!qotForm.client || !qotForm.description} className="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl">Add Quotation</button>
+            <button onClick={() => { setModal(null); setEditQotId(null); }} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
+            <button onClick={handleSaveQuotation} disabled={!qotForm.client || !qotForm.description} className="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl">{editQotId ? 'Save Changes' : 'Add Quotation'}</button>
           </div>
         </Modal>
       )}
 
       {modal === 'invoices-out' && (
-        <Modal title="New Invoice to Client" onClose={() => setModal(null)}>
+        <Modal title={editInvOutId ? 'Edit Invoice to Client' : 'New Invoice to Client'} onClose={() => { setModal(null); setEditInvOutId(null); }}>
           <div className="space-y-3">
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Client <span className="text-rose-400">*</span></label>
               <input type="text" value={invOutForm.client} onChange={e => setInvOutForm({ ...invOutForm, client: e.target.value })} className={inputCls} /></div>
@@ -708,16 +796,16 @@ export default function Contracting() {
               <input type="text" value={invOutForm.description} onChange={e => setInvOutForm({ ...invOutForm, description: e.target.value })} className={inputCls} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (QR) <span className="text-rose-400">*</span></label>
-                <input 
+                <input
                   type="text"
                   inputMode="decimal"
-                  value={invOutForm.amount} 
+                  value={invOutForm.amount}
                   onChange={e => {
                     let val = e.target.value.replace(',', '.');
                     if (val === '' || /^\d*\.?\d*$/.test(val)) setInvOutForm({ ...invOutForm, amount: val });
-                  }} 
-                  placeholder="0.00" 
-                  className={inputCls} 
+                  }}
+                  placeholder="0.00"
+                  className={inputCls}
                 /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Project</label>
                 <select
@@ -745,14 +833,14 @@ export default function Contracting() {
             </div>
           </div>
           <div className="mt-5 flex justify-end gap-3">
-            <button onClick={() => setModal(null)} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
-            <button onClick={handleAddInvOut} disabled={!invOutForm.client || !invOutForm.amount} className="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl">Create Invoice</button>
+            <button onClick={() => { setModal(null); setEditInvOutId(null); }} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
+            <button onClick={handleSaveInvOut} disabled={!invOutForm.client || !invOutForm.amount} className="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl">{editInvOutId ? 'Save Changes' : 'Create Invoice'}</button>
           </div>
         </Modal>
       )}
 
       {modal === 'invoices-in' && (
-        <Modal title="Record Subcontractor Invoice" onClose={() => setModal(null)}>
+        <Modal title={editInvInId ? 'Edit Subcontractor Invoice' : 'Record Subcontractor Invoice'} onClose={() => { setModal(null); setEditInvInId(null); }}>
           <div className="space-y-3">
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Subcontractor <span className="text-rose-400">*</span></label>
               <select value={invInForm.subcontractorId} onChange={e => {
@@ -766,16 +854,16 @@ export default function Contracting() {
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Invoice Ref</label>
                 <input type="text" value={invInForm.invoiceRef} onChange={e => setInvInForm({ ...invInForm, invoiceRef: e.target.value })} className={inputCls} /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (QR) <span className="text-rose-400">*</span></label>
-                <input 
+                <input
                   type="text"
                   inputMode="decimal"
-                  value={invInForm.amount} 
+                  value={invInForm.amount}
                   onChange={e => {
                     let val = e.target.value.replace(',', '.');
                     if (val === '' || /^\d*\.?\d*$/.test(val)) setInvInForm({ ...invInForm, amount: val });
-                  }} 
-                  placeholder="0.00" 
-                  className={inputCls} 
+                  }}
+                  placeholder="0.00"
+                  className={inputCls}
                 /></div>
             </div>
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Description</label>
@@ -788,8 +876,8 @@ export default function Contracting() {
             </div>
           </div>
           <div className="mt-5 flex justify-end gap-3">
-            <button onClick={() => setModal(null)} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
-            <button onClick={handleAddInvIn} disabled={!invInForm.subcontractor || !invInForm.amount} className="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl">Record Invoice</button>
+            <button onClick={() => { setModal(null); setEditInvInId(null); }} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
+            <button onClick={handleSaveInvIn} disabled={!invInForm.subcontractor || !invInForm.amount} className="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl">{editInvInId ? 'Save Changes' : 'Record Invoice'}</button>
           </div>
         </Modal>
       )}
@@ -804,16 +892,16 @@ export default function Contracting() {
               </select></div>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (QR) <span className="text-rose-400">*</span></label>
-                <input 
+                <input
                   type="text"
                   inputMode="decimal"
-                  value={payForm.amount} 
+                  value={payForm.amount}
                   onChange={e => {
                     let val = e.target.value.replace(',', '.');
                     if (val === '' || /^\d*\.?\d*$/.test(val)) setPayForm({ ...payForm, amount: val });
-                  }} 
-                  placeholder="0.00" 
-                  className={inputCls} 
+                  }}
+                  placeholder="0.00"
+                  className={inputCls}
                 /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Date</label>
                 <input type="date" value={payForm.paymentDate} onChange={e => setPayForm({ ...payForm, paymentDate: e.target.value })} className={inputCls} /></div>
@@ -834,6 +922,20 @@ export default function Contracting() {
             <button onClick={handleRecordPayment} disabled={!payForm.amount} className="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl">Record Payment</button>
           </div>
         </Modal>
+      )}
+
+      {/* Document Attachment Modal */}
+      {attachTarget && (
+        <DocumentAttachmentModal
+          isOpen={true}
+          onClose={() => setAttachTarget(null)}
+          recordId={attachTarget.id}
+          tableName={attachTarget.table}
+          currentAttachmentUrl={attachTarget.url}
+          onUploadSuccess={url => {
+            setAttachTarget(prev => prev ? { ...prev, url } : null);
+          }}
+        />
       )}
     </div>
   );

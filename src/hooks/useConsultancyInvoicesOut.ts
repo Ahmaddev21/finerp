@@ -15,6 +15,7 @@ export interface ConsultancyInvoiceOut {
   dueDate: string;
   transactionId: number | null;
   mainProjectId: string | null;
+  attachment_url?: string;
 }
 
 const seed: ConsultancyInvoiceOut[] = [
@@ -38,6 +39,7 @@ function mapRow(row: any): ConsultancyInvoiceOut {
     dueDate: (row.due_date ?? '').toString(),
     transactionId: row.transaction_id ?? null,
     mainProjectId: row.main_project_id ?? null,
+    attachment_url: row.attachment_url ?? undefined,
   };
 }
 
@@ -127,5 +129,30 @@ export function useConsultancyInvoicesOut() {
     }
   }, [invoices]);
 
-  return { invoices, loading, error, addInvoice, updateStatus, refetch: fetch };
+  const updateInvoice = useCallback(async (id: string, updates: Partial<ConsultancyInvoiceOut>) => {
+    setInvoices(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i));
+    if (!isSupabaseConfigured) return;
+    const payload: Record<string, any> = {};
+    if (updates.clientId !== undefined) payload.client_id = updates.clientId;
+    if (updates.client !== undefined) payload.client = updates.client;
+    if (updates.projectId !== undefined) payload.project_id = updates.projectId;
+    if (updates.description !== undefined) payload.description = updates.description;
+    if (updates.amount !== undefined) payload.amount = updates.amount;
+    if (updates.status !== undefined) payload.status = updates.status;
+    if (updates.issuedDate !== undefined) payload.issued_date = updates.issuedDate;
+    if (updates.dueDate !== undefined) payload.due_date = updates.dueDate;
+    if (updates.mainProjectId !== undefined) payload.main_project_id = updates.mainProjectId;
+    const { error } = await supabase.from('consultancy_invoices_out').update(payload).eq('id', id);
+    if (error) { setError(error.message); fetch(); }
+  }, [fetch]);
+
+  const deleteInvoice = useCallback(async (id: string) => {
+    setInvoices(prev => prev.filter(i => i.id !== id));
+    if (!isSupabaseConfigured) return;
+    const companyId = useAuthStore.getState().company?.id;
+    const { error } = await supabase.from('consultancy_invoices_out').delete().eq('id', id).eq('company_id', companyId);
+    if (error) { setError(error.message); fetch(); }
+  }, [fetch]);
+
+  return { invoices, loading, error, addInvoice, updateInvoice, updateStatus, deleteInvoice, refetch: fetch };
 }

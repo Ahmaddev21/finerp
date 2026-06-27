@@ -11,6 +11,7 @@ export interface ConsultancyPartner {
   contactPhone: string;
   status: 'active' | 'inactive';
   notes: string;
+  attachment_url?: string;
 }
 
 const seed: ConsultancyPartner[] = [
@@ -30,6 +31,7 @@ function mapRow(row: any): ConsultancyPartner {
     contactPhone: row.contact_phone ?? '',
     status: row.status ?? 'active',
     notes: row.notes ?? '',
+    attachment_url: row.attachment_url ?? undefined,
   };
 }
 
@@ -89,5 +91,13 @@ export function useConsultancyPartners() {
     if (error) { setError(error.message); fetch(); return; }
   }, [fetch]);
 
-  return { partners, loading, error, addPartner, updatePartner, refetch: fetch };
+  const deletePartner = useCallback(async (id: string) => {
+    setPartners(prev => prev.filter(p => p.id !== id));
+    if (!isSupabaseConfigured) return;
+    const companyId = useAuthStore.getState().company?.id;
+    const { error } = await supabase.from('consultancy_partners').delete().eq('id', id).eq('company_id', companyId);
+    if (error) { setError(error.message); fetch(); }
+  }, [fetch]);
+
+  return { partners, loading, error, addPartner, updatePartner, deletePartner, refetch: fetch };
 }

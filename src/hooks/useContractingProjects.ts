@@ -14,6 +14,7 @@ export interface ContractingProject {
   description: string;
   /** FK to main projects(id) — set to link this ERP project to a business project */
   mainProjectId: string | null;
+  attachment_url?: string;
 }
 
 const seed: ContractingProject[] = [
@@ -36,6 +37,7 @@ function mapRow(row: any): ContractingProject {
     endDate: (row.end_date ?? '').toString(),
     description: row.description ?? '',
     mainProjectId: row.main_project_id ?? null,
+    attachment_url: row.attachment_url ?? undefined,
   };
 }
 
@@ -98,5 +100,13 @@ export function useContractingProjects() {
     if (error) { setError(error.message); fetch(); return; }
   }, [fetch]);
 
-  return { projects, loading, error, addProject, updateProject, refetch: fetch };
+  const deleteProject = useCallback(async (id: string) => {
+    setProjects(prev => prev.filter(p => p.id !== id));
+    if (!isSupabaseConfigured) return;
+    const companyId = useAuthStore.getState().company?.id;
+    const { error } = await supabase.from('contracting_projects').delete().eq('id', id).eq('company_id', companyId);
+    if (error) { setError(error.message); fetch(); }
+  }, [fetch]);
+
+  return { projects, loading, error, addProject, updateProject, deleteProject, refetch: fetch };
 }
