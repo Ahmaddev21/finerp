@@ -550,34 +550,49 @@ export default function Accounting() {
 
   // ── Row actions ───────────────────────────────────────────────────────────
   function getRowActions(tx: Transaction): any[] {
-    const acts: any[] = [{ kind: 'header', label: 'Workflow' }];
+    const acts: any[] = [];
+
+    // Edit always first so it's never clipped off-screen
+    acts.push({
+      label: 'Edit',
+      icon: <Pencil className="w-4 h-4" />,
+      iconCls: 'text-indigo-500',
+      onClick: () => {
+        setEditTarget(tx);
+        setEditForm({
+          type:        (tx.type || 'Invoice') as TxType,
+          date:        tx.date || new Date().toISOString().split('T')[0],
+          desc:        tx.desc || '',
+          project:     tx.project || '',
+          amount:      String(Math.abs(tx.amount || 0)),
+          client_name: tx.client_name || '',
+          due_date:    tx.due_date || '',
+          status:      tx.status || 'draft',
+        });
+        setEditDir((tx.amount || 0) >= 0 ? 'In' : 'Out');
+      },
+    });
+
+    acts.push({ kind: 'divider' });
+    acts.push({ kind: 'header', label: 'Workflow' });
+
     if (tx?.status === 'draft')
       acts.push({ label: 'Submit for Approval', icon: <Send className="w-4 h-4" />, onClick: () => submitForApproval(tx.id) });
     if (isAdmin && tx?.status === 'pending') {
-      acts.push({ label: 'Approve', icon: <BadgeCheck className="w-4 h-4 text-emerald-600" />, onClick: () => { approveTransaction(tx.id); showToast('Transaction approved'); } });
-      acts.push({ label: 'Reject',  icon: <Ban className="w-4 h-4 text-rose-600" />,           onClick: () => { rejectTransaction(tx.id);  showToast('Transaction rejected'); } });
+      acts.push({ label: 'Approve', icon: <BadgeCheck className="w-4 h-4" />, iconCls: 'text-emerald-600', onClick: () => { void approveTransaction(tx.id); showToast('Transaction approved'); } });
+      acts.push({ label: 'Reject',  icon: <Ban className="w-4 h-4" />,        iconCls: 'text-rose-600',    onClick: () => { void rejectTransaction(tx.id);  showToast('Transaction rejected'); } });
     }
+
     acts.push({ kind: 'divider' });
     if (tx?.attachment_url)
-      acts.push({ label: 'View Document', icon: <Eye className="w-4 h-4" />, onClick: () => setViewerTarget(tx) });
+      acts.push({ label: 'View Document',   icon: <Eye className="w-4 h-4" />,       onClick: () => setViewerTarget(tx) });
     acts.push({ label: tx?.attachment_url ? 'Manage Attachment' : 'Attach File', icon: <Paperclip className="w-4 h-4" />, onClick: () => setAttachmentTarget(tx) });
-    acts.push({ kind: 'divider' });
-    acts.push({ label: 'Edit', icon: <Pencil className="w-4 h-4" />, onClick: () => {
-      setEditTarget(tx);
-      setEditForm({
-        ...emptyForm,
-        type:        (tx.type || 'Invoice') as TxType,
-        date:        tx.date || '',
-        desc:        tx.desc || '',
-        project:     tx.project || '',
-        amount:      String(Math.abs(tx.amount || 0)),
-        client_name: tx.client_name || '',
-        due_date:    tx.due_date || '',
-      });
-      setEditDir((tx.amount || 0) >= 0 ? 'In' : 'Out');
-    }});
-    if (isAdmin)
+
+    if (isAdmin) {
+      acts.push({ kind: 'divider' });
       acts.push({ label: 'Delete', icon: <Trash2 className="w-4 h-4" />, danger: true, onClick: () => setDeleteTarget(tx) });
+    }
+
     return acts;
   }
 

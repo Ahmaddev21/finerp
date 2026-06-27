@@ -217,55 +217,38 @@ export function useTransactions() {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return false;
 
-    // Check if approval is needed:
-    // 1. User is not Admin
-    // 2. Not the first correction (edit_count > 0)
-    // 3. Sensitive fields are changing
     const isProtected = hasProtectedChanges(tx, updates);
-    const needsApproval = !isAdmin && (tx.edit_count && tx.edit_count > 0) && isProtected;
+    const needsApproval = !isAdmin && isProtected;
 
-    if (needsApproval) {
-      // Handled via separate Change Request flow/modal or calling submitChangeRequest here
-      // For simplicity in this hook, we assume the UI handles the modal trigger if this returns a specific signal
-      // But according to Priority 4: "the system must require Owner approval"
-      return 'APPROVAL_REQUIRED';
-    }
+    if (needsApproval) return 'APPROVAL_REQUIRED';
 
     setTransactions(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
 
-    const changes: string[] = [];
-    if (updates.status !== undefined && tx.status !== updates.status) changes.push(`Status: ${tx.status} → ${updates.status}`);
-    if (updates.amount !== undefined && tx.amount !== updates.amount) changes.push(`Amount: QR ${Math.abs(tx.amount)} → QR ${Math.abs(updates.amount)}`);
-    if (updates.desc !== undefined && tx.desc !== updates.desc) changes.push(`Description updated`);
-    const isSelfCorrection = !isAdmin && (!tx.edit_count || tx.edit_count === 0);
-    const detailStr = changes.length > 0 ? changes.join(' · ') : `Updated transaction #${id}`;
-    const auditDetail = isSelfCorrection ? `${detailStr} (Self-Correction)` : detailStr;
+    if (!isSupabaseConfigured || !company?.id) return true;
 
-    if (!isSupabaseConfigured) {
-      return true;
-    }
-
-    const payload: Record<string, any> = { ...updates };
-    // Flatten updates to DB columns if needed (mapping desc -> description etc happens in useTransactions)
+    // Map TS field names → DB column names; use !== undefined so empty strings are
+    // included (then null-coerced for nullable date/text columns).
     const dbPayload: Record<string, any> = {};
-    if (updates.date) dbPayload.date = updates.date;
-    if (updates.type) dbPayload.type = updates.type;
-    if (updates.desc) dbPayload.description = updates.desc;
-    if (updates.project) dbPayload.project = updates.project;
-    if (updates.amount !== undefined) dbPayload.amount = Number(updates.amount);
-    if (updates.status) dbPayload.status = updates.status;
-    if (updates.client_name) dbPayload.client_name = updates.client_name;
-    if (updates.due_date) dbPayload.due_date = updates.due_date;
-    
-    // Increment edit count for BDM/Engineer/Staff (Non-Admins)
-    if (isSelfCorrection) {
-      dbPayload.edit_count = 1;
-    }
+    if (updates.date        !== undefined) dbPayload.date         = updates.date;
+    if (updates.type        !== undefined) dbPayload.type         = updates.type;
+    if (updates.desc        !== undefined) dbPayload.description  = updates.desc        || null;
+    if (updates.project     !== undefined) dbPayload.project      = updates.project     || null;
+    if (updates.amount      !== undefined) dbPayload.amount       = Number(updates.amount);
+    if (updates.status      !== undefined) dbPayload.status       = updates.status;
+    if (updates.client_name !== undefined) dbPayload.client_name  = updates.client_name || null;
+    if (updates.due_date    !== undefined) dbPayload.due_date     = updates.due_date    || null;
 
-    const { error } = await supabase.from('transactions').update(dbPayload).eq('id', id);
+    if (Object.keys(dbPayload).length === 0) return true;
+
+    const { error } = await supabase
+      .from('transactions')
+      .update(dbPayload)
+      .eq('id', id)
+      .eq('company_id', company.id);
+
     if (error) { setError(error.message); fetch(); return false; }
     return true;
-  }, [fetch, transactions, user?.role]);
+  }, [fetch, transactions, user?.role, company?.id]);
 
   const deleteTransaction = useCallback(async (id: number) => {
     setTransactions(prev => prev.filter(t => t.id !== id));
