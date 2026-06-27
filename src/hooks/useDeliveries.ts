@@ -195,10 +195,19 @@ export function useDeliveries() {
 
     setDeliveries(prev => prev.map(d => d.id === id ? { ...d, ...data } : d));
 
+    // Empty strings are invalid for date columns — convert to null, same as addDelivery
+    const payload = {
+      ...data,
+      qid_expiry:      data.qid_expiry      || null,
+      passport_expiry: data.passport_expiry  || null,
+      bike_expiry:     data.bike_expiry      || null,
+      car_expiry:      data.car_expiry       || null,
+    };
+
     try {
       const { error } = await supabase
         .from('deliveries')
-        .update(data)
+        .update(payload)
         .eq('id', id)
         .eq('company_id', company.id);
 
