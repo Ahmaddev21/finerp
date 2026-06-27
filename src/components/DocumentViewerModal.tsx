@@ -150,10 +150,10 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white dark:bg-gray-900 w-full max-w-5xl h-[96vh] rounded-2xl shadow-2xl flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
 
-        {/* Header */}
+        {/* Header — always visible, never scrolls away */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 shrink-0">
           <div className="flex items-center gap-3">
             <FileText className="w-5 h-5 text-blue-600 shrink-0" />
@@ -208,12 +208,12 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
           </div>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-auto min-h-0">
+        {/* Body — flex-1 fills remaining height; each tab owns its overflow */}
+        <div className="flex-1 min-h-0 flex flex-col">
 
           {/* ── Uploaded File Tab ── */}
           {activeTab === 'file' && (
-            <div className="h-full min-h-[500px] flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-950">
+            <div className="flex-1 min-h-0 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-950">
               {loadingUrl && (
                 <div className="flex flex-col items-center gap-3 text-slate-400">
                   <Loader2 className="w-8 h-8 animate-spin" />
@@ -228,13 +228,15 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
               )}
               {signedUrl && !loadingUrl && (
                 isPdf ? (
+                  // iframe fills the full body area — it manages its own internal scroll
                   <iframe
                     src={signedUrl}
                     title="Attached document"
-                    className="w-full h-full min-h-[500px] border-0"
+                    className="w-full flex-1 min-h-0 border-0"
+                    style={{ height: '100%' }}
                   />
                 ) : isImage ? (
-                  <div className="p-4 w-full h-full flex items-center justify-center">
+                  <div className="flex-1 min-h-0 w-full overflow-auto p-4 flex items-center justify-center">
                     <img
                       src={signedUrl}
                       alt="Attached document"
@@ -259,9 +261,9 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
             </div>
           )}
 
-          {/* ── Summary Tab ── */}
+          {/* ── Summary Tab — scrolls within the body area ── */}
           {activeTab === 'summary' && (
-            <div className="overflow-y-auto p-8 bg-slate-50 dark:bg-slate-950/50">
+            <div className="flex-1 min-h-0 overflow-y-auto p-8 bg-slate-50 dark:bg-slate-950/50">
               <div className="bg-white dark:bg-gray-900 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-12 max-w-3xl mx-auto min-h-[500px]">
                 <div className="flex justify-between items-start mb-12">
                   <div>
