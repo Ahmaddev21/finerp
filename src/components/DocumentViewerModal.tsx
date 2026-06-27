@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, Download, Printer, FileText, FileSpreadsheet, Loader2, AlertCircle, ExternalLink } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { X, Download, Printer, FileText, FileSpreadsheet, Loader2, AlertCircle, ExternalLink, Maximize2, Minimize2 } from 'lucide-react';
 import { getSignedAttachmentUrl } from '../services/auth';
 import { isSupabaseConfigured } from '../lib/supabase';
 import type { Transaction } from '../hooks/useTransactions';
@@ -17,6 +17,33 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [loadingUrl, setLoadingUrl] = useState(false);
   const [urlError, setUrlError] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [pdfZoom, setPdfZoom] = useState<string>('FitH');
+
+  // Track browser fullscreen state
+  useEffect(() => {
+    const onFSChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFSChange);
+    return () => document.removeEventListener('fullscreenchange', onFSChange);
+  }, []);
+
+  // Escape closes the viewer (but not if the browser fullscreen overlay is active)
+  const handleClose = useCallback(() => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, handleClose]);
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen?.();
+  };
 
   useEffect(() => {
     setSignedUrl(null);
@@ -179,14 +206,30 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
             </div>
           )}
           {activeTab === 'file' && signedUrl && (
-            <a
-              href={signedUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" /> Download
-            </a>
+            <>
+              {isPdf && (
+                <select
+                  value={pdfZoom}
+                  onChange={e => setPdfZoom(e.target.value)}
+                  className="text-xs font-bold bg-slate-700 text-slate-200 border border-slate-600 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-slate-600 transition-colors"
+                  title="Zoom level"
+                >
+                  <option value="FitH">Fit Width</option>
+                  <option value="Fit">Fit Page</option>
+                  <option value="100">100%</option>
+                  <option value="125">125%</option>
+                  <option value="150">150%</option>
+                </select>
+              )}
+              <a
+                href={signedUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" /> Download
+              </a>
+            </>
           )}
           {activeTab === 'summary' && (
             <>
@@ -201,10 +244,18 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
               </button>
             </>
           )}
-          {/* Close button — always visible, high contrast */}
+          {/* Fullscreen toggle */}
           <button
-            onClick={onClose}
-            className="ml-2 p-2 bg-slate-700 hover:bg-red-600 text-slate-300 hover:text-white rounded-lg transition-colors"
+            onClick={toggleFullscreen}
+            className="p-2 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white rounded-lg transition-colors"
+            title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+          {/* Close — always visible, Esc also works */}
+          <button
+            onClick={handleClose}
+            className="p-2 bg-slate-700 hover:bg-red-600 text-slate-300 hover:text-white rounded-lg transition-colors"
             title="Close (Esc)"
           >
             <X className="w-4 h-4" />
@@ -232,10 +283,13 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
             )}
             {signedUrl && !loadingUrl && (
               isPdf ? (
-                // #toolbar=0 hides browser's floating PDF toolbar
-                // #view=FitH makes the page fill the full width (removes grey side margins)
                 <iframe
-                  src={`${signedUrl}#toolbar=0&view=FitH`}
+                  key={pdfZoom}
+                  src={
+                    pdfZoom === 'FitH' || pdfZoom === 'Fit'
+                      ? `${signedUrl}#toolbar=0&view=${pdfZoom}`
+                      : `${signedUrl}#toolbar=0&zoom=${pdfZoom}`
+                  }
                   title="Attached document"
                   className="w-full h-full border-0"
                 />
