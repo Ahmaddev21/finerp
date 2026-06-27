@@ -149,117 +149,121 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
     rejected: 'bg-red-50 text-red-700 border-red-200',
   };
 
+  // Full-screen viewer — covers sidebar, navbar, everything
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 w-full max-w-5xl h-[96vh] rounded-2xl shadow-2xl flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <div className="fixed inset-0 z-[9999] flex flex-col bg-slate-900 animate-fade-in">
 
-        {/* Header — always visible, never scrolls away */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 shrink-0">
-          <div className="flex items-center gap-3">
-            <FileText className="w-5 h-5 text-blue-600 shrink-0" />
-            <span className="font-bold text-slate-800 dark:text-white">
-              {tx.invoice_number || tx.type} — {tx.desc}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Tabs */}
-            {hasAttachment && (
-              <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 mr-2">
-                <button
-                  onClick={() => setActiveTab('file')}
-                  className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${activeTab === 'file' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                >
-                  Uploaded File
-                </button>
-                <button
-                  onClick={() => setActiveTab('summary')}
-                  className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${activeTab === 'summary' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                >
-                  Summary
-                </button>
-              </div>
-            )}
-            {activeTab === 'file' && signedUrl && (
-              <a
-                href={signedUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors"
-              >
-                <Download className="w-3.5 h-3.5" /> Download
-              </a>
-            )}
-            {activeTab === 'summary' && (
-              <>
-                <button onClick={handlePrint} className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors hidden sm:flex" title="Print">
-                  <Printer className="w-4 h-4" />
-                </button>
-                <button onClick={handleDownloadGeneratedPDF} className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors">
-                  <FileText className="w-3.5 h-3.5" /> PDF
-                </button>
-                <button onClick={handleDownloadExcel} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors">
-                  <FileSpreadsheet className="w-3.5 h-3.5" /> Excel
-                </button>
-              </>
-            )}
-            <button onClick={onClose} className="ml-1 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+      {/* Header — pinned, never scrolls away */}
+      <div className="shrink-0 flex items-center justify-between px-4 h-12 bg-slate-800 border-b border-slate-700">
+        <div className="flex items-center gap-3 min-w-0">
+          <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+          <span className="text-sm font-semibold text-white truncate">
+            {tx.invoice_number || tx.type} — {tx.desc}
+          </span>
         </div>
-
-        {/* Body — flex-1 fills remaining height; each tab owns its overflow */}
-        <div className="flex-1 min-h-0 flex flex-col">
-
-          {/* ── Uploaded File Tab ── */}
-          {activeTab === 'file' && (
-            <div className="flex-1 min-h-0 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-950">
-              {loadingUrl && (
-                <div className="flex flex-col items-center gap-3 text-slate-400">
-                  <Loader2 className="w-8 h-8 animate-spin" />
-                  <span className="text-sm">Loading file…</span>
-                </div>
-              )}
-              {urlError && (
-                <div className="flex flex-col items-center gap-3 text-red-500 max-w-xs text-center px-4">
-                  <AlertCircle className="w-8 h-8" />
-                  <p className="text-sm font-medium">{urlError}</p>
-                </div>
-              )}
-              {signedUrl && !loadingUrl && (
-                isPdf ? (
-                  // iframe fills the full body area — it manages its own internal scroll
-                  <iframe
-                    src={signedUrl}
-                    title="Attached document"
-                    className="w-full flex-1 min-h-0 border-0"
-                    style={{ height: '100%' }}
-                  />
-                ) : isImage ? (
-                  <div className="flex-1 min-h-0 w-full overflow-auto p-4 flex items-center justify-center">
-                    <img
-                      src={signedUrl}
-                      alt="Attached document"
-                      className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-4 text-slate-500">
-                    <FileText className="w-12 h-12 text-blue-400" />
-                    <p className="text-sm font-medium">Preview not available for this file type.</p>
-                    <a
-                      href={signedUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4" /> Open File
-                    </a>
-                  </div>
-                )
-              )}
+        <div className="flex items-center gap-2 shrink-0">
+          {hasAttachment && (
+            <div className="flex bg-slate-700 rounded-lg p-0.5 mr-1">
+              <button
+                onClick={() => setActiveTab('file')}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${activeTab === 'file' ? 'bg-slate-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+              >
+                Uploaded File
+              </button>
+              <button
+                onClick={() => setActiveTab('summary')}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${activeTab === 'summary' ? 'bg-slate-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+              >
+                Summary
+              </button>
             </div>
           )}
+          {activeTab === 'file' && signedUrl && (
+            <a
+              href={signedUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" /> Download
+            </a>
+          )}
+          {activeTab === 'summary' && (
+            <>
+              <button onClick={handlePrint} className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors hidden sm:flex" title="Print">
+                <Printer className="w-4 h-4" />
+              </button>
+              <button onClick={handleDownloadGeneratedPDF} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-colors">
+                <FileText className="w-3.5 h-3.5" /> PDF
+              </button>
+              <button onClick={handleDownloadExcel} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-colors">
+                <FileSpreadsheet className="w-3.5 h-3.5" /> Excel
+              </button>
+            </>
+          )}
+          {/* Close button — always visible, high contrast */}
+          <button
+            onClick={onClose}
+            className="ml-2 p-2 bg-slate-700 hover:bg-red-600 text-slate-300 hover:text-white rounded-lg transition-colors"
+            title="Close (Esc)"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Body — fills all remaining height */}
+      <div className="flex-1 min-h-0 flex flex-col">
+
+        {/* ── Uploaded File Tab ── */}
+        {activeTab === 'file' && (
+          <div className="flex-1 min-h-0 flex flex-col items-center justify-center bg-slate-800">
+            {loadingUrl && (
+              <div className="flex flex-col items-center gap-3 text-slate-400">
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <span className="text-sm">Loading file…</span>
+              </div>
+            )}
+            {urlError && (
+              <div className="flex flex-col items-center gap-3 text-red-400 max-w-xs text-center px-4">
+                <AlertCircle className="w-8 h-8" />
+                <p className="text-sm font-medium">{urlError}</p>
+              </div>
+            )}
+            {signedUrl && !loadingUrl && (
+              isPdf ? (
+                // #toolbar=0 hides browser's floating PDF toolbar
+                // #view=FitH makes the page fill the full width (removes grey side margins)
+                <iframe
+                  src={`${signedUrl}#toolbar=0&view=FitH`}
+                  title="Attached document"
+                  className="w-full h-full border-0"
+                />
+              ) : isImage ? (
+                <div className="w-full h-full overflow-auto flex items-center justify-center p-6">
+                  <img
+                    src={signedUrl}
+                    alt="Attached document"
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-4 text-slate-400">
+                  <FileText className="w-12 h-12 text-blue-400" />
+                  <p className="text-sm font-medium">Preview not available for this file type.</p>
+                  <a
+                    href={signedUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4" /> Open File
+                  </a>
+                </div>
+              )
+            )}
+          </div>
+        )}
 
           {/* ── Summary Tab — scrolls within the body area ── */}
           {activeTab === 'summary' && (
@@ -358,7 +362,6 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
             </div>
           )}
         </div>
-      </div>
 
       <style>{`
         @media print {
