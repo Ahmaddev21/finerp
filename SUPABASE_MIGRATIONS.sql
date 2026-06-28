@@ -334,6 +334,12 @@ CREATE POLICY "companies_select"
     )
   );
 
+-- STEP 7: New merchandise item columns
+ALTER TABLE public.merchandise ADD COLUMN IF NOT EXISTS em_box_qty        INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.merchandise ADD COLUMN IF NOT EXISTS safety_kit_qty    INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.merchandise ADD COLUMN IF NOT EXISTS chest_guard_qty   INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.merchandise ADD COLUMN IF NOT EXISTS winter_jacket_qty INTEGER NOT NULL DEFAULT 0;
+
 -- STEP 6: attachment_url column for contracting & consultation tables
 ALTER TABLE public.contracts                  ADD COLUMN IF NOT EXISTS attachment_url TEXT;
 ALTER TABLE public.contracting_projects       ADD COLUMN IF NOT EXISTS attachment_url TEXT;

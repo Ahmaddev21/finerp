@@ -18,6 +18,10 @@ type AllocationForm = {
   safety_gears_qty: string;
   thermal_bag_qty: string;
   gillets_qty: string;
+  em_box_qty: string;
+  safety_kit_qty: string;
+  chest_guard_qty: string;
+  winter_jacket_qty: string;
 };
 
 type ReceiveForm = {
@@ -54,16 +58,16 @@ function AllocationModal({ employee, form, setForm, saving, onClose, onSave }: A
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-2 gap-4 mb-8 max-h-[60vh] overflow-y-auto pr-1">
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">T-Shirt Qty</label>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">T-Shirt</label>
             <div className="relative">
               <Shirt className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input type="number" value={form.t_shirt_qty} onChange={e => setForm(f => ({ ...f, t_shirt_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
             </div>
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Trouser Qty</label>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Trouser</label>
             <div className="relative">
               <Layers className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input type="number" value={form.trouser_qty} onChange={e => setForm(f => ({ ...f, trouser_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
@@ -79,14 +83,14 @@ function AllocationModal({ employee, form, setForm, saving, onClose, onSave }: A
           {employee.category === 'Rider' ? (
             <>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Helmet Qty</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Helmet</label>
                 <div className="relative">
                   <HardHat className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input type="number" value={form.helmet_qty} onChange={e => setForm(f => ({ ...f, helmet_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
                 </div>
               </div>
-              <div className="space-y-2 col-span-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Safety Gears Qty</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Safety Gear</label>
                 <div className="relative">
                   <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input type="number" value={form.safety_gears_qty} onChange={e => setForm(f => ({ ...f, safety_gears_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
@@ -95,13 +99,42 @@ function AllocationModal({ employee, form, setForm, saving, onClose, onSave }: A
             </>
           ) : (
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Gillets Qty</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Gillet</label>
               <div className="relative">
                 <Shirt className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input type="number" value={form.gillets_qty} onChange={e => setForm(f => ({ ...f, gillets_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
               </div>
             </div>
           )}
+          {/* New items — available for all categories */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">EM Box</label>
+            <div className="relative">
+              <Package className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input type="number" value={form.em_box_qty} onChange={e => setForm(f => ({ ...f, em_box_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Safety Kit</label>
+            <div className="relative">
+              <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input type="number" value={form.safety_kit_qty} onChange={e => setForm(f => ({ ...f, safety_kit_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Chest Guard</label>
+            <div className="relative">
+              <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input type="number" value={form.chest_guard_qty} onChange={e => setForm(f => ({ ...f, chest_guard_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Winter Jacket</label>
+            <div className="relative">
+              <Shirt className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input type="number" value={form.winter_jacket_qty} onChange={e => setForm(f => ({ ...f, winter_jacket_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
+            </div>
+          </div>
         </div>
 
         <div className="flex gap-3">
@@ -213,12 +246,14 @@ interface ReturnItemsModalProps {
   employee: EmployeeMerchandise;
   form: Record<string, string>;
   setForm: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  notes: string;
+  setNotes: (v: string) => void;
   saving: boolean;
   onClose: () => void;
   onSave: () => void;
 }
 
-function ReturnItemsModal({ employee, form, setForm, saving, onClose, onSave }: ReturnItemsModalProps) {
+function ReturnItemsModal({ employee, form, setForm, notes, setNotes, saving, onClose, onSave }: ReturnItemsModalProps) {
   const m = employee.merchandise;
   const hasItems = m && MERCH_ITEMS.some(item => ((m as unknown as Record<string, number>)[item.field] ?? 0) > 0);
 
@@ -272,6 +307,19 @@ function ReturnItemsModal({ employee, form, setForm, saving, onClose, onSave }: 
           </div>
         )}
 
+        {hasItems && (
+          <div className="space-y-2 mb-6">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Remark (optional)</label>
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="e.g. items returned in good condition"
+              rows={2}
+              className={cn(inputCls, "resize-none")}
+            />
+          </div>
+        )}
+
         <div className="flex gap-3">
           <button onClick={onClose} disabled={saving} className="flex-1 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all disabled:opacity-50">
             Cancel
@@ -290,6 +338,7 @@ function ReturnItemsModal({ employee, form, setForm, saving, onClose, onSave }: 
 const EMPTY_ALLOC_FORM: AllocationForm = {
   t_shirt_qty: '', trouser_qty: '', helmet_qty: '',
   safety_gears_qty: '', thermal_bag_qty: '', gillets_qty: '',
+  em_box_qty: '', safety_kit_qty: '', chest_guard_qty: '', winter_jacket_qty: '',
 };
 
 const makeReceiveForm = (): ReceiveForm => ({
@@ -328,6 +377,7 @@ export default function Merchandise() {
   // Return items modal state
   const [returnEmployee, setReturnEmployee] = useState<EmployeeMerchandise | null>(null);
   const [returnForm, setReturnForm] = useState<Record<string, string>>({});
+  const [returnNotes, setReturnNotes] = useState('');
 
   // ── Derived state ──────────────────────────────────────────────────────────
 
@@ -356,12 +406,16 @@ export default function Merchandise() {
   const openAllocModal = (emp: EmployeeMerchandise) => {
     const m = emp.merchandise;
     setAllocForm({
-      t_shirt_qty:      m?.t_shirt_qty      ? String(m.t_shirt_qty)      : '',
-      trouser_qty:      m?.trouser_qty      ? String(m.trouser_qty)      : '',
-      helmet_qty:       m?.helmet_qty       ? String(m.helmet_qty)       : '',
-      safety_gears_qty: m?.safety_gears_qty ? String(m.safety_gears_qty) : '',
-      thermal_bag_qty:  m?.thermal_bag_qty  ? String(m.thermal_bag_qty)  : '',
-      gillets_qty:      m?.gillets_qty      ? String(m.gillets_qty)      : '',
+      t_shirt_qty:       m?.t_shirt_qty       ? String(m.t_shirt_qty)       : '',
+      trouser_qty:       m?.trouser_qty       ? String(m.trouser_qty)       : '',
+      helmet_qty:        m?.helmet_qty        ? String(m.helmet_qty)        : '',
+      safety_gears_qty:  m?.safety_gears_qty  ? String(m.safety_gears_qty)  : '',
+      thermal_bag_qty:   m?.thermal_bag_qty   ? String(m.thermal_bag_qty)   : '',
+      gillets_qty:       m?.gillets_qty       ? String(m.gillets_qty)       : '',
+      em_box_qty:        m?.em_box_qty        ? String(m.em_box_qty)        : '',
+      safety_kit_qty:    m?.safety_kit_qty    ? String(m.safety_kit_qty)    : '',
+      chest_guard_qty:   m?.chest_guard_qty   ? String(m.chest_guard_qty)   : '',
+      winter_jacket_qty: m?.winter_jacket_qty ? String(m.winter_jacket_qty) : '',
     });
     setAllocEmployee(emp);
   };
@@ -370,12 +424,16 @@ export default function Merchandise() {
     if (!allocEmployee) return;
     setSaving(true);
     const ok = await updateMerchandise(allocEmployee.id, {
-      t_shirt_qty:      parseInt(allocForm.t_shirt_qty)      || 0,
-      trouser_qty:      parseInt(allocForm.trouser_qty)      || 0,
-      helmet_qty:       parseInt(allocForm.helmet_qty)       || 0,
-      safety_gears_qty: parseInt(allocForm.safety_gears_qty) || 0,
-      thermal_bag_qty:  parseInt(allocForm.thermal_bag_qty)  || 0,
-      gillets_qty:      parseInt(allocForm.gillets_qty)      || 0,
+      t_shirt_qty:       parseInt(allocForm.t_shirt_qty)       || 0,
+      trouser_qty:       parseInt(allocForm.trouser_qty)       || 0,
+      helmet_qty:        parseInt(allocForm.helmet_qty)        || 0,
+      safety_gears_qty:  parseInt(allocForm.safety_gears_qty)  || 0,
+      thermal_bag_qty:   parseInt(allocForm.thermal_bag_qty)   || 0,
+      gillets_qty:       parseInt(allocForm.gillets_qty)       || 0,
+      em_box_qty:        parseInt(allocForm.em_box_qty)        || 0,
+      safety_kit_qty:    parseInt(allocForm.safety_kit_qty)    || 0,
+      chest_guard_qty:   parseInt(allocForm.chest_guard_qty)   || 0,
+      winter_jacket_qty: parseInt(allocForm.winter_jacket_qty) || 0,
     });
     setSaving(false);
     if (ok) setAllocEmployee(null);
@@ -404,6 +462,7 @@ export default function Merchandise() {
 
   const openReturnModal = (emp: EmployeeMerchandise) => {
     setReturnForm({});
+    setReturnNotes('');
     setReturnEmployee(emp);
   };
 
@@ -415,7 +474,7 @@ export default function Merchandise() {
     });
     if (!returns.length) return;
     setSaving(true);
-    const ok = await recordReturn(returnEmployee.id, returnEmployee.name, returns);
+    const ok = await recordReturn(returnEmployee.id, returnEmployee.name, returns, returnNotes);
     setSaving(false);
     if (ok) setReturnEmployee(null);
   };
@@ -656,45 +715,27 @@ export default function Merchandise() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">T-Shirts</p>
-                  <div className="flex items-center gap-2">
-                    <Shirt className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm font-black text-slate-700 dark:text-slate-200">{employee.merchandise?.t_shirt_qty || 0}</span>
-                  </div>
-                </div>
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Trousers</p>
-                  <div className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm font-black text-slate-700 dark:text-slate-200">{employee.merchandise?.trouser_qty || 0}</span>
-                  </div>
-                </div>
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Thermal Bag</p>
-                  <div className="flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm font-black text-slate-700 dark:text-slate-200">{employee.merchandise?.thermal_bag_qty || 0}</span>
-                  </div>
-                </div>
-                {employee.category === 'Rider' ? (
-                  <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Helmet</p>
-                    <div className="flex items-center gap-2">
-                      <HardHat className="w-4 h-4 text-slate-400" />
-                      <span className="text-sm font-black text-slate-700 dark:text-slate-200">{employee.merchandise?.helmet_qty || 0}</span>
+              <div className="grid grid-cols-2 gap-2 mb-6">
+                {[
+                  { label: 'T-Shirt',       icon: <Shirt className="w-3.5 h-3.5 text-slate-400" />, qty: employee.merchandise?.t_shirt_qty },
+                  { label: 'Trouser',       icon: <Layers className="w-3.5 h-3.5 text-slate-400" />, qty: employee.merchandise?.trouser_qty },
+                  { label: 'Thermal Bag',   icon: <ShoppingBag className="w-3.5 h-3.5 text-slate-400" />, qty: employee.merchandise?.thermal_bag_qty },
+                  employee.category === 'Rider'
+                    ? { label: 'Helmet',    icon: <HardHat className="w-3.5 h-3.5 text-slate-400" />, qty: employee.merchandise?.helmet_qty }
+                    : { label: 'Gillet',    icon: <Shirt className="w-3.5 h-3.5 text-slate-400" />, qty: employee.merchandise?.gillets_qty },
+                  { label: 'EM Box',        icon: <Package className="w-3.5 h-3.5 text-slate-400" />, qty: employee.merchandise?.em_box_qty },
+                  { label: 'Safety Kit',    icon: <Shield className="w-3.5 h-3.5 text-slate-400" />, qty: employee.merchandise?.safety_kit_qty },
+                  { label: 'Chest Guard',   icon: <Shield className="w-3.5 h-3.5 text-slate-400" />, qty: employee.merchandise?.chest_guard_qty },
+                  { label: 'Winter Jacket', icon: <Shirt className="w-3.5 h-3.5 text-slate-400" />, qty: employee.merchandise?.winter_jacket_qty },
+                ].map(({ label, icon, qty }) => (
+                  <div key={label} className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">{label}</p>
+                    <div className="flex items-center gap-1.5">
+                      {icon}
+                      <span className="text-sm font-black text-slate-700 dark:text-slate-200">{qty || 0}</span>
                     </div>
                   </div>
-                ) : (
-                  <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Gillets</p>
-                    <div className="flex items-center gap-2">
-                      <Shirt className="w-4 h-4 text-slate-400" />
-                      <span className="text-sm font-black text-slate-700 dark:text-slate-200">{employee.merchandise?.gillets_qty || 0}</span>
-                    </div>
-                  </div>
-                )}
+                ))}
               </div>
 
               <div className="flex gap-2">
@@ -800,6 +841,8 @@ export default function Merchandise() {
           employee={returnEmployee}
           form={returnForm}
           setForm={setReturnForm}
+          notes={returnNotes}
+          setNotes={setReturnNotes}
           saving={saving}
           onClose={() => setReturnEmployee(null)}
           onSave={handleSaveReturn}

@@ -7,12 +7,16 @@ import { Delivery } from './useDeliveries';
 // ── Item-type canonical map — single source of truth ─────────────────────
 // `field` matches the column name in the `merchandise` table exactly.
 export const MERCH_ITEMS = [
-  { type: 't_shirt',     label: 'T-Shirt',     field: 't_shirt_qty'      },
-  { type: 'trouser',     label: 'Trouser',      field: 'trouser_qty'      },
-  { type: 'helmet',      label: 'Helmet',       field: 'helmet_qty'       },
-  { type: 'safety_gear', label: 'Safety Gear',  field: 'safety_gears_qty' },
-  { type: 'thermal_bag', label: 'Thermal Bag',  field: 'thermal_bag_qty'  },
-  { type: 'gillet',      label: 'Gillet',       field: 'gillets_qty'      },
+  { type: 't_shirt',        label: 'T-Shirt',       field: 't_shirt_qty'       },
+  { type: 'trouser',        label: 'Trouser',        field: 'trouser_qty'       },
+  { type: 'helmet',         label: 'Helmet',         field: 'helmet_qty'        },
+  { type: 'safety_gear',    label: 'Safety Gear',    field: 'safety_gears_qty'  },
+  { type: 'thermal_bag',    label: 'Thermal Bag',    field: 'thermal_bag_qty'   },
+  { type: 'gillet',         label: 'Gillet',         field: 'gillets_qty'       },
+  { type: 'em_box',         label: 'EM Box',         field: 'em_box_qty'        },
+  { type: 'safety_kit',     label: 'Safety Kit',     field: 'safety_kit_qty'    },
+  { type: 'chest_guard',    label: 'Chest Guard',    field: 'chest_guard_qty'   },
+  { type: 'winter_jacket',  label: 'Winter Jacket',  field: 'winter_jacket_qty' },
 ] as const;
 
 export type MerchItemType = typeof MERCH_ITEMS[number]['type'];
@@ -30,6 +34,10 @@ export interface MerchandiseRecord {
   safety_gears_qty: number;
   thermal_bag_qty: number;
   gillets_qty: number;
+  em_box_qty: number;
+  safety_kit_qty: number;
+  chest_guard_qty: number;
+  winter_jacket_qty: number;
   created_at: string;
   updated_at: string;
 }
@@ -130,7 +138,8 @@ export function useMerchandise() {
   const recordReturn = useCallback(async (
     deliveryId: string,
     employeeName: string,
-    returns: ReturnItem[]
+    returns: ReturnItem[],
+    notes?: string
   ): Promise<boolean> => {
     if (!returns.length) return false;
 
@@ -187,6 +196,7 @@ export function useMerchandise() {
         item_name:     r.item_name,
         returned_qty:  r.qty,
         return_date:   today,
+        notes:         notes || null,
         created_by:    user?.id ?? null,
       }));
 
