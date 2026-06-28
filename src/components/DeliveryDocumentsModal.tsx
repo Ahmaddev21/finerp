@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Upload, FileText, Trash2, ExternalLink, AlertTriangle, Loader2, ImageIcon, File } from 'lucide-react';
+import { X, Upload, FileText, Trash2, ExternalLink, AlertTriangle, Loader2, ImageIcon, File, Download, Share2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useDeliveryDocuments, DeliveryDocument, formatBytes } from '../hooks/useDeliveryDocuments';
 import type { Delivery as DeliveryRecord } from '../hooks/useDeliveries';
@@ -10,10 +10,13 @@ interface Props {
   onClose: () => void;
 }
 
-function DocIcon({ mimeType }: { mimeType: string | null }) {
-  if (!mimeType) return <File className="w-5 h-5 text-slate-400" />;
-  if (mimeType.startsWith('image/')) return <ImageIcon className="w-5 h-5 text-blue-500" />;
+function DocIcon({ mimeType, fileName }: { mimeType: string | null; fileName: string }) {
+  if (!mimeType && !fileName) return <File className="w-5 h-5 text-slate-400" />;
+  if (mimeType?.startsWith('image/')) return <ImageIcon className="w-5 h-5 text-blue-500" />;
   if (mimeType === 'application/pdf') return <FileText className="w-5 h-5 text-rose-500" />;
+  const ext = fileName.split('.').pop()?.toLowerCase();
+  if (ext === 'doc' || ext === 'docx' || mimeType?.includes('word') || mimeType?.includes('officedocument'))
+    return <FileText className="w-5 h-5 text-blue-600" />;
   return <File className="w-5 h-5 text-slate-400" />;
 }
 
@@ -25,18 +28,24 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [openingId, setOpeningId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [sharingId, setSharingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'image/heic'];
-  const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB (bucket updated by setup script)
+  const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'image/heic',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  const ALLOWED_EXT = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'heic', 'doc', 'docx'];
+  const MAX_SIZE_BYTES = 10 * 1024 * 1024;
 
   const validateAndUpload = async (file: File) => {
     setLocalError(null);
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      setLocalError('Only PDF, JPG, PNG, WEBP, and HEIC files are supported.');
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+    if (!ALLOWED_MIME.includes(file.type) && !ALLOWED_EXT.includes(ext)) {
+      setLocalError('Only PDF, JPG, PNG, WEBP, HEIC, DOC, and DOCX files are supported.');
       return;
     }
     if (file.size > MAX_SIZE_BYTES) {
@@ -69,6 +78,26 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
     } else {
       setLocalError('Could not generate a link for this file. Please try again.');
     }
+  };
+
+  const handleDownload = async (doc: DeliveryDocument) => {
+    setDownloadingId(doc.id);
+    const url = await getSignedUrl(doc.filePath);
+    setDownloadingId(null);
+    if (!url) { setLocalError('Could not generate download link. Please try again.'); return; }
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = doc.fileName;
+    a.click();
+  };
+
+  const handleWhatsAppShare = async (doc: DeliveryDocument) => {
+    setSharingId(doc.id);
+    const url = await getSignedUrl(doc.filePath);
+    setSharingId(null);
+    if (!url) { setLocalError('Could not generate share link. Please try again.'); return; }
+    const text = encodeURIComponent(`${doc.fileName}\n${url}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
   };
 
   const handleDelete = async (doc: DeliveryDocument) => {
@@ -134,14 +163,14 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
               <div className="flex flex-col items-center gap-2 text-slate-400">
                 <Upload className="w-7 h-7" />
                 <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Click or drag to upload</p>
-                <p className="text-xs text-slate-400">PDF, JPG, PNG, WEBP, HEIC · Max 10 MB</p>
+                <p className="text-xs text-slate-400">PDF, JPG, PNG, WEBP, HEIC, DOC, DOCX · Max 10 MB</p>
               </div>
             )}
           </div>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
+            accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.doc,.docx"
             className="hidden"
             onChange={handleFileChange}
           />
@@ -164,7 +193,7 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
                 key={doc.id}
                 className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group"
               >
-                <DocIcon mimeType={doc.mimeType} />
+                <DocIcon mimeType={doc.mimeType} fileName={doc.fileName} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{doc.fileName}</p>
                   <p className="text-xs text-slate-400">
@@ -174,28 +203,42 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
                   </p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
+                  {/* Open in new tab */}
                   <button
                     onClick={() => handleOpen(doc)}
                     disabled={openingId === doc.id}
-                    title="Open document"
+                    title="Open"
                     className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all disabled:opacity-50"
                   >
-                    {openingId === doc.id
-                      ? <Loader2 className="w-4 h-4 animate-spin" />
-                      : <ExternalLink className="w-4 h-4" />
-                    }
+                    {openingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
                   </button>
+                  {/* Download */}
+                  <button
+                    onClick={() => handleDownload(doc)}
+                    disabled={downloadingId === doc.id}
+                    title="Download"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all disabled:opacity-50"
+                  >
+                    {downloadingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                  </button>
+                  {/* Share via WhatsApp */}
+                  <button
+                    onClick={() => handleWhatsAppShare(doc)}
+                    disabled={sharingId === doc.id}
+                    title="Share via WhatsApp"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-all disabled:opacity-50"
+                  >
+                    {sharingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+                  </button>
+                  {/* Delete (owners/admins only) */}
                   {isOwnerOrAdmin && (
                     <button
                       onClick={() => handleDelete(doc)}
                       disabled={deletingId === doc.id}
-                      title="Delete document"
+                      title="Delete"
                       className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all disabled:opacity-50"
                     >
-                      {deletingId === doc.id
-                        ? <Loader2 className="w-4 h-4 animate-spin" />
-                        : <Trash2 className="w-4 h-4" />
-                      }
+                      {deletingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                     </button>
                   )}
                 </div>
