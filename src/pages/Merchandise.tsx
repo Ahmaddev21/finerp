@@ -45,8 +45,8 @@ interface AllocationModalProps {
 function AllocationModal({ employee, form, setForm, saving, onClose, onSave }: AllocationModalProps) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl max-w-lg w-full p-8 border border-slate-100 dark:border-slate-800">
-        <div className="flex justify-between items-center mb-8">
+      <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl max-w-lg w-full border border-slate-100 dark:border-slate-800 flex flex-col max-h-[90vh]">
+        <div className="flex justify-between items-center px-8 pt-8 pb-6 shrink-0">
           <div>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Allocate Gear</h3>
             <p className="text-sm text-slate-500 font-medium mt-1">
@@ -58,7 +58,7 @@ function AllocationModal({ employee, form, setForm, saving, onClose, onSave }: A
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-8 max-h-[60vh] overflow-y-auto pr-1">
+        <div className="grid grid-cols-2 gap-4 overflow-y-auto flex-1 min-h-0 px-8 pb-2 custom-scrollbar">
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">T-Shirt</label>
             <div className="relative">
@@ -137,7 +137,7 @@ function AllocationModal({ employee, form, setForm, saving, onClose, onSave }: A
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 px-8 py-6 shrink-0 border-t border-slate-100 dark:border-slate-800">
           <button onClick={onClose} disabled={saving} className="flex-1 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all disabled:opacity-50">
             Cancel
           </button>
