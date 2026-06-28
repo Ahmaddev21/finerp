@@ -177,8 +177,9 @@ function Modal({ title, sub, children, footer }: {
 }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 rounded border border-slate-200 dark:border-slate-700 shadow-xl max-w-md w-full p-5 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
+      <div className="bg-white dark:bg-gray-900 rounded border border-slate-200 dark:border-slate-700 shadow-xl max-w-md w-full flex flex-col max-h-[90vh]">
+        {/* sticky header */}
+        <div className="flex justify-between items-center px-5 pt-5 pb-4 shrink-0">
           <div>
             <h3 className="font-bold text-slate-900 dark:text-white">{title}</h3>
             {sub && <p className="text-xs text-slate-400 font-mono mt-0.5">{sub}</p>}
@@ -190,8 +191,14 @@ function Modal({ title, sub, children, footer }: {
             <X className="w-4 h-4" />
           </button>
         </div>
-        {children}
-        <div className="mt-4 flex justify-end gap-2">{footer.buttons}</div>
+        {/* scrollable body */}
+        <div className="flex-1 overflow-y-auto px-5 pb-1">
+          {children}
+        </div>
+        {/* sticky footer */}
+        <div className="px-5 py-4 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
+          {footer.buttons}
+        </div>
       </div>
     </div>
   );
