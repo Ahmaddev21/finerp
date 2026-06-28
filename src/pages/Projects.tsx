@@ -391,7 +391,12 @@ export default function Projects() {
                       className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
                     >
                       <td className="px-4 py-3.5">
-                        <div className="font-semibold text-slate-900 dark:text-slate-100">{p.name}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-slate-900 dark:text-slate-100">{p.name}</span>
+                          {p.source === 'contracting' && (
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide bg-violet-100 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400">Contracting</span>
+                          )}
+                        </div>
                         <div className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">{p.id}</div>
                       </td>
                       <td className="px-4 py-3.5 text-slate-600 dark:text-slate-400">{p.client}</td>

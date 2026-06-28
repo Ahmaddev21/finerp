@@ -19,6 +19,8 @@ export interface Project {
   /** Amount already collected from the client */
   payment_received: number;
   edit_count?: number;
+  /** 'contracting' when auto-created from the Contracting section */
+  source?: string;
 }
 
 // ── Derived financial helpers (stateless, deterministic) ──────────
@@ -52,6 +54,7 @@ function mapRow(row: any): Project {
     additional_costs: Number(row.additional_costs ?? 0),
     payment_received: Number(row.payment_received ?? 0),
     edit_count:       row.edit_count ?? 0,
+    source:           row.source ?? undefined,
   };
 }
 

@@ -334,6 +334,9 @@ CREATE POLICY "companies_select"
     )
   );
 
+-- STEP 8: source column on projects — marks rows auto-created from Contracting
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS source TEXT;
+
 -- STEP 7: New merchandise item columns
 ALTER TABLE public.merchandise ADD COLUMN IF NOT EXISTS em_box_qty        INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE public.merchandise ADD COLUMN IF NOT EXISTS safety_kit_qty    INTEGER NOT NULL DEFAULT 0;

@@ -74,9 +74,30 @@ export function useContractingProjects() {
     if (!isSupabaseConfigured) return;
     const companyId = useAuthStore.getState().company?.id;
     const userId = useAuthStore.getState().user?.id;
+
+    // 1. Create a mirrored entry in the main projects table so it appears
+    //    in the Projects section where financials (expenses etc.) can be added.
+    const mainProjectId = `PRJ-${Date.now().toString(36).toUpperCase().slice(-4)}${Math.floor(Math.random()*1000).toString().padStart(3,'0')}`;
+    const { error: prjErr } = await supabase.from('projects').insert({
+      id:               mainProjectId,
+      company_id:       companyId,
+      name:             p.name,
+      client_name:      p.client,
+      status:           p.status,
+      revenue:          p.value,
+      investment:       0,
+      expenses:         0,
+      additional_costs: 0,
+      payment_received: 0,
+      source:           'contracting',
+    });
+    if (prjErr) console.warn('[contracting_projects] main project mirror failed:', prjErr.message);
+
+    // 2. Insert the contracting project, linking it to the main project.
+    const resolvedMainId = prjErr ? (p.mainProjectId ?? null) : mainProjectId;
     const payload = { id: newId, company_id: companyId, contract_id: p.contractId, name: p.name, client: p.client,
       value: p.value, status: p.status, start_date: p.startDate || null, end_date: p.endDate || null, description: p.description,
-      main_project_id: p.mainProjectId ?? null };
+      main_project_id: resolvedMainId };
     console.log('[contracting_projects:insert] payload=', JSON.stringify(payload), 'auth_uid=', userId);
     const { data: insertData, error } = await supabase.from('contracting_projects').insert(payload).select();
     console.log('[contracting_projects:insert] response data=', JSON.stringify(insertData), 'error=', error?.message ?? null, 'error_code=', error?.code ?? null);
