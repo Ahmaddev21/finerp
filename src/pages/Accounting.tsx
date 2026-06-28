@@ -466,7 +466,7 @@ export default function Accounting() {
   const { user, company, isLoading, isInitialized } = useAuthStore();
   const {
     transactions, addTransaction, updateTransaction, deleteTransaction,
-    submitForApproval, approveTransaction, rejectTransaction,
+    submitForApproval, approveTransaction, rejectTransaction, markAsPaid,
   } = useTransactions();
   const { requests, reviewChangeRequest } = useChangeRequests();
 
@@ -582,6 +582,10 @@ export default function Accounting() {
       acts.push({ label: 'Approve', icon: <BadgeCheck className="w-4 h-4" />, iconCls: 'text-emerald-600', onClick: () => { void approveTransaction(tx.id); showToast('Transaction approved'); } });
       acts.push({ label: 'Reject',  icon: <Ban className="w-4 h-4" />,        iconCls: 'text-rose-600',    onClick: () => { void rejectTransaction(tx.id);  showToast('Transaction rejected'); } });
     }
+    if (isAdmin && tx?.status === 'approved')
+      acts.push({ label: 'Mark as Paid', icon: <CheckCircle2 className="w-4 h-4" />, iconCls: 'text-emerald-600', onClick: () => { void markAsPaid(tx.id); showToast('Marked as paid'); } });
+    if (isAdmin && tx?.status === 'paid')
+      acts.push({ label: 'Mark as Unpaid', icon: <Clock className="w-4 h-4" />, iconCls: 'text-amber-600', onClick: () => { void updateTransaction(tx.id, { status: 'approved' }); showToast('Marked as unpaid'); } });
 
     acts.push({ kind: 'divider' });
     if (tx?.attachment_url)
