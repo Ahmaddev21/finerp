@@ -95,77 +95,88 @@ function ProjForm({ f, set }: { f: FormState; set: (v: FormState) => void }) {
     />
   );
 
+  const r  = parseFloat(f.revenue)          || 0;
+  const i  = parseFloat(f.investment)       || 0;
+  const ex = parseFloat(f.expenses)         || 0;
+  const ac = parseFloat(f.additional_costs) || 0;
+  const pr = parseFloat(f.payment_received) || 0;
+  const totalCost = i + ex + ac;
+  const profit    = r - totalCost;
+  const pending   = r - pr;
+
   return (
-    <div className="space-y-3">
-      {/* Name + Client */}
-      <div>
-        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-          Project Name <span className="text-red-400">*</span>
-        </label>
-        <input
-          type="text"
-          placeholder="e.g. Q4 Logistics Expansion"
-          value={f.name}
-          onChange={e => set({ ...f, name: e.target.value })}
-          className={inputCls}
-        />
-      </div>
-      <div>
-        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-          Client <span className="text-red-400">*</span>
-        </label>
-        <input
-          type="text"
-          placeholder="e.g. Acme Corp"
-          value={f.client}
-          onChange={e => set({ ...f, client: e.target.value })}
-          className={inputCls}
-        />
-      </div>
-      <div>
-        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Status</label>
-        <select
-          value={f.status}
-          onChange={e => set({ ...f, status: e.target.value as FormState['status'] })}
-          className={inputCls}
-        >
-          {(['Planning', 'Active', 'On Hold', 'Completed'] as const).map(s => (
-            <option key={s}>{s}</option>
-          ))}
-        </select>
-      </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0">
 
-      {/* Financial section */}
-      <div className="pt-1">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Financial Details (QR)</p>
-        <div className="space-y-2">
-          {num('Contract Value', 'revenue', '0.00', 'Total value agreed with client')}
-          {num('Company Investment', 'investment', '0.00', 'Capital you put into this project')}
-          {num('Operating Expenses', 'expenses', '0.00', 'Day-to-day running costs')}
-          {num('Additional Costs', 'additional_costs', '0.00', 'Miscellaneous or one-off costs')}
-          {num('Payment Received', 'payment_received', '0.00', 'Amount already collected from client')}
+      {/* ── Left column: basics ── */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Project Info</p>
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+            Project Name <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            placeholder="e.g. Q4 Logistics Expansion"
+            value={f.name}
+            onChange={e => set({ ...f, name: e.target.value })}
+            className={inputCls}
+          />
         </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+            Client <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            placeholder="e.g. Acme Corp"
+            value={f.client}
+            onChange={e => set({ ...f, client: e.target.value })}
+            className={inputCls}
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Status</label>
+          <select
+            value={f.status}
+            onChange={e => set({ ...f, status: e.target.value as FormState['status'] })}
+            className={inputCls}
+          >
+            {(['Planning', 'Active', 'On Hold', 'Completed'] as const).map(s => (
+              <option key={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Live preview — shown once values exist */}
+        {r > 0 && (
+          <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded border border-slate-200 dark:border-slate-700 text-xs space-y-1.5 mt-1">
+            <p className="font-bold text-slate-400 uppercase tracking-widest text-[10px] mb-1">Preview</p>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Total Cost</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(totalCost)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Net Profit</span>
+              <span className={cn('font-bold', profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400')}>{formatCurrency(profit)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Pending</span>
+              <span className="font-semibold text-amber-600 dark:text-amber-400">{formatCurrency(pending)}</span>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Live preview */}
-      {(parseFloat(f.revenue) > 0 || parseFloat(f.investment) > 0) && (() => {
-        const r  = parseFloat(f.revenue)          || 0;
-        const i  = parseFloat(f.investment)       || 0;
-        const ex = parseFloat(f.expenses)         || 0;
-        const ac = parseFloat(f.additional_costs) || 0;
-        const pr = parseFloat(f.payment_received) || 0;
-        const totalCost = i + ex + ac;
-        const profit    = r - totalCost;
-        const pending   = r - pr;
-        return (
-          <div className="mt-1 p-3 bg-slate-50 dark:bg-slate-800/60 rounded border border-slate-200 dark:border-slate-700 text-xs space-y-1">
-            <p className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-[10px] mb-1.5">Preview</p>
-            <div className="flex justify-between"><span className="text-slate-500">Total Cost</span><span className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(totalCost)}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">Net Profit</span><span className={cn('font-bold', profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400')}>{formatCurrency(profit)}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">Pending Balance</span><span className="font-semibold text-amber-600 dark:text-amber-400">{formatCurrency(pending)}</span></div>
-          </div>
-        );
-      })()}
+      {/* ── Right column: financials ── */}
+      <div className="space-y-3 sm:border-l sm:border-slate-100 sm:dark:border-slate-800 sm:pl-6">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 sm:mt-0 mt-3">Financial Details (QR)</p>
+        {num('Contract Value',    'revenue',          '0.00', 'Total value agreed with client')}
+        {num('Company Investment','investment',        '0.00', 'Capital you put into this project')}
+        {num('Operating Expenses','expenses',          '0.00', 'Day-to-day running costs')}
+        {num('Additional Costs',  'additional_costs', '0.00', 'Miscellaneous or one-off costs')}
+        {num('Payment Received',  'payment_received', '0.00', 'Amount already collected from client')}
+      </div>
+
     </div>
   );
 }
@@ -177,7 +188,7 @@ function Modal({ title, sub, children, footer }: {
 }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 rounded border border-slate-200 dark:border-slate-700 shadow-xl max-w-md w-full flex flex-col max-h-[min(90vh,640px)]">
+      <div className="bg-white dark:bg-gray-900 rounded border border-slate-200 dark:border-slate-700 shadow-xl max-w-2xl w-full flex flex-col max-h-[min(90vh,680px)]">
         {/* pinned header */}
         <div className="flex justify-between items-center px-5 pt-5 pb-4 shrink-0 border-b border-slate-100 dark:border-slate-800">
           <div>
