@@ -192,7 +192,7 @@ function Modal({ title, sub, children, footer }: {
           </button>
         </div>
         {/* scrollable body */}
-        <div className="flex-1 overflow-y-auto px-5 pb-1">
+        <div className="overflow-y-auto px-5 pb-6" style={{ maxHeight: 'calc(100vh - 250px)' }}>
           {children}
         </div>
         {/* sticky footer */}
