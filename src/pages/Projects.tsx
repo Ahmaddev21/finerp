@@ -188,7 +188,7 @@ function Modal({ title, sub, children, footer }: {
 }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 rounded border border-slate-200 dark:border-slate-700 shadow-xl max-w-2xl w-full flex flex-col max-h-[min(90vh,680px)]">
+      <div className="bg-white dark:bg-gray-900 rounded border border-slate-200 dark:border-slate-700 shadow-xl max-w-2xl w-full flex flex-col" style={{ maxHeight: '90vh' }}>
         {/* pinned header */}
         <div className="flex justify-between items-center px-5 pt-5 pb-4 shrink-0 border-b border-slate-100 dark:border-slate-800">
           <div>
