@@ -52,7 +52,7 @@ sidebar, aside, header, main {
 /* No bounce, no translateY — just a clean fade */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: none; }
 }
 
 @keyframes clock-tick {
