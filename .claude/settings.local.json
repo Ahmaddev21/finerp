@@ -4,7 +4,9 @@
       "WebFetch(domain:api.supabase.com)",
       "Bash(npm run *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(npx tsc *)"
     ]
   }
 }
