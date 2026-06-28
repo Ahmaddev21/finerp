@@ -85,17 +85,18 @@ function generateInvoiceNumber(date: string): string {
 
 // Determine initial status based on type, amount, and user role
 function getInitialStatus(type: string, amount: number, role: string): string {
-  // Owners and Admins get auto-approval for everything they enter
-  if (isAdminRole(role)) return 'approved';
-
-  // Receipts are always auto-approved for others too
-  if (type === 'Receipt') return 'approved';
-
-  // Invoices always start as draft for standard users
+  // Invoices always start as draft regardless of role.
+  // Creating an invoice ≠ approving it — it must go through the workflow
+  // (draft → approved → paid) so it doesn't prematurely count as revenue.
   if (type === 'Invoice') return 'draft';
 
-  // Expenses & Petty Cash: auto-approve if small amount AND some roles (currently empty threshold check for non-admins)
-  // Everything else starts as pending
+  // Owners and Admins get auto-approval for all other transaction types
+  if (isAdminRole(role)) return 'approved';
+
+  // Receipts are always auto-approved for standard users too
+  if (type === 'Receipt') return 'approved';
+
+  // Expenses & Petty Cash for non-admins start as pending
   return 'pending';
 }
 

@@ -48,9 +48,11 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function isOverdue(tx: Transaction) {
+  // Only APPROVED invoices can be overdue — drafts and pending ones haven't
+  // been formally sent yet so their due date doesn't count against us.
   return tx?.type === 'Invoice' && tx?.due_date &&
-    new Date(tx.due_date) < new Date() &&
-    tx?.status !== 'paid' && tx?.status !== 'cancelled' && tx?.status !== 'rejected';
+    tx?.status === 'approved' &&
+    new Date(tx.due_date) < new Date();
 }
 
 // ─── Tab config ───────────────────────────────────────────────────────────────
