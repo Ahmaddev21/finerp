@@ -45,7 +45,7 @@ interface AllocationModalProps {
 function AllocationModal({ employee, form, setForm, saving, onClose, onSave }: AllocationModalProps) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl max-w-lg w-full border border-slate-100 dark:border-slate-800 flex flex-col max-h-[90vh]">
+      <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl max-w-2xl w-full border border-slate-100 dark:border-slate-800 flex flex-col">
         <div className="flex justify-between items-center px-8 pt-8 pb-6 shrink-0">
           <div>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Allocate Gear</h3>
@@ -58,84 +58,38 @@ function AllocationModal({ employee, form, setForm, saving, onClose, onSave }: A
           </button>
         </div>
 
-        {/* Scroll wrapper — plain div is the flex child so overflow-y works reliably */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-8 py-2">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">T-Shirt</label>
-              <div className="relative">
-                <Shirt className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input type="number" value={form.t_shirt_qty} onChange={e => setForm(f => ({ ...f, t_shirt_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
+        {/* 3-col compact grid — all 10 items visible without scroll */}
+        <div className="px-8 py-4">
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: 'T-Shirt',       key: 't_shirt_qty'       as const },
+              { label: 'Trouser',       key: 'trouser_qty'       as const },
+              { label: 'Thermal Bag',   key: 'thermal_bag_qty'   as const },
+              ...(employee.category === 'Rider'
+                ? [
+                    { label: 'Helmet',      key: 'helmet_qty'       as const },
+                    { label: 'Safety Gear', key: 'safety_gears_qty' as const },
+                  ]
+                : [
+                    { label: 'Gillet',      key: 'gillets_qty'      as const },
+                  ]
+              ),
+              { label: 'EM Box',        key: 'em_box_qty'        as const },
+              { label: 'Safety Kit',    key: 'safety_kit_qty'    as const },
+              { label: 'Chest Guard',   key: 'chest_guard_qty'   as const },
+              { label: 'Winter Jacket', key: 'winter_jacket_qty' as const },
+            ].map(({ label, key }) => (
+              <div key={key} className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">{label}</label>
+                <input
+                  type="number"
+                  value={form[key]}
+                  onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                  min="0"
+                  className={inputCls}
+                />
               </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Trouser</label>
-              <div className="relative">
-                <Layers className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input type="number" value={form.trouser_qty} onChange={e => setForm(f => ({ ...f, trouser_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Thermal Bag</label>
-              <div className="relative">
-                <ShoppingBag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input type="number" value={form.thermal_bag_qty} onChange={e => setForm(f => ({ ...f, thermal_bag_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
-              </div>
-            </div>
-            {employee.category === 'Rider' ? (
-              <>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Helmet</label>
-                  <div className="relative">
-                    <HardHat className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input type="number" value={form.helmet_qty} onChange={e => setForm(f => ({ ...f, helmet_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Safety Gear</label>
-                  <div className="relative">
-                    <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input type="number" value={form.safety_gears_qty} onChange={e => setForm(f => ({ ...f, safety_gears_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Gillet</label>
-                <div className="relative">
-                  <Shirt className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input type="number" value={form.gillets_qty} onChange={e => setForm(f => ({ ...f, gillets_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
-                </div>
-              </div>
-            )}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">EM Box</label>
-              <div className="relative">
-                <Package className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input type="number" value={form.em_box_qty} onChange={e => setForm(f => ({ ...f, em_box_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Safety Kit</label>
-              <div className="relative">
-                <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input type="number" value={form.safety_kit_qty} onChange={e => setForm(f => ({ ...f, safety_kit_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Chest Guard</label>
-              <div className="relative">
-                <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input type="number" value={form.chest_guard_qty} onChange={e => setForm(f => ({ ...f, chest_guard_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Winter Jacket</label>
-              <div className="relative">
-                <Shirt className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input type="number" value={form.winter_jacket_qty} onChange={e => setForm(f => ({ ...f, winter_jacket_qty: e.target.value }))} min="0" className={cn(inputCls, "pl-12")} />
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
