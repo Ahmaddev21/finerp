@@ -58,9 +58,9 @@ function AllocationModal({ employee, form, setForm, saving, onClose, onSave }: A
           </button>
         </div>
 
-        {/* 3-col compact grid — all 10 items visible without scroll */}
-        <div className="px-8 py-4">
-          <div className="grid grid-cols-3 gap-3">
+        {/* compact grid — collapses to 2-col on phone */}
+        <div className="px-4 sm:px-8 py-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[
               { label: 'T-Shirt',       key: 't_shirt_qty'       as const },
               { label: 'Trouser',       key: 'trouser_qty'       as const },
@@ -119,7 +119,7 @@ interface ReceiveStockModalProps {
 function ReceiveStockModal({ form, setForm, saving, onClose, onSave }: ReceiveStockModalProps) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl max-w-lg w-full p-8 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl max-w-lg w-full p-4 sm:p-8 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Receive Stock</h3>
@@ -141,7 +141,7 @@ function ReceiveStockModal({ form, setForm, saving, onClose, onSave }: ReceiveSt
               className={inputCls}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Received Date</label>
               <input
@@ -166,7 +166,7 @@ function ReceiveStockModal({ form, setForm, saving, onClose, onSave }: ReceiveSt
 
         <div className="mb-8">
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1 mb-3">Quantities Received</p>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {MERCH_ITEMS.map(item => (
               <div key={item.type} className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-600 dark:text-slate-400 px-1">{item.label}</label>
@@ -215,7 +215,7 @@ function ReturnItemsModal({ employee, form, setForm, notes, setNotes, saving, on
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl max-w-lg w-full p-8 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl max-w-lg w-full p-4 sm:p-8 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Record Return</h3>

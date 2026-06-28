@@ -234,7 +234,7 @@ export default function Assets() {
               <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"><X className="w-5 h-5" /></button>
             </div>
             
-            <div className="grid grid-cols-2 gap-5 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Asset Type</label>
                 <select value={newAsset.type} onChange={e => setNewAsset({ ...newAsset, type: e.target.value })} className={inputCls}>
@@ -270,13 +270,13 @@ export default function Assets() {
                 <input type="date" value={newAsset.expiry_date} onChange={e => setNewAsset({ ...newAsset, expiry_date: e.target.value })} className={inputCls} />
               </div>
 
-              <div className="col-span-2">
+              <div className="sm:col-span-2">
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Moved To (Assignment)</label>
                 <input type="text" placeholder="e.g. Vehicle List, Ahmed Al-Farsi, Site A" value={newAsset.moved_to} onChange={e => setNewAsset({ ...newAsset, moved_to: e.target.value })} className={inputCls} />
                 <p className="text-xs text-slate-500 mt-1">Specify who is currently using it or where it is located.</p>
               </div>
 
-              <div className="col-span-2">
+              <div className="sm:col-span-2">
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Remarks</label>
                 <textarea rows={3} placeholder="Any additional notes..." value={newAsset.remarks} onChange={e => setNewAsset({ ...newAsset, remarks: e.target.value })} className={inputCls} />
               </div>
@@ -304,7 +304,7 @@ export default function Assets() {
               <button onClick={() => setEditingAsset(null)} className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"><X className="w-5 h-5" /></button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Asset Type</label>
                 <select value={editForm.type ?? ''} onChange={e => setEditForm({ ...editForm, type: e.target.value })} className={inputCls}>
@@ -341,7 +341,7 @@ export default function Assets() {
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Moved To</label>
                 <input type="text" placeholder="e.g. Ahmed Al-Farsi" value={editForm.moved_to ?? ''} onChange={e => setEditForm({ ...editForm, moved_to: e.target.value })} className={inputCls} />
               </div>
-              <div className="col-span-2">
+              <div className="sm:col-span-2">
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Remarks</label>
                 <textarea rows={2} value={editForm.remarks ?? ''} onChange={e => setEditForm({ ...editForm, remarks: e.target.value })} className={inputCls} />
               </div>

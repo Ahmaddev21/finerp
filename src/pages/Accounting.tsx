@@ -283,7 +283,7 @@ function AmountInput({ value, onChange }: { value: string; onChange: (v: string)
 function InvoiceForm({ f, set }: { f: FormState; set: (v: FormState) => void }) {
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className={labelCls}>Date *</label>
           <input type="date" value={f.date} onChange={e => set({ ...f, date: e.target.value })} className={inputCls} />
@@ -297,7 +297,7 @@ function InvoiceForm({ f, set }: { f: FormState; set: (v: FormState) => void }) 
         <label className={labelCls}>Description / Item *</label>
         <input type="text" value={f.desc} onChange={e => set({ ...f, desc: e.target.value })} placeholder="e.g. Q1 Rider Supply Services" className={inputCls} />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className={labelCls}>Project</label>
           <input type="text" value={f.project} onChange={e => set({ ...f, project: e.target.value })} placeholder="e.g. Snoonu Logistics" className={inputCls} />
@@ -318,7 +318,7 @@ function InvoiceForm({ f, set }: { f: FormState; set: (v: FormState) => void }) 
 function ExpenseForm({ f, set }: { f: FormState; set: (v: FormState) => void }) {
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className={labelCls}>Date *</label>
           <input type="date" value={f.date} onChange={e => set({ ...f, date: e.target.value })} className={inputCls} />
@@ -344,7 +344,7 @@ function ExpenseForm({ f, set }: { f: FormState; set: (v: FormState) => void }) 
 function ReceiptForm({ f, set }: { f: FormState; set: (v: FormState) => void }) {
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className={labelCls}>Date *</label>
           <input type="date" value={f.date} onChange={e => set({ ...f, date: e.target.value })} className={inputCls} />
@@ -358,7 +358,7 @@ function ReceiptForm({ f, set }: { f: FormState; set: (v: FormState) => void }) 
         <label className={labelCls}>Description *</label>
         <input type="text" value={f.desc} onChange={e => set({ ...f, desc: e.target.value })} placeholder="e.g. Payment for INV-001" className={inputCls} />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className={labelCls}>Project</label>
           <input type="text" value={f.project} onChange={e => set({ ...f, project: e.target.value })} placeholder="e.g. Snoonu Logistics" className={inputCls} />
@@ -390,7 +390,7 @@ function PettyCashForm({
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className={labelCls}>Date *</label>
           <input type="date" value={f.date} onChange={e => set({ ...f, date: e.target.value })} className={inputCls} />

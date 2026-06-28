@@ -490,8 +490,8 @@ export default function Delivery() {
       {/* Add / Edit Modal */}
       {isOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-2xl w-full p-8 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div className="flex justify-between items-center mb-8">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-2xl w-full p-4 sm:p-8 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex justify-between items-center mb-4 sm:mb-8">
               <div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                   {editRecord ? `Edit ${form.category}` : `Add New ${form.category}`}
@@ -506,7 +506,7 @@ export default function Delivery() {
             </div>
 
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">EMP Number <span className="text-rose-500">*</span></label>
                   <div className="relative">
@@ -523,7 +523,7 @@ export default function Delivery() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Company</label>
                   <input type="text" value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} placeholder="e.g. Snoonu Logistics" className={inputCls} />
@@ -534,7 +534,7 @@ export default function Delivery() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Snoonu Email</label>
                   <div className="relative">
@@ -564,7 +564,7 @@ export default function Delivery() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">QID Number</label>
                   <div className="relative">
@@ -578,7 +578,7 @@ export default function Delivery() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Passport Number</label>
                   <input type="text" value={form.passport_number} onChange={e => setForm({ ...form, passport_number: e.target.value })} placeholder="Passport No." className={inputCls} />
@@ -589,7 +589,7 @@ export default function Delivery() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {form.category === 'Rider' ? (
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Bike Number</label>

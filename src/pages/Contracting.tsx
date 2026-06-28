@@ -637,7 +637,7 @@ export default function Contracting() {
                 placeholder="0.00"
                 className={inputCls}
               /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Start</label>
                 <input type="date" value={ctrForm.startDate} onChange={e => setCtrForm({ ...ctrForm, startDate: e.target.value })} className={inputCls} /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">End</label>
@@ -658,7 +658,7 @@ export default function Contracting() {
               <input type="text" value={prjForm.name} onChange={e => setPrjForm({ ...prjForm, name: e.target.value })} className={inputCls} /></div>
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Client <span className="text-rose-400">*</span></label>
               <input type="text" value={prjForm.client} onChange={e => setPrjForm({ ...prjForm, client: e.target.value })} className={inputCls} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Value (QR)</label>
                 <input
                   type="text"
@@ -695,7 +695,7 @@ export default function Contracting() {
                   {contracts.map(c => <option key={c.id} value={c.id}>{c.id} — {c.title}</option>)}
                 </select></div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Start</label>
                 <input type="date" value={prjForm.startDate} onChange={e => setPrjForm({ ...prjForm, startDate: e.target.value })} className={inputCls} /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">End</label>
@@ -723,7 +723,7 @@ export default function Contracting() {
               <input type="text" value={subForm.name} onChange={e => setSubForm({ ...subForm, name: e.target.value })} className={inputCls} /></div>
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Contact Person</label>
               <input type="text" value={subForm.contactPerson} onChange={e => setSubForm({ ...subForm, contactPerson: e.target.value })} className={inputCls} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Phone</label>
                 <input type="text" value={subForm.phone} onChange={e => setSubForm({ ...subForm, phone: e.target.value })} className={inputCls} /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
@@ -746,7 +746,7 @@ export default function Contracting() {
               <input type="text" value={qotForm.client} onChange={e => setQotForm({ ...qotForm, client: e.target.value })} className={inputCls} /></div>
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Description <span className="text-rose-400">*</span></label>
               <input type="text" value={qotForm.description} onChange={e => setQotForm({ ...qotForm, description: e.target.value })} className={inputCls} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (QR)</label>
                 <input
                   type="text"
@@ -794,7 +794,7 @@ export default function Contracting() {
               <input type="text" value={invOutForm.client} onChange={e => setInvOutForm({ ...invOutForm, client: e.target.value })} className={inputCls} /></div>
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Description</label>
               <input type="text" value={invOutForm.description} onChange={e => setInvOutForm({ ...invOutForm, description: e.target.value })} className={inputCls} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (QR) <span className="text-rose-400">*</span></label>
                 <input
                   type="text"
@@ -825,7 +825,7 @@ export default function Contracting() {
                   {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select></div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Issue Date</label>
                 <input type="date" value={invOutForm.issuedDate} onChange={e => setInvOutForm({ ...invOutForm, issuedDate: e.target.value })} className={inputCls} /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Due Date</label>
@@ -850,7 +850,7 @@ export default function Contracting() {
                 <option value="">Select subcontractor…</option>
                 {subcontractors.filter(s => s.status === 'active').map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Invoice Ref</label>
                 <input type="text" value={invInForm.invoiceRef} onChange={e => setInvInForm({ ...invInForm, invoiceRef: e.target.value })} className={inputCls} /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (QR) <span className="text-rose-400">*</span></label>
@@ -868,7 +868,7 @@ export default function Contracting() {
             </div>
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Description</label>
               <input type="text" value={invInForm.description} onChange={e => setInvInForm({ ...invInForm, description: e.target.value })} className={inputCls} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Received</label>
                 <input type="date" value={invInForm.receivedDate} onChange={e => setInvInForm({ ...invInForm, receivedDate: e.target.value })} className={inputCls} /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Due</label>
@@ -890,7 +890,7 @@ export default function Contracting() {
                 <option value="in">Received from Client</option>
                 <option value="out">Sent to Subcontractor</option>
               </select></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (QR) <span className="text-rose-400">*</span></label>
                 <input
                   type="text"
@@ -906,7 +906,7 @@ export default function Contracting() {
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Date</label>
                 <input type="date" value={payForm.paymentDate} onChange={e => setPayForm({ ...payForm, paymentDate: e.target.value })} className={inputCls} /></div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Method</label>
                 <select value={payForm.method} onChange={e => setPayForm({ ...payForm, method: e.target.value })} className={inputCls}>
                   <option>Bank Transfer</option><option>Cheque</option><option>Cash</option><option>Online</option>

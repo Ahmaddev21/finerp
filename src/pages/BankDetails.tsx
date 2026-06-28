@@ -66,10 +66,10 @@ interface FormModalProps {
 function FormModal({ isEdit, form, setForm, saving, onClose, onSave }: FormModalProps) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-2xl w-full p-8 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-2xl w-full p-4 sm:p-8 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
         {/* Header */}
-        <div className="flex justify-between items-start mb-8">
+        <div className="flex justify-between items-start mb-4 sm:mb-8">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -93,7 +93,7 @@ function FormModal({ isEdit, form, setForm, saving, onClose, onSave }: FormModal
           {/* Employee info */}
           <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Employee Identity</p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Full Name <span className="text-rose-500">*</span></label>
                 <div className="relative">
@@ -126,7 +126,7 @@ function FormModal({ isEdit, form, setForm, saving, onClose, onSave }: FormModal
           {/* Bank info */}
           <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Bank Information</p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Bank Name</label>
                 <div className="relative">

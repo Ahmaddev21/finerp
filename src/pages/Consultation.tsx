@@ -588,7 +588,7 @@ export default function Consultation() {
               <input type="text" value={engForm.client} onChange={e => setEngForm({ ...engForm, client: e.target.value })} className={inputCls} /></div>
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Service <span className="text-rose-400">*</span></label>
               <input type="text" value={engForm.service} onChange={e => setEngForm({ ...engForm, service: e.target.value })} placeholder="e.g. IT Strategy Advisory" className={inputCls} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Consultant</label>
                 <input type="text" value={engForm.consultant} onChange={e => setEngForm({ ...engForm, consultant: e.target.value })} placeholder={user?.name} className={inputCls} /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Rate/hr (QR)</label>
@@ -624,7 +624,7 @@ export default function Consultation() {
               <input type="text" value={ptrForm.country} onChange={e => setPtrForm({ ...ptrForm, country: e.target.value })} placeholder="e.g. Germany, France" className={inputCls} /></div>
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Contact Person</label>
               <input type="text" value={ptrForm.contactPerson} onChange={e => setPtrForm({ ...ptrForm, contactPerson: e.target.value })} className={inputCls} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
                 <input type="email" value={ptrForm.contactEmail} onChange={e => setPtrForm({ ...ptrForm, contactEmail: e.target.value })} className={inputCls} /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Phone</label>
@@ -646,7 +646,7 @@ export default function Consultation() {
           <div className="space-y-3">
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Company Name <span className="text-rose-400">*</span></label>
               <input type="text" value={clForm.name} onChange={e => setClForm({ ...clForm, name: e.target.value })} className={inputCls} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Industry</label>
                 <input type="text" value={clForm.industry} onChange={e => setClForm({ ...clForm, industry: e.target.value })} placeholder="e.g. Technology" className={inputCls} /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Country</label>
@@ -654,7 +654,7 @@ export default function Consultation() {
             </div>
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Contact Person</label>
               <input type="text" value={clForm.contactPerson} onChange={e => setClForm({ ...clForm, contactPerson: e.target.value })} className={inputCls} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
                 <input type="email" value={clForm.contactEmail} onChange={e => setClForm({ ...clForm, contactEmail: e.target.value })} className={inputCls} /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Phone</label>
@@ -677,7 +677,7 @@ export default function Consultation() {
                 <option value="">Select partner…</option>
                 {partners.filter(p => p.status === 'active').map(p => <option key={p.id} value={p.id}>{p.name} ({p.country})</option>)}
               </select></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Invoice Ref</label>
                 <input type="text" value={invInForm.invoiceRef} onChange={e => setInvInForm({ ...invInForm, invoiceRef: e.target.value })} className={inputCls} /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Project</label>
@@ -718,7 +718,7 @@ export default function Consultation() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Received</label>
                 <input type="date" value={invInForm.receivedDate} onChange={e => setInvInForm({ ...invInForm, receivedDate: e.target.value })} className={inputCls} /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Due</label>
@@ -748,7 +748,7 @@ export default function Consultation() {
               </select></div>
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Description</label>
               <input type="text" value={invOutForm.description} onChange={e => setInvOutForm({ ...invOutForm, description: e.target.value })} className={inputCls} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (QR) <span className="text-rose-400">*</span></label>
                 <input
                   type="text"
@@ -764,7 +764,7 @@ export default function Consultation() {
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Project</label>
                 <input type="text" value={invOutForm.projectId} onChange={e => setInvOutForm({ ...invOutForm, projectId: e.target.value })} placeholder="e.g. IT Strategy" className={inputCls} /></div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Issue Date</label>
                 <input type="date" value={invOutForm.issuedDate} onChange={e => setInvOutForm({ ...invOutForm, issuedDate: e.target.value })} className={inputCls} /></div>
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Due Date</label>
@@ -800,7 +800,7 @@ export default function Consultation() {
                 <option value="">None</option>
                 {invoicesOut.filter(i => i.status === 'approved').map(i => <option key={i.id} value={i.id}>{i.invoiceNumber} — {i.client} ({formatCurrency(i.amount)})</option>)}
               </select></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (QR) <span className="text-rose-400">*</span></label>
                 <input
                   type="text"
@@ -816,7 +816,7 @@ export default function Consultation() {
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Date</label>
                 <input type="date" value={payForm.paymentDate} onChange={e => setPayForm({ ...payForm, paymentDate: e.target.value })} className={inputCls} /></div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Method</label>
                 <select value={payForm.method} onChange={e => setPayForm({ ...payForm, method: e.target.value })} className={inputCls}>
                   <option>Bank Transfer</option><option>Cheque</option><option>Cash</option><option>Online</option>

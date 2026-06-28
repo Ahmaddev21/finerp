@@ -255,7 +255,7 @@ function RecordModal({
 
           {/* Check In / Check Out — present, late, half_day */}
           {showTime && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Check In</label>
                 <input type="time" value={form.checkIn} onChange={e => set({ checkIn: e.target.value })} className={inputCls} />
