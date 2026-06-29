@@ -67,9 +67,14 @@ export function useDeliveryDocuments(deliveryId: string | null) {
       const safeName = file.name.replace(/[^a-zA-Z0-9._\-]/g, '_');
       const path = `${company.id}/delivery-documents/${deliveryId}/${Date.now()}_${safeName}`;
 
+      // Word docs have a MIME type that Supabase buckets don't whitelist by default.
+      // Upload as octet-stream so Storage accepts it; the real type is saved in the DB row.
+      const wordMimes = ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      const uploadContentType = wordMimes.includes(file.type) ? 'application/octet-stream' : (file.type || 'application/octet-stream');
+
       const { error: uploadErr } = await supabase.storage
         .from('finance_attachments')
-        .upload(path, file, { upsert: false });
+        .upload(path, file, { upsert: false, contentType: uploadContentType });
 
       if (uploadErr) throw uploadErr;
 
