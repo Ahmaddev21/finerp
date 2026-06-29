@@ -85,14 +85,19 @@ export function useFinanceWorkflow() {
   const fetch = useCallback(async () => {
     if (!isSupabaseConfigured || !company?.id) return;
     setLoading(true);
-    const { data, error: err } = await supabase
-      .from('finance_workflows')
-      .select('*')
-      .eq('company_id', company.id)
-      .order('created_at', { ascending: false });
-    setLoading(false);
-    if (err) { setError(err.message); return; }
-    setWorkflows((data ?? []).map(mapRow));
+    try {
+      const { data, error: err } = await supabase
+        .from('finance_workflows')
+        .select('*')
+        .eq('company_id', company.id)
+        .order('created_at', { ascending: false });
+      if (err) { setError(err.message); return; }
+      setWorkflows((data ?? []).map(mapRow));
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to load workflows');
+    } finally {
+      setLoading(false);
+    }
   }, [company?.id]);
 
   useEffect(() => {
@@ -107,7 +112,9 @@ export function useFinanceWorkflow() {
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'finance_workflows', filter: `company_id=eq.${company.id}` },
         () => { fetch(); })
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.error('[FinanceWorkflow] realtime error:', err.message);
+      });
     return () => { supabase.removeChannel(channel); };
   }, [company?.id, fetch]);
 

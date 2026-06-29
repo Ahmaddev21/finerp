@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ErrorBoundary } from './ErrorBoundary';
 import { Navigate, Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
 import { useThemeStore } from '../store/theme';
@@ -577,13 +578,15 @@ export default function Layout() {
 
         {/* Page Content */}
         <div className="flex-1 p-4 sm:p-6 overflow-auto relative">
-          <React.Suspense fallback={
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            </div>
-          }>
-            <Outlet />
-          </React.Suspense>
+          <ErrorBoundary>
+            <React.Suspense fallback={
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              </div>
+            }>
+              <Outlet />
+            </React.Suspense>
+          </ErrorBoundary>
         </div>
       </main>
     </div>
