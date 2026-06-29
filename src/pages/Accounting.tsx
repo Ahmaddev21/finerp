@@ -91,7 +91,7 @@ const COLS: Record<Exclude<TabID, 'pettycash'>, ColDef[]> = {
   expenses: [
     { key: 'date',    label: 'Date',              sortable: 'date' },
     { key: 'desc',    label: 'Description' },
-    { key: 'vendor',  label: 'Vendor / Paid To' },
+    { key: 'vendor',  label: 'From Company' },
     { key: 'project', label: 'Category' },
     { key: 'amount',  label: 'Amount',            align: 'right', sortable: 'amount' },
     { key: 'status',  label: 'Status',            align: 'center', sortable: 'status' },
@@ -330,18 +330,18 @@ function ExpenseForm({ f, set }: { f: FormState; set: (v: FormState) => void }) 
         </div>
       </div>
       <div>
-        <label className={labelCls}>Vendor / Paid To</label>
+        <label className={labelCls}>From Company</label>
         <div className="relative">
           <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
           <input
             type="text"
             value={f.client_name}
             onChange={e => set({ ...f, client_name: e.target.value })}
-            placeholder="e.g. Carrefour, Shell, Amazon"
+            placeholder="Which of your companies paid this?"
             className={cn(inputCls, 'pl-8')}
           />
         </div>
-        <p className="text-[10px] text-slate-400 mt-1">Which company or supplier was this expense paid to?</p>
+        <p className="text-[10px] text-slate-400 mt-1">Which of your companies did this expense come from?</p>
       </div>
       <div>
         <label className={labelCls}>Description *</label>
