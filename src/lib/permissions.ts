@@ -6,7 +6,8 @@ export interface ModuleDef {
   description: string;
 }
 
-export const ALWAYS_ALLOWED = ['owner', 'admin'];
+// Only owner is permanently locked — admin is now configurable per-module by the owner
+export const ALWAYS_ALLOWED = ['owner'];
 
 export const CONFIGURABLE_ROLES = [
   { key: 'bdm',          label: 'BDM' },
@@ -32,6 +33,7 @@ export const MODULES: ModuleDef[] = [
   { key: 'audit-logs',       label: 'Audit Logs',         description: 'System activity logs' },
 ];
 
+// Admin is on by default for every module — owner can remove it per-module
 export const DEFAULT_PERMISSIONS: ModulePermissions = {
   projects:          ['owner', 'admin'],
   accounting:        ['owner', 'admin'],
@@ -48,7 +50,7 @@ export const DEFAULT_PERMISSIONS: ModulePermissions = {
   'audit-logs':      ['owner', 'admin'],
 };
 
-/** Returns the roles allowed for a module, always including owner + admin. */
+/** Returns the roles allowed for a module. Owner is always included; admin is now configurable. */
 export function getModuleRoles(
   moduleKey: string,
   stored: ModulePermissions | null | undefined
@@ -56,7 +58,8 @@ export function getModuleRoles(
   if (!stored || stored[moduleKey] === undefined) {
     return DEFAULT_PERMISSIONS[moduleKey] ?? [...ALWAYS_ALLOWED];
   }
-  return [...new Set([...ALWAYS_ALLOWED, ...stored[moduleKey]])];
+  // Only owner is hardcoded; everything else (including admin) comes from stored
+  return [...new Set(['owner', ...stored[moduleKey]])];
 }
 
 /** Returns true if the given role can access the module. */

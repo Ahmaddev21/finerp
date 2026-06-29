@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Check, Lock, Save, Loader2, CheckCircle2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, Lock, Save, Loader2, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import { updateModulePermissions } from '../services/auth';
 import {
   MODULES,
   CONFIGURABLE_ROLES,
-  ALWAYS_ALLOWED,
   DEFAULT_PERMISSIONS,
   ModulePermissions,
 } from '../lib/permissions';
@@ -17,7 +16,7 @@ function buildInitialState(stored: ModulePermissions | null | undefined): Module
     if (stored && stored[m.key] !== undefined) {
       result[m.key] = stored[m.key];
     } else {
-      result[m.key] = DEFAULT_PERMISSIONS[m.key] ?? [...ALWAYS_ALLOWED];
+      result[m.key] = DEFAULT_PERMISSIONS[m.key] ?? ['owner', 'admin'];
     }
   }
   return result;
@@ -25,6 +24,7 @@ function buildInitialState(stored: ModulePermissions | null | undefined): Module
 
 export default function Permissions() {
   const { user, company, setCompany } = useAuthStore();
+  const isOwner = user?.role === 'owner';
   const canEdit = user?.role === 'owner' || user?.role === 'admin';
 
   const [perms, setPerms] = useState<ModulePermissions>(() =>
@@ -37,6 +37,8 @@ export default function Permissions() {
 
   const toggle = (moduleKey: string, roleKey: string) => {
     if (!canEdit) return;
+    // Only owner can change admin permissions
+    if (roleKey === 'admin' && !isOwner) return;
     setPerms(prev => {
       const current = prev[moduleKey] ?? [];
       const has = current.includes(roleKey);
@@ -80,7 +82,8 @@ export default function Permissions() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Module Permissions</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Control which roles can access each section. Owner and Admin always have full access.
+            Control which roles can access each section. Owner always has full access.
+            {isOwner && <span className="ml-1 text-amber-600 dark:text-amber-400 font-medium">Admin access is configurable per module.</span>}
           </p>
         </div>
         {canEdit && (
@@ -131,6 +134,16 @@ export default function Permissions() {
         </div>
       )}
 
+      {/* Admin note for non-owners */}
+      {!isOwner && (
+        <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 rounded-xl">
+          <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-700 dark:text-amber-400">
+            Only the owner can adjust Admin permissions. You can manage access for BDM, Engineer, and other roles.
+          </p>
+        </div>
+      )}
+
       {/* Permissions matrix */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
@@ -140,14 +153,30 @@ export default function Permissions() {
                 <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 w-56">
                   Module
                 </th>
-                {/* Locked columns */}
-                {ALWAYS_ALLOWED.map(r => (
-                  <th key={r} className="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 w-28">
-                    <span className="capitalize">{r}</span>
+
+                {/* Owner — permanently locked */}
+                <th className="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 w-28">
+                  Owner
+                  <Lock className="w-3 h-3 inline ml-1 opacity-50" />
+                </th>
+
+                {/* Admin — configurable by owner, locked for others */}
+                <th className="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider w-28">
+                  <span className={cn(
+                    isOwner
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-slate-400 dark:text-slate-500'
+                  )}>
+                    Admin
+                  </span>
+                  {isOwner ? (
+                    <ShieldCheck className="w-3 h-3 inline ml-1 text-amber-500 opacity-70" />
+                  ) : (
                     <Lock className="w-3 h-3 inline ml-1 opacity-50" />
-                  </th>
-                ))}
-                {/* Configurable columns */}
+                  )}
+                </th>
+
+                {/* Other configurable roles */}
                 {CONFIGURABLE_ROLES.map(r => (
                   <th key={r.key} className="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 w-28">
                     {r.label}
@@ -156,44 +185,76 @@ export default function Permissions() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {MODULES.map(m => (
-                <tr key={m.key} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm">{m.label}</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{m.description}</p>
-                  </td>
-                  {/* Always-allowed (locked) */}
-                  {ALWAYS_ALLOWED.map(r => (
-                    <td key={r} className="px-4 py-3.5 text-center">
+              {MODULES.map(m => {
+                const adminChecked = (perms[m.key] ?? []).includes('admin');
+                return (
+                  <tr key={m.key} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
+                    <td className="px-5 py-3.5">
+                      <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm">{m.label}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{m.description}</p>
+                    </td>
+
+                    {/* Owner — always checked, locked */}
+                    <td className="px-4 py-3.5 text-center">
                       <span className="inline-flex items-center justify-center w-6 h-6 bg-emerald-100 dark:bg-emerald-950/40 rounded-full">
                         <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       </span>
                     </td>
-                  ))}
-                  {/* Configurable toggles */}
-                  {CONFIGURABLE_ROLES.map(r => {
-                    const checked = (perms[m.key] ?? []).includes(r.key);
-                    return (
-                      <td key={r.key} className="px-4 py-3.5 text-center">
+
+                    {/* Admin — toggleable by owner only */}
+                    <td className="px-4 py-3.5 text-center">
+                      {isOwner ? (
                         <button
                           type="button"
-                          onClick={() => toggle(m.key, r.key)}
-                          disabled={!canEdit}
+                          onClick={() => toggle(m.key, 'admin')}
+                          title={adminChecked ? 'Remove admin access' : 'Grant admin access'}
                           className={cn(
                             'inline-flex items-center justify-center w-6 h-6 rounded-full border-2 transition-all',
-                            checked
-                              ? 'bg-indigo-600 border-indigo-600 hover:bg-indigo-500 hover:border-indigo-500'
-                              : 'bg-transparent border-slate-300 dark:border-slate-600 hover:border-indigo-400 dark:hover:border-indigo-500',
-                            !canEdit && 'cursor-not-allowed opacity-50'
+                            adminChecked
+                              ? 'bg-amber-500 border-amber-500 hover:bg-amber-400 hover:border-amber-400'
+                              : 'bg-transparent border-slate-300 dark:border-slate-600 hover:border-amber-400 dark:hover:border-amber-500'
                           )}
                         >
-                          {checked && <Check className="w-3.5 h-3.5 text-white" />}
+                          {adminChecked && <Check className="w-3.5 h-3.5 text-white" />}
                         </button>
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+                      ) : (
+                        // Admin sees a locked checkbox — no interaction
+                        <span className={cn(
+                          'inline-flex items-center justify-center w-6 h-6 rounded-full',
+                          adminChecked
+                            ? 'bg-amber-100 dark:bg-amber-950/40'
+                            : 'bg-transparent border-2 border-slate-200 dark:border-slate-700'
+                        )}>
+                          {adminChecked && <Check className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />}
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Other configurable roles */}
+                    {CONFIGURABLE_ROLES.map(r => {
+                      const checked = (perms[m.key] ?? []).includes(r.key);
+                      return (
+                        <td key={r.key} className="px-4 py-3.5 text-center">
+                          <button
+                            type="button"
+                            onClick={() => toggle(m.key, r.key)}
+                            disabled={!canEdit}
+                            className={cn(
+                              'inline-flex items-center justify-center w-6 h-6 rounded-full border-2 transition-all',
+                              checked
+                                ? 'bg-indigo-600 border-indigo-600 hover:bg-indigo-500 hover:border-indigo-500'
+                                : 'bg-transparent border-slate-300 dark:border-slate-600 hover:border-indigo-400 dark:hover:border-indigo-500',
+                              !canEdit && 'cursor-not-allowed opacity-50'
+                            )}
+                          >
+                            {checked && <Check className="w-3.5 h-3.5 text-white" />}
+                          </button>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
