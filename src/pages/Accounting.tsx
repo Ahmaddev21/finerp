@@ -6,7 +6,7 @@ import {
   ChevronUp, ChevronDown, ChevronsUpDown, Plus, X, Loader2,
   Pencil, Trash2, BadgeCheck, Send, FileText, Ban, FileSpreadsheet,
   Paperclip, Eye, ReceiptText, Clock, Wallet, ScanSearch, FileDown,
-  CheckCircle2, AlertTriangle, ArrowRightLeft, Check,
+  CheckCircle2, AlertTriangle, ArrowRightLeft, Check, Building2,
 } from 'lucide-react';
 import { useTransactions, Transaction } from '../hooks/useTransactions';
 import { RowMenu } from '../components/RowMenu';
@@ -91,7 +91,8 @@ const COLS: Record<Exclude<TabID, 'pettycash'>, ColDef[]> = {
   expenses: [
     { key: 'date',    label: 'Date',              sortable: 'date' },
     { key: 'desc',    label: 'Description' },
-    { key: 'project', label: 'Category / Project' },
+    { key: 'vendor',  label: 'Vendor / Paid To' },
+    { key: 'project', label: 'Category' },
     { key: 'amount',  label: 'Amount',            align: 'right', sortable: 'amount' },
     { key: 'status',  label: 'Status',            align: 'center', sortable: 'status' },
     { key: 'actions', label: '' },
@@ -327,6 +328,20 @@ function ExpenseForm({ f, set }: { f: FormState; set: (v: FormState) => void }) 
           <label className={labelCls}>Category / Project</label>
           <input type="text" value={f.project} onChange={e => set({ ...f, project: e.target.value })} placeholder="e.g. Fleet, Internal" className={inputCls} />
         </div>
+      </div>
+      <div>
+        <label className={labelCls}>Vendor / Paid To</label>
+        <div className="relative">
+          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            value={f.client_name}
+            onChange={e => set({ ...f, client_name: e.target.value })}
+            placeholder="e.g. Carrefour, Shell, Amazon"
+            className={cn(inputCls, 'pl-8')}
+          />
+        </div>
+        <p className="text-[10px] text-slate-400 mt-1">Which company or supplier was this expense paid to?</p>
       </div>
       <div>
         <label className={labelCls}>Description *</label>
@@ -694,6 +709,15 @@ export default function Accounting() {
               <p className="text-[10px] text-slate-400 mt-0.5">{tx.project}</p>
             )}
           </div>
+        );
+      case 'vendor':
+        return tx.client_name ? (
+          <div className="flex items-center gap-1.5">
+            <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{tx.client_name}</span>
+          </div>
+        ) : (
+          <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
         );
       case 'project':
         return <span className="text-xs text-slate-500 dark:text-slate-400">{tx.project || '—'}</span>;
