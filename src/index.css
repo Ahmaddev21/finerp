@@ -5,7 +5,7 @@
    ─────────────────────────────────────────────────────────────────────────── */
 
 /* IBM Plex Sans — designed for financial/enterprise applications */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -20,14 +20,36 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
-  font-size: 16px; /* standard modern base for perfect readability */
+  font-size: 16px;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   margin: 0;
   padding: 0;
   letter-spacing: -0.01em;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "tnum" 0;
 }
+
+/* Branded text selection */
+::selection {
+  background: rgba(99, 102, 241, 0.18);
+  color: inherit;
+}
+.dark ::selection {
+  background: rgba(129, 140, 248, 0.25);
+}
+
+/* Tight letter-spacing on large headings — IBM Plex earns it */
+h1 { letter-spacing: -0.025em; font-weight: 700; }
+h2 { letter-spacing: -0.02em;  font-weight: 600; }
+h3 { letter-spacing: -0.015em; }
+
+/* Placeholder refinement */
+::placeholder { opacity: 0.45; }
+
+/* All interactive elements should show pointer */
+button, [role="button"], label[for] { cursor: pointer; }
 
 /* ─── Scrollbar ──────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -76,13 +98,18 @@ sidebar, aside, header, main {
 /* Clock colon blink */
 .clock-colon { animation: clock-tick 1s step-end infinite; }
 
-/* ─── Typography — Classic Financial ─────────────────────────────────────── */
-/* NO gradient text — just solid, confident dark text */
+/* ─── Typography ─────────────────────────────────────────────────────────── */
 .gradient-text {
-  color: #1e3a5f; /* deep navy blue — professional, no gradient */
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 .dark .gradient-text {
-  color: #93c5fd; /* soft blue in dark mode — still legible */
+  background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* ─── NO Glassmorphism ───────────────────────────────────────────────────── */
@@ -168,36 +195,35 @@ sidebar, aside, header, main {
   transform: translateX(18px);
 }
 
-/* ─── Table Typography — Dense, readable ─────────────────────────────────── */
+/* ─── Table Typography ───────────────────────────────────────────────────── */
 table {
   border-collapse: collapse;
 }
 
 th {
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
 }
 
 td, th {
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
-/* ─── Financial Number Formatting ────────────────────────────────────────── */
-/* Tabular figures for aligned numbers in tables */
+/* ─── Financial Numbers ──────────────────────────────────────────────────── */
 .font-mono, td {
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
 
-/* ─── Focus States — Clean/Professional ──────────────────────────────────── */
-input:focus, select:focus, textarea:focus, button:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 1px;
+/* ─── Focus States ───────────────────────────────────────────────────────── */
+input:focus-visible, select:focus-visible, textarea:focus-visible,
+button:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.6);
+  outline-offset: 2px;
 }
-
-/* Override any remaining shadow effects on inputs */
-input, select, textarea {
-  box-shadow: none !important;
-}
+/* Let Tailwind's ring utilities work — don't kill box-shadow on inputs */
 
 /* ─── Print-friendly text ─────────────────────────────────────────────────── */
 @media print {
