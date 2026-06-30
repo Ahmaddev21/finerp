@@ -251,17 +251,24 @@ function SidebarContent({ onClose, accountingBadge }: { onClose: () => void; acc
 
   return (
     <div className="flex flex-col h-full">
-      {/* Logo — classic wordmark */}
-      <div className="px-4 py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-            Fin<span className="text-blue-600 dark:text-blue-400">ERP</span>
-          </h1>
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Financial & Operations</p>
+      {/* Logo */}
+      <div className="px-4 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <img
+            src="/logo-transparent.png"
+            alt="Rafi Al Aftab"
+            className="h-11 w-auto object-contain shrink-0 dark:brightness-0 dark:invert"
+          />
+          <div className="min-w-0">
+            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
+              Fin<span className="text-blue-600 dark:text-blue-400">ERP</span>
+            </h1>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight truncate">Rafi Al Aftab</p>
+          </div>
         </div>
         <button
           onClick={onClose}
-          className="md:hidden p-1.5 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="md:hidden p-1.5 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
         >
           <X className="w-4 h-4" />
         </button>
