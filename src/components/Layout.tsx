@@ -558,12 +558,12 @@ export default function Layout() {
           <div className="flex items-center gap-2 shrink-0">
 
             {/* Clock */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-blue-200/60 dark:border-violet-500/30 bg-gradient-to-r from-blue-50/80 to-violet-50/80 dark:from-blue-950/30 dark:to-violet-950/30 backdrop-blur-sm">
-              <span className="font-mono text-sm font-black tabular-nums tracking-tight bg-gradient-to-r from-blue-600 to-violet-600 dark:from-blue-400 dark:to-violet-400 bg-clip-text text-transparent">
+            <div className="hidden sm:flex items-center gap-2.5 px-4 py-2 rounded-xl border border-blue-200/60 dark:border-violet-400/20 bg-gradient-to-r from-blue-50 to-violet-50 dark:from-slate-800 dark:to-slate-800 backdrop-blur-sm">
+              <span className="font-mono text-base font-black tabular-nums tracking-tight bg-gradient-to-r from-blue-600 to-violet-600 dark:from-white dark:to-blue-100 bg-clip-text text-transparent">
                 {h}:{m}:{s}
               </span>
-              <span className="text-[10px] font-black text-violet-500 dark:text-violet-400 leading-none">{ampm}</span>
-              <span className="text-[11px] text-slate-400 dark:text-slate-500 hidden lg:inline border-l border-blue-200 dark:border-violet-800 pl-2">{dayStr}</span>
+              <span className="text-xs font-black text-violet-500 dark:text-violet-300 leading-none">{ampm}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-400 hidden lg:inline border-l border-blue-200 dark:border-slate-600 pl-2.5">{dayStr}</span>
             </div>
 
             {/* Dark Mode Toggle */}
