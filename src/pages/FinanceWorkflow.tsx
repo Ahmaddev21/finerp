@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   useFinanceWorkflow,
   type FinanceWorkflow as FW,
@@ -31,12 +31,13 @@ const CATEGORY_TX_TYPE: Record<FWCategory, string> = {
 
 const TX_TYPES = ['Invoice', 'Expense', 'Receipt', 'Petty Cash', 'Salary'];
 
-const STATUS_TABS: { key: FWStatus | 'all'; label: string }[] = [
+const STATUS_TABS: { key: FWStatus | 'all' | 'notes'; label: string }[] = [
   { key: 'all',         label: 'All' },
   { key: 'pending',     label: 'Pending' },
   { key: 'in_progress', label: 'In Progress' },
   { key: 'completed',   label: 'Completed' },
   { key: 'rejected',    label: 'Rejected' },
+  { key: 'notes',       label: 'Notes' },
 ];
 
 // ── Notes helpers ─────────────────────────────────────────────────────────────
@@ -98,127 +99,201 @@ function categoryCls(c: FWCategory) {
   }
 }
 
-// ── Notes Panel ───────────────────────────────────────────────────────────────
+// ── Notes View (top-level tab) ────────────────────────────────────────────────
 
-function NotesPanel({ wf, isOwner, onUpdate }: {
-  wf: FW;
-  isOwner: boolean;
-  onUpdate: (id: string, updates: Partial<Pick<FW, 'notes'>>) => Promise<void>;
+type FlatNote = NoteEntry & {
+  workflowId:       string;
+  workflowTitle:    string;
+  workflowCategory: FWCategory;
+};
+
+function NotesView({
+  workflows,
+  isOwner,
+  updateWorkflow,
+  onOpenWorkflow,
+}: {
+  workflows:      FW[];
+  isOwner:        boolean;
+  updateWorkflow: (id: string, updates: any) => Promise<void>;
+  onOpenWorkflow: (wf: FW) => void;
 }) {
-  const [notes,    setNotes]    = useState<NoteEntry[]>(() => parseNotes(wf.notes));
-  const [newText,  setNewText]  = useState('');
-  const [editId,   setEditId]   = useState<string | null>(null);
-  const [editText, setEditText] = useState('');
-  const [saving,   setSaving]   = useState(false);
+  const [selectedWfId, setSelectedWfId] = useState(workflows[0]?.id ?? '');
+  const [newText,      setNewText]      = useState('');
+  const [editId,       setEditId]       = useState<string | null>(null);
+  const [editWfId,     setEditWfId]     = useState<string | null>(null);
+  const [editText,     setEditText]     = useState('');
+  const [saving,       setSaving]       = useState(false);
 
-  const persist = async (updated: NoteEntry[]) => {
+  const allNotes: FlatNote[] = useMemo(() =>
+    workflows.flatMap(wf =>
+      parseNotes(wf.notes).map(n => ({
+        ...n,
+        workflowId:       wf.id,
+        workflowTitle:    wf.title,
+        workflowCategory: wf.category,
+      }))
+    ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+  [workflows]);
+
+  const addNote = async () => {
+    if (!newText.trim() || !selectedWfId) return;
+    const wf = workflows.find(w => w.id === selectedWfId);
+    if (!wf) return;
     setSaving(true);
-    await onUpdate(wf.id, { notes: JSON.stringify(updated) });
-    setNotes(updated);
+    const entry: NoteEntry = { id: crypto.randomUUID(), text: newText.trim(), createdAt: new Date().toISOString() };
+    await updateWorkflow(selectedWfId, { notes: JSON.stringify([...parseNotes(wf.notes), entry]) });
+    setNewText('');
     setSaving(false);
   };
 
-  const addNote = async () => {
-    if (!newText.trim()) return;
-    const entry: NoteEntry = {
-      id: crypto.randomUUID(),
-      text: newText.trim(),
-      createdAt: new Date().toISOString(),
-    };
-    await persist([...notes, entry]);
-    setNewText('');
-  };
-
   const saveEdit = async () => {
-    if (!editId || !editText.trim()) return;
-    const updated = notes.map(n =>
+    if (!editId || !editWfId || !editText.trim()) return;
+    const wf = workflows.find(w => w.id === editWfId);
+    if (!wf) return;
+    setSaving(true);
+    const updated = parseNotes(wf.notes).map(n =>
       n.id === editId ? { ...n, text: editText.trim(), editedAt: new Date().toISOString() } : n
     );
-    await persist(updated);
+    await updateWorkflow(editWfId, { notes: JSON.stringify(updated) });
     setEditId(null);
+    setEditWfId(null);
     setEditText('');
+    setSaving(false);
   };
 
   return (
-    <div>
-      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-        <StickyNote className="w-3.5 h-3.5" /> Notes
-      </p>
+    <div className="space-y-4">
+      {/* Compose — owner only */}
+      {isOwner && (
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-3">
+          <p className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+            <StickyNote className="w-4 h-4 text-amber-500" /> New Note
+          </p>
 
-      {notes.length === 0 && (
-        <p className="text-xs text-slate-400 italic mb-2">No notes yet.</p>
-      )}
-
-      <div className="space-y-2 mb-3 max-h-48 overflow-y-auto pr-0.5">
-        {notes.map(n => (
-          <div key={n.id} className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 rounded-xl p-3">
-            {editId === n.id ? (
-              <div className="space-y-2">
-                <textarea
-                  value={editText}
-                  onChange={e => setEditText(e.target.value)}
-                  rows={2}
-                  autoFocus
-                  className="w-full px-2 py-1.5 text-xs bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none resize-none"
-                />
-                <div className="flex gap-1.5">
-                  <button
-                    onClick={saveEdit}
-                    disabled={saving || !editText.trim()}
-                    className="flex-1 py-1 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-lg disabled:opacity-50 transition-colors"
-                  >
-                    {saving ? 'Saving…' : 'Save'}
-                  </button>
-                  <button
-                    onClick={() => { setEditId(null); setEditText(''); }}
-                    className="px-2 py-1 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
+              Attach to Document *
+            </label>
+            {workflows.length === 0 ? (
+              <p className="text-xs text-slate-400 italic">No documents uploaded yet.</p>
             ) : (
-              <>
-                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{n.text}</p>
-                <div className="flex items-end justify-between mt-1.5 gap-2">
-                  <div>
-                    <p className="text-[10px] text-slate-400">{fmtNoteDate(n.createdAt)}</p>
-                    {n.editedAt && (
-                      <p className="text-[9px] text-slate-400 italic">edited · {fmtNoteDate(n.editedAt)}</p>
-                    )}
-                  </div>
-                  {isOwner && (
-                    <button
-                      onClick={() => { setEditId(n.id); setEditText(n.text); }}
-                      className="text-[10px] font-semibold text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200 flex items-center gap-0.5 shrink-0"
-                    >
-                      <Pencil className="w-2.5 h-2.5" /> Edit
-                    </button>
-                  )}
-                </div>
-              </>
+              <select
+                value={selectedWfId}
+                onChange={e => setSelectedWfId(e.target.value)}
+                className="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-all"
+              >
+                {workflows.map(wf => (
+                  <option key={wf.id} value={wf.id}>{wf.title} · {wf.category}</option>
+                ))}
+              </select>
             )}
           </div>
-        ))}
-      </div>
 
-      {isOwner && (
-        <div className="space-y-1.5">
-          <textarea
-            value={newText}
-            onChange={e => setNewText(e.target.value)}
-            rows={2}
-            placeholder="Write a note…"
-            className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-all resize-none"
-          />
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Note</label>
+            <textarea
+              value={newText}
+              onChange={e => setNewText(e.target.value)}
+              rows={3}
+              placeholder="Write your note here…"
+              className="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-all resize-none"
+            />
+          </div>
+
           <button
             onClick={addNote}
-            disabled={!newText.trim() || saving}
-            className="w-full py-1.5 text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50 rounded-xl transition-colors flex items-center justify-center gap-1.5"
+            disabled={!newText.trim() || !selectedWfId || saving}
+            className="flex items-center gap-2 px-5 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-colors shadow-sm"
           >
-            {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-            {saving ? 'Saving…' : 'Submit Note'}
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {saving ? 'Submitting…' : 'Submit Note'}
           </button>
+        </div>
+      )}
+
+      {/* Notes list */}
+      {allNotes.length === 0 ? (
+        <div className="text-center py-16 text-slate-400 bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <StickyNote className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p className="text-sm font-medium">No notes yet</p>
+          {isOwner && <p className="text-xs mt-1">Select a document above and write your first note.</p>}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">
+            {allNotes.length} note{allNotes.length !== 1 ? 's' : ''}
+          </p>
+          {allNotes.map(n => {
+            const sourceWf = workflows.find(w => w.id === n.workflowId);
+            const isEditing = editId === n.id && editWfId === n.workflowId;
+            return (
+              <div key={`${n.workflowId}-${n.id}`} className="bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-3">
+                {/* Document tag — clickable to open details */}
+                <button
+                  type="button"
+                  onClick={() => sourceWf && onOpenWorkflow(sourceWf)}
+                  className="flex items-center gap-2 group"
+                >
+                  <FileText className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate max-w-xs">
+                    {n.workflowTitle}
+                  </span>
+                  <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0', categoryCls(n.workflowCategory))}>
+                    {n.workflowCategory}
+                  </span>
+                </button>
+
+                {/* Note body */}
+                {isEditing ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={editText}
+                      onChange={e => setEditText(e.target.value)}
+                      rows={3}
+                      autoFocus
+                      className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-amber-300 dark:border-amber-700 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none resize-none"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={saveEdit}
+                        disabled={saving || !editText.trim()}
+                        className="px-4 py-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-lg disabled:opacity-50 transition-colors"
+                      >
+                        {saving ? 'Saving…' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => { setEditId(null); setEditWfId(null); setEditText(''); }}
+                        className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed">{n.text}</p>
+                    <div className="flex items-end justify-between gap-2">
+                      <div>
+                        <p className="text-xs text-slate-400">{fmtNoteDate(n.createdAt)}</p>
+                        {n.editedAt && (
+                          <p className="text-[10px] text-slate-400 italic">edited · {fmtNoteDate(n.editedAt)}</p>
+                        )}
+                      </div>
+                      {isOwner && (
+                        <button
+                          onClick={() => { setEditId(n.id); setEditWfId(n.workflowId); setEditText(n.text); }}
+                          className="flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200 transition-colors shrink-0"
+                        >
+                          <Pencil className="w-3 h-3" /> Edit
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -959,9 +1034,6 @@ function DetailsModal({ wf, onClose, onUpdate, onComplete, onRequestDelete, getS
                 </div>
               )}
 
-              {/* Notes — timestamped log, owner can add/edit, admin read-only */}
-              <NotesPanel wf={wf} isOwner={isOwner} onUpdate={onUpdate} />
-
               {/* Manual transaction ref (only if not yet auto-linked) */}
               {!wf.destinationId && (
                 <div>
@@ -1040,7 +1112,7 @@ export default function FinanceWorkflow() {
   const user    = useAuthStore(s => s.user);
   const isOwner = user?.role === 'owner';
 
-  const [statusFilter, setStatusFilter] = useState<FWStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<FWStatus | 'all' | 'notes'>('all');
   const [search,       setSearch]       = useState('');
   const [showUpload,    setShowUpload]    = useState(false);
   const [selected,      setSelected]      = useState<FW | null>(null);
@@ -1055,6 +1127,7 @@ export default function FinanceWorkflow() {
   };
 
   const filtered = workflows.filter(w => {
+    if (statusFilter === 'notes') return false; // handled by NotesView
     if (statusFilter !== 'all' && w.status !== statusFilter) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -1146,15 +1219,20 @@ export default function FinanceWorkflow() {
               key={tab.key}
               onClick={() => setStatusFilter(tab.key)}
               className={cn(
-                'px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors',
-                statusFilter === tab.key
+                'px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1',
+                tab.key === 'notes' && statusFilter === 'notes'
+                  ? 'bg-amber-500 text-white shadow-sm'
+                  : tab.key === 'notes'
+                  ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                  : statusFilter === tab.key
                   ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 shadow-sm'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
               )}
             >
+              {tab.key === 'notes' && <StickyNote className="w-3 h-3" />}
               {tab.label}
-              {counts[tab.key as keyof typeof counts] > 0 && (
-                <span className="ml-1.5 text-[10px] text-slate-400">
+              {tab.key !== 'notes' && counts[tab.key as keyof typeof counts] > 0 && (
+                <span className="ml-1 text-[10px] text-slate-400">
                   {counts[tab.key as keyof typeof counts]}
                 </span>
               )}
@@ -1162,20 +1240,32 @@ export default function FinanceWorkflow() {
           ))}
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search title, category…"
-            className="w-56 pl-8 pr-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
-          />
-        </div>
+        {statusFilter !== 'notes' && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search title, category…"
+              className="w-56 pl-8 pr-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+            />
+          </div>
+        )}
       </div>
 
-      {/* Table */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      {/* Notes tab — full-page view */}
+      {statusFilter === 'notes' && (
+        <NotesView
+          workflows={workflows}
+          isOwner={isOwner}
+          updateWorkflow={updateWorkflow}
+          onOpenWorkflow={wf => setSelected(wf)}
+        />
+      )}
+
+      {/* Table — hidden when Notes tab is active */}
+      {statusFilter !== 'notes' && <div className="bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16 gap-3 text-slate-400">
             <Loader2 className="w-5 h-5 animate-spin" /> Loading…
@@ -1219,8 +1309,11 @@ export default function FinanceWorkflow() {
                       {wf.description && (
                         <p className="text-xs text-slate-400 mt-0.5 truncate">{wf.description}</p>
                       )}
-                      {wf.notes && (
-                        <p className="text-xs text-blue-500 dark:text-blue-400 mt-0.5 truncate">Note: {wf.notes}</p>
+                      {parseNotes(wf.notes).length > 0 && (
+                        <span className="inline-flex items-center gap-0.5 mt-0.5 text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
+                          <StickyNote className="w-2.5 h-2.5" />
+                          {parseNotes(wf.notes).length} note{parseNotes(wf.notes).length !== 1 ? 's' : ''}
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -1263,7 +1356,7 @@ export default function FinanceWorkflow() {
             </table>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Modals */}
       {showUpload && (
