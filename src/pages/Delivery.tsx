@@ -70,7 +70,12 @@ export default function Delivery() {
       const matchesSearch = !q ||
                            d.name.toLowerCase().includes(q) ||
                            d.emp_number.toLowerCase().includes(q) ||
-                           d.delivery_code.toLowerCase().includes(q);
+                           d.delivery_code.toLowerCase().includes(q) ||
+                           (d.qid || '').toLowerCase().includes(q) ||
+                           (d.passport_number || '').toLowerCase().includes(q) ||
+                           (d.snoonu_id || '').toLowerCase().includes(q) ||
+                           (d.bike_number || '').toLowerCase().includes(q) ||
+                           (d.car_number || '').toLowerCase().includes(q);
       if (categoryFilter === 'Inactive') {
         return d.status === 'Inactive' && matchesSearch;
       }
@@ -203,7 +208,7 @@ export default function Delivery() {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by name, EMP, or Code..."
+              placeholder="Search name, QID, passport, Snoonu ID, bike/car #..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={cn(inputCls, 'pl-10')}
