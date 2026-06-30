@@ -10,6 +10,18 @@ interface State {
   message: string;
 }
 
+function isChunkError(err: Error): boolean {
+  const msg = err?.message ?? '';
+  const name = err?.name ?? '';
+  return (
+    name === 'ChunkLoadError' ||
+    msg.includes('Failed to fetch dynamically imported module') ||
+    msg.includes('Importing a module script failed') ||
+    msg.includes('Unable to preload CSS for') ||
+    msg.includes('error loading dynamically imported module')
+  );
+}
+
 export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -17,11 +29,23 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   static getDerivedStateFromError(err: Error): State {
+    // Chunk errors mean stale build — reload to get fresh chunks
+    if (isChunkError(err)) {
+      const key = 'finerp_chunk_reload_at';
+      const last = Number(sessionStorage.getItem(key) ?? 0);
+      if (Date.now() - last > 15_000) {
+        sessionStorage.setItem(key, String(Date.now()));
+        window.location.reload();
+        return { hasError: false, message: '' };
+      }
+    }
     return { hasError: true, message: err?.message ?? 'Unknown error' };
   }
 
   componentDidCatch(err: Error, info: React.ErrorInfo) {
-    console.error('[ErrorBoundary] caught:', err, info.componentStack);
+    if (!isChunkError(err)) {
+      console.error('[ErrorBoundary] caught:', err, info.componentStack);
+    }
   }
 
   render() {

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useThemeStore } from './store/theme';
 import { useAuthStore } from './store/auth';
@@ -7,26 +7,52 @@ import { getMe } from './services/auth';
 import { getModuleRoles } from './lib/permissions';
 import Layout from './components/Layout';
 import AuthPage from './components/AuthPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
-// Lazy loaded pages (Code Splitting)
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-const Accounting = React.lazy(() => import('./pages/Accounting'));
-const ERP = React.lazy(() => import('./pages/ERP'));
-const AuditLogs = React.lazy(() => import('./pages/AuditLogs'));
-const Assets = React.lazy(() => import('./pages/Assets'));
-const Projects = React.lazy(() => import('./pages/Projects'));
-const ProjectDetails = React.lazy(() => import('./pages/ProjectDetails'));
-const Tasks = React.lazy(() => import('./pages/Tasks'));
-const Contracting = React.lazy(() => import('./pages/Contracting'));
-const Delivery = React.lazy(() => import('./pages/Delivery'));
-const TeamSettings = React.lazy(() => import('./components/TeamSettings')); 
-const DailyVisitors = React.lazy(() => import('./pages/DailyVisitors'));
-const Consultation = React.lazy(() => import('./pages/Consultation'));
-const Merchandise = React.lazy(() => import('./pages/Merchandise'));
-const TimeKeeping = React.lazy(() => import('./pages/TimeKeeping'));
-const FinanceWorkflow = React.lazy(() => import('./pages/FinanceWorkflow'));
-const BankDetails = React.lazy(() => import('./pages/BankDetails'));
-const Permissions = React.lazy(() => import('./pages/Permissions'));
+// Wraps React.lazy with auto-reload on stale chunk errors (post-deployment)
+function lazyPage<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>
+) {
+  return React.lazy(() =>
+    factory().catch(err => {
+      const key = 'finerp_chunk_reload_at';
+      const last = Number(sessionStorage.getItem(key) ?? 0);
+      if (Date.now() - last > 15_000) {
+        sessionStorage.setItem(key, String(Date.now()));
+        window.location.reload();
+      }
+      return Promise.reject(err);
+    })
+  );
+}
+
+const Dashboard      = lazyPage(() => import('./pages/Dashboard'));
+const Accounting     = lazyPage(() => import('./pages/Accounting'));
+const ERP            = lazyPage(() => import('./pages/ERP'));
+const AuditLogs      = lazyPage(() => import('./pages/AuditLogs'));
+const Assets         = lazyPage(() => import('./pages/Assets'));
+const Projects       = lazyPage(() => import('./pages/Projects'));
+const ProjectDetails = lazyPage(() => import('./pages/ProjectDetails'));
+const Tasks          = lazyPage(() => import('./pages/Tasks'));
+const Contracting    = lazyPage(() => import('./pages/Contracting'));
+const Delivery       = lazyPage(() => import('./pages/Delivery'));
+const TeamSettings   = lazyPage(() => import('./components/TeamSettings'));
+const DailyVisitors  = lazyPage(() => import('./pages/DailyVisitors'));
+const Consultation   = lazyPage(() => import('./pages/Consultation'));
+const Merchandise    = lazyPage(() => import('./pages/Merchandise'));
+const TimeKeeping    = lazyPage(() => import('./pages/TimeKeeping'));
+const FinanceWorkflow = lazyPage(() => import('./pages/FinanceWorkflow'));
+const BankDetails    = lazyPage(() => import('./pages/BankDetails'));
+const Permissions    = lazyPage(() => import('./pages/Permissions'));
+
+// Full-page spinner shown while a lazy chunk loads
+function PageLoader() {
+  return (
+    <div className="flex-1 flex items-center justify-center min-h-[60vh]">
+      <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 /* ── Role-based route guard ──────────────────────────── */
 function roleDefaultPath(role: string | null) {
@@ -343,7 +369,13 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Navigate to="/" replace />} />
-        <Route path="/" element={<Layout />}>
+        <Route path="/" element={
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoader />}>
+              <Layout />
+            </Suspense>
+          </ErrorBoundary>
+        }>
           {/* Dashboard — owner and admin only */}
           <Route element={<RoleGuard allowed={['owner','admin']} />}>
             <Route index element={<Dashboard />} />
