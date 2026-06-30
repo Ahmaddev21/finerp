@@ -496,9 +496,11 @@ export default function Layout() {
     return last.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
   };
 
-  const h = pad(now.getHours());
+  const rawH = now.getHours();
+  const h = String(rawH % 12 || 12);
   const m = pad(now.getMinutes());
   const s = pad(now.getSeconds());
+  const ampm = rawH >= 12 ? 'PM' : 'AM';
   const dayStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
   if (location.pathname === '/' && user.role && !canAccessDashboard(user.role)) {
@@ -555,13 +557,14 @@ export default function Layout() {
           {/* Right controls */}
           <div className="flex items-center gap-2 shrink-0">
 
-            {/* Clock — classic digital display */}
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-              <span className="font-mono text-xs font-semibold text-slate-700 dark:text-slate-300 tabular-nums">
-                {h}<span className="clock-colon">:</span>{m}<span className="clock-colon">:</span>{s}
+            {/* Clock */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-slate-800 border border-slate-700 dark:border-slate-700">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
+              <span className="font-mono text-xs font-bold text-white tabular-nums tracking-wide">
+                {h}:{m}:{s}
               </span>
-              <span className="text-[11px] text-slate-400 dark:text-slate-500 hidden lg:inline ml-0.5 border-l border-slate-200 dark:border-slate-700 pl-1.5">{dayStr}</span>
+              <span className="text-[10px] font-bold text-emerald-400 leading-none">{ampm}</span>
+              <span className="text-[11px] text-slate-400 hidden lg:inline border-l border-slate-600 pl-2">{dayStr}</span>
             </div>
 
             {/* Dark Mode Toggle */}
