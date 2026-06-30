@@ -140,7 +140,7 @@ export default function Dashboard() {
 
   function calcTrend(current: number, previous: number): { text: string; up: boolean } {
     if (previous === 0 && current === 0) return { text: '', up: true };
-    if (previous === 0) return { text: current > 0 ? 'New' : '', up: current > 0 };
+    if (previous === 0) return { text: '', up: true };
     const pct = ((current - previous) / previous) * 100;
     return { text: `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`, up: pct >= 0 };
   }
@@ -225,31 +225,30 @@ export default function Dashboard() {
           <div key={k.title}
             onClick={k.onClick}
             className={cn(
-              'bg-white dark:bg-gray-900 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 card-hover',
-              k.cls, k.onClick && 'cursor-pointer'
+              'bg-white dark:bg-gray-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 card-hover',
+              k.onClick && 'cursor-pointer'
             )}>
-            <div className="flex items-start justify-between mb-3">
-              <div className={cn('p-2 rounded-lg', k.iconBg)}>
-                <k.icon className="w-4 h-4" />
+            <div className="flex items-start justify-between mb-4">
+              <div className={cn('p-2.5 rounded-xl', k.iconBg)}>
+                <k.icon className="w-5 h-5" />
               </div>
               {k.trend ? (
                 <span className={cn(
-                  'flex items-center gap-0.5 text-sm font-semibold px-2 py-0.5 rounded',
-                  k.up ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
-                       : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+                  'flex items-center gap-0.5 text-xs font-bold',
+                  k.up ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'
                 )}>
-                  {k.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                  {k.up ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
                   {k.trend}
                 </span>
               ) : null}
             </div>
-            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">{k.title}</p>
+            <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">{k.title}</p>
             {isLoading
-              ? <div className="flex items-center gap-2 h-7"><Loader2 className="w-4 h-4 animate-spin text-slate-300" /></div>
-              : <p className="text-xl font-bold text-slate-900 dark:text-white tracking-tight tabular-nums">{k.value}</p>
+              ? <div className="flex items-center gap-2 h-8"><Loader2 className="w-4 h-4 animate-spin text-slate-300" /></div>
+              : <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums leading-none">{k.value}</p>
             }
             {!isLoading && k.sub && (
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 truncate">{k.sub}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 truncate">{k.sub}</p>
             )}
           </div>
         ))}
@@ -290,19 +289,19 @@ export default function Dashboard() {
             <h3 className="font-bold text-slate-900 dark:text-white mb-1">Quick Actions</h3>
             <p className="text-sm text-slate-400 dark:text-slate-500">Jump to common tasks</p>
           </div>
-          <div className="space-y-2.5">
-            {[
-              { label: 'Create Invoice', path: '/accounting', icon: FileText, color: 'indigo' },
-              { label: 'Record Expense', path: '/accounting', icon: ReceiptText, color: 'rose' },
-              { label: 'New Project', path: '/projects', icon: Briefcase, color: 'emerald' },
-            ].map(a => (
+          <div className="space-y-2">
+            {([
+              { label: 'Create Invoice',  path: '/accounting', icon: FileText,    btnCls: 'hover:border-indigo-200 hover:bg-indigo-50 dark:hover:border-indigo-800 dark:hover:bg-indigo-950/30', iconCls: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400', arrowCls: 'group-hover:text-indigo-500' },
+              { label: 'Record Expense',  path: '/accounting', icon: ReceiptText, btnCls: 'hover:border-rose-200 hover:bg-rose-50 dark:hover:border-rose-800 dark:hover:bg-rose-950/30',       iconCls: 'bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400',       arrowCls: 'group-hover:text-rose-500' },
+              { label: 'New Project',     path: '/projects',   icon: Briefcase,   btnCls: 'hover:border-emerald-200 hover:bg-emerald-50 dark:hover:border-emerald-800 dark:hover:bg-emerald-950/30', iconCls: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400', arrowCls: 'group-hover:text-emerald-500' },
+            ] as const).map(a => (
               <button key={a.label} onClick={() => navigate(a.path)}
-                className={`w-full flex items-center gap-3 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-${a.color}-300 dark:hover:border-${a.color}-700 hover:bg-${a.color}-50 dark:hover:bg-${a.color}-950/30 transition-all group`}>
-                <div className={`p-2 bg-${a.color}-50 dark:bg-${a.color}-950/50 text-${a.color}-600 dark:text-${a.color}-400 rounded-lg group-hover:scale-110 transition-transform`}>
+                className={cn('w-full flex items-center gap-3 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 transition-all group', a.btnCls)}>
+                <div className={cn('p-2 rounded-xl group-hover:scale-110 transition-transform', a.iconCls)}>
                   <a.icon className="w-4 h-4" />
                 </div>
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{a.label}</span>
-                <ArrowUpRight className={`w-4 h-4 text-slate-300 dark:text-slate-600 ml-auto group-hover:text-${a.color}-500 transition-colors`} />
+                <ArrowUpRight className={cn('w-4 h-4 text-slate-300 dark:text-slate-600 ml-auto transition-colors', a.arrowCls)} />
               </button>
             ))}
           </div>

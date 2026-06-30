@@ -109,25 +109,31 @@ sidebar, aside, header, main {
   border-left: 3px solid #3b82f6;
 }
 
-/* ─── Card Hover — Subtle, no lift ──────────────────────────────────────── */
+/* ─── Card Hover ─────────────────────────────────────────────────────────── */
 .card-hover {
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.05);
 }
 .card-hover:hover {
-  /* No transform, no shadow glow — just a border color shift */
-  border-color: #93c5fd !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.05);
+  transform: translateY(-2px);
+  border-color: #e2e8f0;
+}
+.dark .card-hover {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2);
 }
 .dark .card-hover:hover {
-  border-color: #1d4ed8 !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.45), 0 1px 4px rgba(0,0,0,0.3);
+  transform: translateY(-2px);
+  border-color: #334155;
 }
 
-/* ─── KPI Cards — Classic top-border accent ──────────────────────────────── */
-/* Muted, professional colors — no neon */
-.kpi-blue    { border-top: 2px solid #2563eb; }  /* classic blue */
-.kpi-emerald { border-top: 2px solid #059669; }  /* accounting green */
-.kpi-rose    { border-top: 2px solid #dc2626; }  /* classic red */
-.kpi-violet  { border-top: 2px solid #7c3aed; }  /* muted purple */
-.kpi-amber   { border-top: 2px solid #d97706; }  /* accounts receivable amber */
+/* ─── KPI Cards — accent via colored icon, no border ───────────────────── */
+.kpi-blue    {}
+.kpi-emerald {}
+.kpi-rose    {}
+.kpi-violet  {}
+.kpi-amber   {}
 
 /* ─── Status Dots ─────────────────────────────────────────────────────────── */
 .status-dot {
