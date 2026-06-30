@@ -12,6 +12,7 @@ import {
   Upload, Search, X, FileText, Eye, Loader2,
   ExternalLink, Download, Paperclip, FileUp,
   CheckCircle2, ArrowRight, Trash2, AlertTriangle,
+  StickyNote, Pencil, Send,
 } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -37,6 +38,34 @@ const STATUS_TABS: { key: FWStatus | 'all'; label: string }[] = [
   { key: 'completed',   label: 'Completed' },
   { key: 'rejected',    label: 'Rejected' },
 ];
+
+// ── Notes helpers ─────────────────────────────────────────────────────────────
+
+interface NoteEntry {
+  id: string;
+  text: string;
+  createdAt: string;
+  editedAt?: string;
+}
+
+function parseNotes(raw: string | null | undefined): NoteEntry[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+  } catch {}
+  // Legacy plain-text note — wrap it so it still appears
+  if (raw.trim()) return [{ id: 'legacy', text: raw, createdAt: new Date().toISOString() }];
+  return [];
+}
+
+function fmtNoteDate(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric',
+    year: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+}
 
 // ── Badge helpers ──────────────────────────────────────────────────────────────
 
@@ -67,6 +96,133 @@ function categoryCls(c: FWCategory) {
     case 'Receipt':  return 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300';
     case 'Other':    return 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
   }
+}
+
+// ── Notes Panel ───────────────────────────────────────────────────────────────
+
+function NotesPanel({ wf, isOwner, onUpdate }: {
+  wf: FW;
+  isOwner: boolean;
+  onUpdate: (id: string, updates: Partial<Pick<FW, 'notes'>>) => Promise<void>;
+}) {
+  const [notes,    setNotes]    = useState<NoteEntry[]>(() => parseNotes(wf.notes));
+  const [newText,  setNewText]  = useState('');
+  const [editId,   setEditId]   = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+  const [saving,   setSaving]   = useState(false);
+
+  const persist = async (updated: NoteEntry[]) => {
+    setSaving(true);
+    await onUpdate(wf.id, { notes: JSON.stringify(updated) });
+    setNotes(updated);
+    setSaving(false);
+  };
+
+  const addNote = async () => {
+    if (!newText.trim()) return;
+    const entry: NoteEntry = {
+      id: crypto.randomUUID(),
+      text: newText.trim(),
+      createdAt: new Date().toISOString(),
+    };
+    await persist([...notes, entry]);
+    setNewText('');
+  };
+
+  const saveEdit = async () => {
+    if (!editId || !editText.trim()) return;
+    const updated = notes.map(n =>
+      n.id === editId ? { ...n, text: editText.trim(), editedAt: new Date().toISOString() } : n
+    );
+    await persist(updated);
+    setEditId(null);
+    setEditText('');
+  };
+
+  return (
+    <div>
+      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+        <StickyNote className="w-3.5 h-3.5" /> Notes
+      </p>
+
+      {notes.length === 0 && (
+        <p className="text-xs text-slate-400 italic mb-2">No notes yet.</p>
+      )}
+
+      <div className="space-y-2 mb-3 max-h-48 overflow-y-auto pr-0.5">
+        {notes.map(n => (
+          <div key={n.id} className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 rounded-xl p-3">
+            {editId === n.id ? (
+              <div className="space-y-2">
+                <textarea
+                  value={editText}
+                  onChange={e => setEditText(e.target.value)}
+                  rows={2}
+                  autoFocus
+                  className="w-full px-2 py-1.5 text-xs bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none resize-none"
+                />
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={saveEdit}
+                    disabled={saving || !editText.trim()}
+                    className="flex-1 py-1 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-lg disabled:opacity-50 transition-colors"
+                  >
+                    {saving ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    onClick={() => { setEditId(null); setEditText(''); }}
+                    className="px-2 py-1 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{n.text}</p>
+                <div className="flex items-end justify-between mt-1.5 gap-2">
+                  <div>
+                    <p className="text-[10px] text-slate-400">{fmtNoteDate(n.createdAt)}</p>
+                    {n.editedAt && (
+                      <p className="text-[9px] text-slate-400 italic">edited · {fmtNoteDate(n.editedAt)}</p>
+                    )}
+                  </div>
+                  {isOwner && (
+                    <button
+                      onClick={() => { setEditId(n.id); setEditText(n.text); }}
+                      className="text-[10px] font-semibold text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200 flex items-center gap-0.5 shrink-0"
+                    >
+                      <Pencil className="w-2.5 h-2.5" /> Edit
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {isOwner && (
+        <div className="space-y-1.5">
+          <textarea
+            value={newText}
+            onChange={e => setNewText(e.target.value)}
+            rows={2}
+            placeholder="Write a note…"
+            className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-all resize-none"
+          />
+          <button
+            onClick={addNote}
+            disabled={!newText.trim() || saving}
+            className="w-full py-1.5 text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50 rounded-xl transition-colors flex items-center justify-center gap-1.5"
+          >
+            {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+            {saving ? 'Saving…' : 'Submit Note'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── Upload Modal ───────────────────────────────────────────────────────────────
@@ -610,7 +766,6 @@ interface DetailsModalProps {
 function DetailsModal({ wf, onClose, onUpdate, onComplete, onRequestDelete, getSignedUrl, isOwner }: DetailsModalProps) {
   const [signedUrl,    setSignedUrl]    = useState<string | null>(null);
   const [loadingUrl,   setLoadingUrl]   = useState(false);
-  const [notes,        setNotes]        = useState(wf.notes          ?? '');
   const [txnRef,       setTxnRef]       = useState(wf.transactionRef ?? '');
   const [saving,       setSaving]       = useState(false);
   const [showComplete, setShowComplete] = useState(false);
@@ -626,9 +781,9 @@ function DetailsModal({ wf, onClose, onUpdate, onComplete, onRequestDelete, getS
 
   const isPdf = wf.fileName?.toLowerCase().endsWith('.pdf') ?? false;
 
-  const handleSave = async () => {
+  const handleSaveRef = async () => {
     setSaving(true);
-    await onUpdate(wf.id, { notes: notes || null, transactionRef: txnRef || null });
+    await onUpdate(wf.id, { transactionRef: txnRef || null });
     setSaving(false);
   };
 
@@ -804,17 +959,8 @@ function DetailsModal({ wf, onClose, onUpdate, onComplete, onRequestDelete, getS
                 </div>
               )}
 
-              {/* Admin notes */}
-              <div>
-                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Admin Notes</p>
-                <textarea
-                  value={notes}
-                  onChange={e => setNotes(e.target.value)}
-                  rows={3}
-                  placeholder="Processing notes, actions taken…"
-                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all resize-none"
-                />
-              </div>
+              {/* Notes — timestamped log, owner can add/edit, admin read-only */}
+              <NotesPanel wf={wf} isOwner={isOwner} onUpdate={onUpdate} />
 
               {/* Manual transaction ref (only if not yet auto-linked) */}
               {!wf.destinationId && (
@@ -827,17 +973,16 @@ function DetailsModal({ wf, onClose, onUpdate, onComplete, onRequestDelete, getS
                     placeholder="e.g. TXN-12345"
                     className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
                   />
+                  <button
+                    onClick={handleSaveRef}
+                    disabled={saving}
+                    className="mt-1.5 w-full py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {saving ? 'Saving…' : 'Save Reference'}
+                  </button>
                 </div>
               )}
-
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="w-full py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl transition-colors flex items-center justify-center gap-1.5"
-              >
-                {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                {saving ? 'Saving…' : 'Save Notes'}
-              </button>
 
               {/* Metadata */}
               <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
