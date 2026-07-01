@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Truck, Search, Plus, X, User, Shield, CreditCard, Smartphone, Mail, Key, MoreVertical, Filter, Bike, Car, Download, Eye, EyeOff, AlertTriangle, Hash, FolderOpen, Trash2, Pencil, IdCard, BookUser, FileUp, Upload, Clock, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Truck, Search, Plus, X, User, Shield, CreditCard, Smartphone, Mail, Key, MoreVertical, Filter, Bike, Car, Download, Eye, EyeOff, AlertTriangle, Hash, FolderOpen, Trash2, Pencil } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useDeliveries, DeliveryStatus, DeliveryCategory } from '../hooks/useDeliveries';
 import type { Delivery as DeliveryRecord } from '../hooks/useDeliveries';
@@ -10,173 +10,8 @@ import { countPriorEdits, writeAuditLog } from '../lib/audit';
 import { exportFleetCSV } from '../utils/exportUtils';
 import { RowMenu } from '../components/RowMenu';
 import DeliveryDocumentsModal from '../components/DeliveryDocumentsModal';
-import { useDocumentFolders, type FolderType } from '../hooks/useDocumentFolders';
 
-// ── Document folder config ────────────────────────────────────────────────────
-const FOLDER_TABS: { key: FolderType; label: string; icon: React.ElementType }[] = [
-  { key: 'qid',      label: 'QID',      icon: IdCard   },
-  { key: 'estamara', label: 'Estamara', icon: Car      },
-  { key: 'license',  label: 'License',  icon: Shield   },
-  { key: 'passport', label: 'Passport', icon: BookUser },
-];
-const FOLDER_KEYS = new Set<string>(FOLDER_TABS.map(f => f.key));
-
-type DeliveryTab = 'All' | 'Rider' | 'Driver' | 'Vehicles' | 'Inactive' | FolderType;
-
-// ── Document Folder View ──────────────────────────────────────────────────────
-function DocumentFolderView({ folder, isOwner }: { folder: FolderType; isOwner: boolean }) {
-  const { docs, loading, uploading, error, uploadDoc, deleteDoc, getUrl } = useDocumentFolders();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [dragOver, setDragOver] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  const folderDocs = docs.filter(d => d.folder === folder);
-  const meta = FOLDER_TABS.find(f => f.key === folder)!;
-  const Icon = meta.icon;
-
-  const handleFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    for (const file of Array.from(files)) {
-      await uploadDoc(file, folder);
-    }
-  };
-
-  const handleDelete = async (id: string, filePath: string) => {
-    if (!confirm('Delete this file?')) return;
-    setDeletingId(id);
-    await deleteDoc(id, filePath);
-    setDeletingId(null);
-  };
-
-  const handleOpen = async (filePath: string) => {
-    const url = await getUrl(filePath);
-    if (url) window.open(url, '_blank');
-  };
-
-  const fmtDate = (iso: string) =>
-    new Date(iso).toLocaleString('en-GB', {
-      day: '2-digit', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    });
-
-  return (
-    <div className="space-y-4 p-1">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40">
-            <Icon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">{meta.label} Documents</h2>
-            <p className="text-xs text-slate-400">{folderDocs.length} file{folderDocs.length !== 1 ? 's' : ''} stored</p>
-          </div>
-        </div>
-        {isOwner && (
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl disabled:opacity-60 transition-colors"
-          >
-            {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-            {uploading ? 'Uploading…' : 'Upload File'}
-          </button>
-        )}
-        <input ref={fileInputRef} type="file" multiple className="hidden" onChange={e => handleFiles(e.target.files)} />
-      </div>
-
-      {error && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
-          <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
-        </div>
-      )}
-
-      {/* Drop zone — owner only */}
-      {isOwner && (
-        <div
-          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
-          onClick={() => fileInputRef.current?.click()}
-          className={cn(
-            'border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all',
-            dragOver
-              ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30'
-              : 'border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-slate-50 dark:hover:bg-slate-800/40'
-          )}
-        >
-          <FileUp className="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-            Drop files here or <span className="text-emerald-600 dark:text-emerald-400">browse</span>
-          </p>
-          <p className="text-xs text-slate-400 mt-1">PDF, JPG, PNG, DOCX — max 10 MB each</p>
-        </div>
-      )}
-
-      {/* File list */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12 text-slate-400 gap-2">
-          <Loader2 className="w-5 h-5 animate-spin" /> Loading files…
-        </div>
-      ) : folderDocs.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-400">
-          <Icon className="w-12 h-12 mx-auto mb-3 opacity-20" />
-          <p className="text-sm font-medium">No {meta.label} files yet</p>
-          {isOwner && <p className="text-xs mt-1">Upload files using the button above.</p>}
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-          {folderDocs.map((doc, i) => {
-            const ext = doc.fileName.split('.').pop()?.toUpperCase() ?? 'FILE';
-            const isImg = /jpe?g|png|gif|webp/i.test(ext);
-            return (
-              <div key={doc.id} className={cn(
-                'flex items-center gap-4 px-5 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40',
-                i !== 0 && 'border-t border-slate-100 dark:border-slate-800'
-              )}>
-                <div className={cn(
-                  'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-[10px] font-black',
-                  isImg ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
-                        : ext === 'PDF' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
-                        : 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
-                )}>
-                  {ext.slice(0, 4)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{doc.fileName}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <Clock className="w-3 h-3 text-slate-400" />
-                    <span className="text-xs text-slate-400">{fmtDate(doc.uploadedAt)}</span>
-                    {doc.uploadedByName && (
-                      <span className="text-xs text-slate-300 dark:text-slate-600">· {doc.uploadedByName}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => handleOpen(doc.filePath)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors"
-                  >
-                    <Eye className="w-3.5 h-3.5" /> View
-                  </button>
-                  {isOwner && (
-                    <button
-                      onClick={() => handleDelete(doc.id, doc.filePath)}
-                      disabled={deletingId === doc.id}
-                      className="p-1.5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      {deletingId === doc.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
+type DeliveryTab = 'All' | 'Rider' | 'Driver' | 'Vehicles' | 'Inactive';
 
 const inputCls = 'w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-400 transition-all';
 
@@ -235,7 +70,6 @@ export default function Delivery() {
   // Filtering & Sorting
   const filtered = deliveries
     .filter(d => {
-      if (FOLDER_KEYS.has(categoryFilter)) return false; // folder view active
       const q = searchQuery.trim().toLowerCase();
       const matchesSearch = !q ||
                            d.name.toLowerCase().includes(q) ||
@@ -366,25 +200,6 @@ export default function Delivery() {
             )}
           </button>
 
-          {/* Divider */}
-          <div className="w-px h-7 bg-slate-200 dark:bg-slate-700 mx-1" />
-
-          {/* Document folder tabs */}
-          {FOLDER_TABS.map(f => (
-            <button
-              key={f.key}
-              onClick={() => setCategoryFilter(f.key)}
-              className={cn(
-                'px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2',
-                categoryFilter === f.key
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-              )}
-            >
-              <f.icon className="w-4 h-4" />
-              {f.label}
-            </button>
-          ))}
         </div>
 
         <div className="flex items-center gap-3 w-full lg:w-auto">
@@ -410,8 +225,8 @@ export default function Delivery() {
               setForm({ ...emptyForm, category: (categoryFilter === 'Rider' || categoryFilter === 'Driver') ? categoryFilter : 'Rider' });
               setIsOpen(true);
             }}
-            disabled={categoryFilter === 'All' || categoryFilter === 'Vehicles' || categoryFilter === 'Inactive' || FOLDER_KEYS.has(categoryFilter)}
-            title={categoryFilter === 'All' ? 'Select a category first' : categoryFilter === 'Vehicles' ? 'Manage vehicles in Assets' : categoryFilter === 'Inactive' ? 'Cannot add inactive entries directly' : FOLDER_KEYS.has(categoryFilter) ? 'Switch to Rider or Driver to add entries' : 'Add new entry'}
+            disabled={categoryFilter === 'All' || categoryFilter === 'Vehicles' || categoryFilter === 'Inactive'}
+            title={categoryFilter === 'All' ? 'Select a category first' : categoryFilter === 'Vehicles' ? 'Manage vehicles in Assets' : categoryFilter === 'Inactive' ? 'Cannot add inactive entries directly' : 'Add new entry'}
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:-translate-y-0.5"
           >
             <Plus className="w-4 h-4" /> New Entry
@@ -419,13 +234,8 @@ export default function Delivery() {
         </div>
       </div>
 
-      {/* Document Folder View */}
-      {FOLDER_KEYS.has(categoryFilter) && (
-        <DocumentFolderView folder={categoryFilter as FolderType} isOwner={isOwner} />
-      )}
-
       {/* Main Table Content */}
-      {!FOLDER_KEYS.has(categoryFilter) && <div className="bg-white dark:bg-gray-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
         {categoryFilter === 'Vehicles' ? (
           /* ── Vehicle List ─────────────────────────────── */
           <div className="overflow-x-auto min-h-[450px]">
@@ -677,7 +487,7 @@ export default function Delivery() {
             </table>
           </div>
         )}
-      </div>}
+      </div>
 
       {/* Documents Modal */}
       {docsRecord && (

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Upload, FileText, Trash2, ExternalLink, AlertTriangle, Loader2, ImageIcon, File, Download, Share2 } from 'lucide-react';
+import { X, Upload, FileText, Trash2, ExternalLink, AlertTriangle, Loader2, ImageIcon, File, Download, Share2, IdCard, Car, Shield, BookUser } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { useDeliveryDocuments, DeliveryDocument, formatBytes } from '../hooks/useDeliveryDocuments';
+import { useDeliveryDocuments, DeliveryDocument, DocFolder, formatBytes } from '../hooks/useDeliveryDocuments';
 import type { Delivery as DeliveryRecord } from '../hooks/useDeliveries';
 import { useAuthStore } from '../store/auth';
 
@@ -9,6 +9,13 @@ interface Props {
   record: DeliveryRecord;
   onClose: () => void;
 }
+
+const FOLDERS: { key: DocFolder; label: string; icon: React.ElementType }[] = [
+  { key: 'qid',      label: 'QID',      icon: IdCard   },
+  { key: 'estamara', label: 'Estamara', icon: Car      },
+  { key: 'license',  label: 'License',  icon: Shield   },
+  { key: 'passport', label: 'Passport', icon: BookUser },
+];
 
 function DocIcon({ mimeType, fileName }: { mimeType: string | null; fileName: string }) {
   if (!mimeType && !fileName) return <File className="w-5 h-5 text-slate-400" />;
@@ -26,6 +33,7 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
   const { documents, loading, uploading, error, fetch, uploadDocument, deleteDocument, getSignedUrl } = useDeliveryDocuments(record.id);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeFolder, setActiveFolder] = useState<DocFolder>('qid');
   const [dragOver, setDragOver] = useState(false);
   const [openingId, setOpeningId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -52,13 +60,12 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
       setLocalError(`File too large. Maximum size is 10 MB (got ${formatBytes(file.size)}).`);
       return;
     }
-    await uploadDocument(file);
+    await uploadDocument(file, activeFolder);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) validateAndUpload(file);
-    // Reset input so same file can be re-selected after an error
     e.target.value = '';
   };
 
@@ -73,11 +80,8 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
     setOpeningId(doc.id);
     const url = await getSignedUrl(doc.filePath);
     setOpeningId(null);
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    } else {
-      setLocalError('Could not generate a link for this file. Please try again.');
-    }
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    else setLocalError('Could not generate a link for this file. Please try again.');
   };
 
   const handleDownload = async (doc: DeliveryDocument) => {
@@ -107,6 +111,8 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
     setDeletingId(null);
   };
 
+  const visibleDocs = documents.filter(d => d.folder === activeFolder);
+  const activeMeta = FOLDERS.find(f => f.key === activeFolder)!;
   const displayError = localError || error;
 
   return (
@@ -115,6 +121,7 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-lg w-full border border-slate-100 dark:border-slate-800 max-h-[90vh] flex flex-col">
+
         {/* Header */}
         <div className="flex justify-between items-start p-6 pb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div>
@@ -131,9 +138,44 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
           </button>
         </div>
 
+        {/* Folder tabs */}
+        <div className="px-6 pt-4 shrink-0">
+          <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+            {FOLDERS.map(f => {
+              const count = documents.filter(d => d.folder === f.key).length;
+              const Icon = f.icon;
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => { setActiveFolder(f.key); setLocalError(null); }}
+                  className={cn(
+                    'flex-1 flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl text-xs font-semibold transition-all',
+                    activeFolder === f.key
+                      ? 'bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  {f.label}
+                  {count > 0 && (
+                    <span className={cn(
+                      'text-[9px] font-black px-1.5 py-0.5 rounded-full',
+                      activeFolder === f.key
+                        ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400'
+                        : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                    )}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Error banner */}
         {displayError && (
-          <div className="mx-6 mt-4 flex items-start gap-2.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl px-4 py-3">
+          <div className="mx-6 mt-4 flex items-start gap-2.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl px-4 py-3 shrink-0">
             <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
             <p className="text-xs font-medium text-rose-600 dark:text-rose-400">{displayError}</p>
           </div>
@@ -147,22 +189,24 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
             onDrop={handleDrop}
             onClick={() => !uploading && fileInputRef.current?.click()}
             className={cn(
-              'border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer select-none',
+              'border-2 border-dashed rounded-2xl p-5 text-center transition-all cursor-pointer select-none',
               dragOver
-                ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-950/20'
-                : 'border-slate-200 dark:border-slate-700 hover:border-emerald-400 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/10',
+                ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/20'
+                : 'border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:bg-blue-50/40 dark:hover:bg-blue-950/10',
               uploading && 'opacity-60 cursor-not-allowed pointer-events-none'
             )}
           >
             {uploading ? (
-              <div className="flex flex-col items-center gap-2 text-emerald-600 dark:text-emerald-400">
-                <Loader2 className="w-7 h-7 animate-spin" />
-                <p className="text-sm font-semibold">Uploading…</p>
+              <div className="flex flex-col items-center gap-2 text-blue-600 dark:text-blue-400">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <p className="text-sm font-semibold">Uploading to {activeMeta.label}…</p>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-2 text-slate-400">
-                <Upload className="w-7 h-7" />
-                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Click or drag to upload</p>
+              <div className="flex flex-col items-center gap-1.5 text-slate-400">
+                <Upload className="w-6 h-6" />
+                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                  Upload to <span className="text-blue-600 dark:text-blue-400">{activeMeta.label}</span>
+                </p>
                 <p className="text-xs text-slate-400">PDF, JPG, PNG, WEBP, HEIC, DOC, DOCX · Max 10 MB</p>
               </div>
             )}
@@ -180,18 +224,19 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2 custom-scrollbar min-h-0">
           {loading ? (
             <div className="flex justify-center py-10">
-              <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+              <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
             </div>
-          ) : documents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-2 text-slate-400">
-              <FileText className="w-10 h-10 opacity-20" />
-              <p className="text-sm font-medium">No documents uploaded yet</p>
+          ) : visibleDocs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 gap-2 text-slate-400">
+              <activeMeta.icon className="w-9 h-9 opacity-20" />
+              <p className="text-sm font-medium">No {activeMeta.label} documents yet</p>
+              <p className="text-xs">Upload a file above to add one.</p>
             </div>
           ) : (
-            documents.map(doc => (
+            visibleDocs.map(doc => (
               <div
                 key={doc.id}
-                className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group"
+                className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
               >
                 <DocIcon mimeType={doc.mimeType} fileName={doc.fileName} />
                 <div className="flex-1 min-w-0">
@@ -203,7 +248,6 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
                   </p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  {/* Open in new tab */}
                   <button
                     onClick={() => handleOpen(doc)}
                     disabled={openingId === doc.id}
@@ -212,7 +256,6 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
                   >
                     {openingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
                   </button>
-                  {/* Download */}
                   <button
                     onClick={() => handleDownload(doc)}
                     disabled={downloadingId === doc.id}
@@ -221,7 +264,6 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
                   >
                     {downloadingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                   </button>
-                  {/* Share via WhatsApp */}
                   <button
                     onClick={() => handleWhatsAppShare(doc)}
                     disabled={sharingId === doc.id}
@@ -230,7 +272,6 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
                   >
                     {sharingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
                   </button>
-                  {/* Delete (owners/admins only) */}
                   {isOwnerOrAdmin && (
                     <button
                       onClick={() => handleDelete(doc)}
@@ -250,7 +291,7 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
         {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
           <p className="text-xs text-slate-400 text-center">
-            {documents.length} document{documents.length !== 1 ? 's' : ''} · Secured to your company account
+            {visibleDocs.length} {activeMeta.label} document{visibleDocs.length !== 1 ? 's' : ''} · {documents.length} total · Secured to your company account
           </p>
         </div>
       </div>

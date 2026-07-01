@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuthStore } from '../store/auth';
 
+export type DocFolder = 'qid' | 'estamara' | 'license' | 'passport' | 'general';
+
 export interface DeliveryDocument {
   id: string;
   deliveryId: string;
@@ -11,6 +13,7 @@ export interface DeliveryDocument {
   mimeType: string | null;
   uploadedBy: string | null;
   createdAt: string;
+  folder: DocFolder;
 }
 
 function mapRow(row: any): DeliveryDocument {
@@ -23,6 +26,7 @@ function mapRow(row: any): DeliveryDocument {
     mimeType: row.mime_type ?? null,
     uploadedBy: row.uploaded_by ?? null,
     createdAt: row.created_at,
+    folder: (row.folder as DocFolder) ?? 'general',
   };
 }
 
@@ -56,7 +60,7 @@ export function useDeliveryDocuments(deliveryId: string | null) {
     setDocuments(data ? data.map(mapRow) : []);
   }, [deliveryId, company?.id]);
 
-  const uploadDocument = useCallback(async (file: File): Promise<boolean> => {
+  const uploadDocument = useCallback(async (file: File, folder: DocFolder = 'general'): Promise<boolean> => {
     if (!isSupabaseConfigured || !deliveryId || !company?.id) return false;
     const user = useAuthStore.getState().user;
     setUploading(true);
@@ -65,7 +69,7 @@ export function useDeliveryDocuments(deliveryId: string | null) {
     try {
       // Sanitize filename to avoid storage path issues
       const safeName = file.name.replace(/[^a-zA-Z0-9._\-]/g, '_');
-      const path = `${company.id}/delivery-documents/${deliveryId}/${Date.now()}_${safeName}`;
+      const path = `${company.id}/delivery-documents/${deliveryId}/${folder}/${Date.now()}_${safeName}`;
 
       // Word docs have a MIME type that Supabase buckets don't whitelist by default.
       // Upload as octet-stream so Storage accepts it; the real type is saved in the DB row.
@@ -88,6 +92,7 @@ export function useDeliveryDocuments(deliveryId: string | null) {
           file_size: file.size,
           mime_type: file.type || null,
           uploaded_by: user?.id ?? null,
+          folder,
         });
 
       if (insertErr) {
