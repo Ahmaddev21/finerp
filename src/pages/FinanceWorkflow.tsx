@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   useFinanceWorkflow,
   type FinanceWorkflow as FW,
@@ -6,15 +6,13 @@ import {
   type FWCategory,
   type CompletionData,
 } from '../hooks/useFinanceWorkflow';
-import { useDocumentFolders, type FolderType } from '../hooks/useDocumentFolders';
 import { useAuthStore } from '../store/auth';
 import { cn } from '../lib/utils';
 import {
   Upload, Search, X, FileText, Eye, Loader2,
   ExternalLink, Download, Paperclip, FileUp,
   CheckCircle2, ArrowRight, Trash2, AlertTriangle,
-  StickyNote, Pencil, Send, FolderOpen, Clock,
-  IdCard, Car, Shield, BookUser,
+  StickyNote, Pencil, Send,
 } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -33,17 +31,7 @@ const CATEGORY_TX_TYPE: Record<FWCategory, string> = {
 
 const TX_TYPES = ['Invoice', 'Expense', 'Receipt', 'Petty Cash', 'Salary'];
 
-type TabKey = FWStatus | 'all' | 'notes' | FolderType;
-
-const FOLDER_TABS: { key: FolderType; label: string; icon: React.ElementType }[] = [
-  { key: 'qid',      label: 'QID',      icon: IdCard   },
-  { key: 'estamara', label: 'Estamara', icon: Car      },
-  { key: 'license',  label: 'License',  icon: Shield   },
-  { key: 'passport', label: 'Passport', icon: BookUser },
-];
-const FOLDER_KEYS = new Set<string>(FOLDER_TABS.map(f => f.key));
-
-const STATUS_TABS: { key: TabKey; label: string }[] = [
+const STATUS_TABS: { key: FWStatus | 'all' | 'notes'; label: string }[] = [
   { key: 'all',         label: 'All' },
   { key: 'pending',     label: 'Pending' },
   { key: 'in_progress', label: 'In Progress' },
@@ -317,181 +305,6 @@ function NotesView({
 interface UploadModalProps {
   onClose:  () => void;
   onSubmit: (data: { title: string; category: FWCategory; description: string; file?: File }) => Promise<void>;
-}
-
-// ── Document Folder View ──────────────────────────────────────────────────────
-
-function DocumentFolderView({ folder, isOwner }: { folder: FolderType; isOwner: boolean }) {
-  const { docs, loading, uploading, error, uploadDoc, deleteDoc, getUrl } = useDocumentFolders();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [dragOver, setDragOver] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  const folderDocs = docs.filter(d => d.folder === folder);
-  const meta = FOLDER_TABS.find(f => f.key === folder)!;
-  const Icon = meta.icon;
-
-  const handleFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    for (const file of Array.from(files)) {
-      await uploadDoc(file, folder);
-    }
-  };
-
-  const handleDelete = async (id: string, filePath: string) => {
-    if (!confirm('Delete this file?')) return;
-    setDeletingId(id);
-    await deleteDoc(id, filePath);
-    setDeletingId(null);
-  };
-
-  const handleOpen = async (filePath: string, fileName: string) => {
-    const url = await getUrl(filePath);
-    if (url) window.open(url, '_blank');
-  };
-
-  const fmtDate = (iso: string) =>
-    new Date(iso).toLocaleString('en-GB', {
-      day: '2-digit', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    });
-
-  return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/40">
-            <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">{meta.label} Documents</h2>
-            <p className="text-xs text-slate-400">{folderDocs.length} file{folderDocs.length !== 1 ? 's' : ''} stored</p>
-          </div>
-        </div>
-        {isOwner && (
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl disabled:opacity-60 transition-colors"
-          >
-            {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-            {uploading ? 'Uploading…' : 'Upload File'}
-          </button>
-        )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          className="hidden"
-          onChange={e => handleFiles(e.target.files)}
-        />
-      </div>
-
-      {error && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
-          <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
-        </div>
-      )}
-
-      {/* Drop zone */}
-      {isOwner && (
-        <div
-          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
-          onClick={() => fileInputRef.current?.click()}
-          className={cn(
-            'border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all',
-            dragOver
-              ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/30'
-              : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-slate-50 dark:hover:bg-slate-800/40'
-          )}
-        >
-          <FileUp className="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-            Drop files here or <span className="text-blue-600 dark:text-blue-400">browse</span>
-          </p>
-          <p className="text-xs text-slate-400 mt-1">PDF, JPG, PNG, DOCX — max 10 MB each</p>
-        </div>
-      )}
-
-      {/* File list */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12 text-slate-400 gap-2">
-          <Loader2 className="w-5 h-5 animate-spin" /> Loading files…
-        </div>
-      ) : folderDocs.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-400">
-          <Icon className="w-12 h-12 mx-auto mb-3 opacity-20" />
-          <p className="text-sm font-medium">No {meta.label} files yet</p>
-          {isOwner && <p className="text-xs mt-1">Upload files using the button above.</p>}
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-          {folderDocs.map((doc, i) => {
-            const ext = doc.fileName.split('.').pop()?.toUpperCase() ?? 'FILE';
-            const isImg = /jpe?g|png|gif|webp/i.test(ext);
-            return (
-              <div
-                key={doc.id}
-                className={cn(
-                  'flex items-center gap-4 px-5 py-4 transition-colors',
-                  i !== 0 && 'border-t border-slate-100 dark:border-slate-800',
-                  'hover:bg-slate-50 dark:hover:bg-slate-800/40'
-                )}
-              >
-                {/* File type badge */}
-                <div className={cn(
-                  'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-[10px] font-black',
-                  isImg
-                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
-                    : ext === 'PDF'
-                    ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
-                    : 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
-                )}>
-                  {ext.slice(0, 4)}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{doc.fileName}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <Clock className="w-3 h-3 text-slate-400" />
-                    <span className="text-xs text-slate-400">{fmtDate(doc.uploadedAt)}</span>
-                    {doc.uploadedByName && (
-                      <span className="text-xs text-slate-300 dark:text-slate-600">· {doc.uploadedByName}</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => handleOpen(doc.filePath, doc.fileName)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg transition-colors"
-                  >
-                    <Eye className="w-3.5 h-3.5" /> View
-                  </button>
-                  {isOwner && (
-                    <button
-                      onClick={() => handleDelete(doc.id, doc.filePath)}
-                      disabled={deletingId === doc.id}
-                      className="p-1.5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      {deletingId === doc.id
-                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        : <Trash2 className="w-3.5 h-3.5" />}
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
 }
 
 function UploadModal({ onClose, onSubmit }: UploadModalProps) {
@@ -1299,7 +1112,7 @@ export default function FinanceWorkflow() {
   const user    = useAuthStore(s => s.user);
   const isOwner = user?.role === 'owner';
 
-  const [statusFilter, setStatusFilter] = useState<TabKey>('all');
+  const [statusFilter, setStatusFilter] = useState<FWStatus | 'all' | 'notes'>('all');
   const [search,       setSearch]       = useState('');
   const [showUpload,    setShowUpload]    = useState(false);
   const [selected,      setSelected]      = useState<FW | null>(null);
@@ -1314,7 +1127,7 @@ export default function FinanceWorkflow() {
   };
 
   const filtered = workflows.filter(w => {
-    if (statusFilter === 'notes' || FOLDER_KEYS.has(statusFilter)) return false;
+    if (statusFilter === 'notes') return false;
     if (statusFilter !== 'all' && w.status !== statusFilter) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -1399,69 +1212,46 @@ export default function FinanceWorkflow() {
       )}
 
       {/* Filter tabs + search */}
-      <div className="space-y-2">
-        {/* Row 1: workflow status tabs */}
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex gap-1 bg-slate-100 dark:bg-slate-800/60 rounded-xl p-1 flex-wrap">
-            {STATUS_TABS.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setStatusFilter(tab.key)}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1',
-                  tab.key === 'notes' && statusFilter === 'notes'
-                    ? 'bg-amber-500 text-white shadow-sm'
-                    : tab.key === 'notes'
-                    ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-                    : statusFilter === tab.key
-                    ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 shadow-sm'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                )}
-              >
-                {tab.key === 'notes' && <StickyNote className="w-3 h-3" />}
-                {tab.label}
-                {tab.key !== 'notes' && counts[tab.key as keyof typeof counts] > 0 && (
-                  <span className="ml-1 text-[10px] text-slate-400">
-                    {counts[tab.key as keyof typeof counts]}
-                  </span>
-                )}
-              </button>
-            ))}
-
-            {/* Divider */}
-            <div className="w-px bg-slate-300 dark:bg-slate-600 mx-1 self-stretch" />
-
-            {/* Folder tabs */}
-            {FOLDER_TABS.map(f => (
-              <button
-                key={f.key}
-                onClick={() => setStatusFilter(f.key)}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5',
-                  statusFilter === f.key
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30'
-                )}
-              >
-                <f.icon className="w-3 h-3" />
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {!FOLDER_KEYS.has(statusFilter) && statusFilter !== 'notes' && (
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search title, category…"
-                className="w-56 pl-8 pr-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
-              />
-            </div>
-          )}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex gap-1 bg-slate-100 dark:bg-slate-800/60 rounded-xl p-1">
+          {STATUS_TABS.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setStatusFilter(tab.key)}
+              className={cn(
+                'px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1',
+                tab.key === 'notes' && statusFilter === 'notes'
+                  ? 'bg-amber-500 text-white shadow-sm'
+                  : tab.key === 'notes'
+                  ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                  : statusFilter === tab.key
+                  ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+              )}
+            >
+              {tab.key === 'notes' && <StickyNote className="w-3 h-3" />}
+              {tab.label}
+              {tab.key !== 'notes' && counts[tab.key as keyof typeof counts] > 0 && (
+                <span className="ml-1 text-[10px] text-slate-400">
+                  {counts[tab.key as keyof typeof counts]}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
+
+        {statusFilter !== 'notes' && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search title, category…"
+              className="w-56 pl-8 pr-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+            />
+          </div>
+        )}
       </div>
 
       {/* Notes tab — full-page view */}
@@ -1474,13 +1264,8 @@ export default function FinanceWorkflow() {
         />
       )}
 
-      {/* Document folder tabs */}
-      {FOLDER_KEYS.has(statusFilter) && (
-        <DocumentFolderView folder={statusFilter as FolderType} isOwner={isOwner} />
-      )}
-
-      {/* Table — hidden when Notes or Folder tab is active */}
-      {!FOLDER_KEYS.has(statusFilter) && statusFilter !== 'notes' && <div className="bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      {/* Table — hidden when Notes tab is active */}
+      {statusFilter !== 'notes' && <div className="bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16 gap-3 text-slate-400">
             <Loader2 className="w-5 h-5 animate-spin" /> Loading…
