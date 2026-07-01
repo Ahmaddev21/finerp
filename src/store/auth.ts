@@ -24,38 +24,83 @@ interface AuthState {
   setCompany: (company: Company) => void;
   setLoading: (loading: boolean) => void;
   setInitialized: () => void;
-  loginAs: (role: Role) => void; // Kept for demo/offline mode
+  loginAs: (role: Role) => void;
   logout: () => void;
 }
 
-// Mock users for offline/demo mode
+// ── Auth cache (localStorage) ──────────────────────────────────────────────
+// We persist user/profile/company so the app renders instantly on refresh.
+// Background re-validation in App.tsx then confirms the session is still valid.
+
+const CACHE_KEY = 'finerp-auth-v1';
+
+interface AuthCache {
+  user: User;
+  profile: UserProfile;
+  company: Company | null;
+}
+
+function readCache(): AuthCache | null {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? (JSON.parse(raw) as AuthCache) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(user: User | null, profile: UserProfile | null, company: Company | null) {
+  if (!isSupabaseConfigured) return;
+  if (user && profile) {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ user, profile, company }));
+  } else {
+    localStorage.removeItem(CACHE_KEY);
+  }
+}
+
+// Read synchronously at module load — before any React render
+const cached = readCache();
+
+// ── Mock users for offline/demo mode ──────────────────────────────────────
 const mockUsers: Record<string, User> = {
-  owner: { id: '1', email: 'owner@example.com', role: 'owner', name: 'Owner User' },
-  admin: { id: '2', email: 'admin@example.com', role: 'admin', name: 'Admin User' },
-  bdm: { id: '3', email: 'bdm@example.com', role: 'bdm', name: 'BDM User' },
-  engineer: { id: '4', email: 'engineer@example.com', role: 'engineer', name: 'Engineer User' },
+  owner:        { id: '1', email: 'owner@example.com',     role: 'owner',        name: 'Owner User' },
+  admin:        { id: '2', email: 'admin@example.com',     role: 'admin',        name: 'Admin User' },
+  bdm:          { id: '3', email: 'bdm@example.com',       role: 'bdm',          name: 'BDM User' },
+  engineer:     { id: '4', email: 'engineer@example.com',  role: 'engineer',     name: 'Engineer User' },
   receptionist: { id: '5', email: 'reception@example.com', role: 'receptionist', name: 'Receptionist User' },
-  developer: { id: '6', email: 'dev@example.com', role: 'developer', name: 'Developer User' },
-  intern: { id: '7', email: 'intern@example.com', role: 'intern', name: 'Intern User' },
+  developer:    { id: '6', email: 'dev@example.com',       role: 'developer',    name: 'Developer User' },
+  intern:       { id: '7', email: 'intern@example.com',    role: 'intern',       name: 'Intern User' },
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
-  // Default: auto-login as owner in demo mode, null in live mode
-  user: isSupabaseConfigured ? null : mockUsers.owner,
-  profile: isSupabaseConfigured ? null : { id: '1', username: 'Owner User' },
-  company: isSupabaseConfigured ? null : { id: 'demo', name: 'Demo Company', currency: 'QR', join_code: 'DEMO01' },
-  isLoading: isSupabaseConfigured, // Start loading only in live mode
-  isInitialized: !isSupabaseConfigured, // Already initialized in demo mode
+  // Initialise directly from localStorage cache so the very first render
+  // already has user/profile/company — no loading screen for returning users.
+  user:    isSupabaseConfigured ? (cached?.user    ?? null) : mockUsers.owner,
+  profile: isSupabaseConfigured ? (cached?.profile ?? null) : { id: '1', username: 'Owner User' },
+  company: isSupabaseConfigured ? (cached?.company ?? null) : { id: 'demo', name: 'Demo Company', currency: 'QR', join_code: 'DEMO01' },
+  isLoading:     isSupabaseConfigured ? !cached : false,
+  isInitialized: isSupabaseConfigured ?  !!cached : true,
 
   setUser: (user) => set({ user, isInitialized: true, isLoading: false }),
-  setAuth: (user, profile, company) => set({ user, profile, company, isInitialized: true, isLoading: false }),
+
+  setAuth: (user, profile, company) => {
+    writeCache(user, profile, company);
+    set({ user, profile, company, isInitialized: true, isLoading: false });
+  },
+
   setCompany: (company) => set({ company }),
   setLoading: (isLoading) => set({ isLoading }),
   setInitialized: () => set({ isInitialized: true, isLoading: false }),
+
   loginAs: (role) => set({
-    user: mockUsers[role] ?? mockUsers.owner,
+    user:    mockUsers[role] ?? mockUsers.owner,
     profile: { id: mockUsers[role]?.id ?? '1', username: mockUsers[role]?.name ?? 'User' },
     company: { id: 'demo', name: 'Demo Company', currency: 'QR', join_code: 'DEMO01' },
   }),
-  logout: () => set({ user: null, profile: null, company: null }),
+
+  logout: () => {
+    writeCache(null, null, null);
+    set({ user: null, profile: null, company: null });
+  },
 }));

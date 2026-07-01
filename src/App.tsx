@@ -289,14 +289,13 @@ export default function App() {
   useEffect(() => {
     if (!isSupabaseConfigured) return;
 
+    // Runs in the background after every page load.
+    // For users with a cached session the app is already visible —
+    // this only refreshes data or signs out if the session expired.
     const hydrateFromSession = async () => {
       try {
         const me = await getMe();
         if (me) {
-          // Guard: if the signup flow already set valid auth state while this
-          // async call was in flight, don't overwrite it with potentially stale
-          // data (company_users row may not have been written yet at read time).
-          if (useAuthStore.getState().user) return;
           setAuth(
             {
               id: me.user.id,
@@ -308,9 +307,12 @@ export default function App() {
             me.company ?? null
           );
         } else {
-          setInitialized();
+          // Supabase returned no user → session expired, clear cache and sign out.
+          setAuth(null, null, null);
         }
       } catch {
+        // Network error — keep whatever state is already in the store
+        // (cached user stays logged in; new users stay on login screen).
         setInitialized();
       }
     };

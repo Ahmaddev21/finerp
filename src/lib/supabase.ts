@@ -19,9 +19,17 @@ export const isSupabaseConfigured =
      !supabaseUrl.includes('your_') &&
      !supabaseAnonKey.includes('your_'));
 
+// Wraps fetch with a 10-second abort timeout so any hung Supabase request
+// rejects rather than blocking auth initialization indefinitely.
+function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), 10_000);
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(id));
+}
+
 // Create a real client only when valid, otherwise a stub that never throws
 export const supabase: SupabaseClient = isSupabaseConfigured
-  ? createClient(supabaseUrl!, supabaseAnonKey!)
+  ? createClient(supabaseUrl!, supabaseAnonKey!, { global: { fetch: fetchWithTimeout } })
   : (new Proxy({} as SupabaseClient, {
       get: () => () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }),
     }));
