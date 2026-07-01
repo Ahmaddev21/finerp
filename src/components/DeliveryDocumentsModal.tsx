@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Upload, FileText, Trash2, ExternalLink, AlertTriangle, Loader2, ImageIcon, File, Download, Share2, IdCard, Car, Shield, BookUser } from 'lucide-react';
+import { X, Upload, FileText, Trash2, ExternalLink, AlertTriangle, Loader2, ImageIcon, File, Download, Share2, IdCard, Car, Shield, BookUser, Briefcase, FolderOpen } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useDeliveryDocuments, DeliveryDocument, DocFolder, formatBytes } from '../hooks/useDeliveryDocuments';
 import type { Delivery as DeliveryRecord } from '../hooks/useDeliveries';
@@ -11,10 +11,12 @@ interface Props {
 }
 
 const FOLDERS: { key: DocFolder; label: string; icon: React.ElementType }[] = [
-  { key: 'qid',      label: 'QID',      icon: IdCard   },
-  { key: 'estamara', label: 'Estamara', icon: Car      },
-  { key: 'license',  label: 'License',  icon: Shield   },
-  { key: 'passport', label: 'Passport', icon: BookUser },
+  { key: 'qid',        label: 'QID',               icon: IdCard    },
+  { key: 'istimara',   label: 'Istimara',           icon: Car       },
+  { key: 'license',    label: 'License',            icon: Shield    },
+  { key: 'passport',   label: 'Passport',           icon: BookUser  },
+  { key: 'secondment', label: 'Secondment (Iaara)', icon: Briefcase },
+  { key: 'other',      label: 'Other',              icon: FolderOpen},
 ];
 
 function DocIcon({ mimeType, fileName }: { mimeType: string | null; fileName: string }) {
@@ -140,7 +142,7 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
 
         {/* Folder tabs */}
         <div className="px-6 pt-4 shrink-0">
-          <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+          <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-x-auto custom-scrollbar">
             {FOLDERS.map(f => {
               const count = documents.filter(d => d.folder === f.key).length;
               const Icon = f.icon;

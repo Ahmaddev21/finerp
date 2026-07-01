@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuthStore } from '../store/auth';
 
-export type DocFolder = 'qid' | 'estamara' | 'license' | 'passport' | 'general';
+export type DocFolder = 'qid' | 'istimara' | 'license' | 'passport' | 'secondment' | 'other' | 'general';
 
 export interface DeliveryDocument {
   id: string;
