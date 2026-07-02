@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Truck, Search, Plus, X, User, Shield, CreditCard, Smartphone, Mail, Key, MoreVertical, Filter, Bike, Car, Download, Eye, EyeOff, AlertTriangle, Hash, FolderOpen, Trash2, Pencil } from 'lucide-react';
+import { Truck, Search, Plus, X, User, Shield, CreditCard, Smartphone, Mail, Key, MoreVertical, Filter, Bike, Car, Download, Eye, EyeOff, AlertTriangle, Hash, FolderOpen, Trash2, Pencil, ChevronDown } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useDeliveries, DeliveryStatus, DeliveryCategory } from '../hooks/useDeliveries';
 import type { Delivery as DeliveryRecord } from '../hooks/useDeliveries';
@@ -129,6 +129,7 @@ export default function Delivery() {
   const [showPassword, setShowPassword] = useState(false);
   const [revealedPasswords, setRevealedPasswords] = useState<Set<string>>(new Set());
   const [docsRecord, setDocsRecord] = useState<DeliveryRecord | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const toggleRevealPassword = (id: string) => {
     setRevealedPasswords(prev => {
@@ -295,196 +296,223 @@ export default function Delivery() {
             <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Loading fleet data...</p>
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-2 text-slate-400">
+            <Search className="w-8 h-8 opacity-20" />
+            <p className="font-medium">No matching records found</p>
+          </div>
         ) : (
-          /* ── Rider / Driver Table ─────────────────────── */
-          <div className="overflow-x-auto min-h-[450px]">
-            <table className="w-full text-sm text-left whitespace-nowrap">
-              <thead className="bg-slate-50/60 dark:bg-slate-800/40">
-                <tr>
-                  {['S.L', 'Internal Code', 'EMP Number', 'Name', 'Company', 'Snoonu ID', 'Email', 'Password', 'QID', 'QID Expiry', 'Passport', 'Passport Expiry', 'Vehicle No.', 'Vehicle Expiry', 'Mobile', 'Status', ''].map(h => (
-                    <th key={h} className="px-5 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filtered.map((d, index) => {
-                  return (
-                    <tr key={d.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors group">
-                      <td className="px-5 py-4 font-medium text-slate-400">{index + 1}</td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
-                          <Hash className="w-3 h-3 text-slate-300" />
-                          <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-400">{d.delivery_code}</span>
+          /* ── Rider / Driver expandable card list ──────── */
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {filtered.map((d, index) => {
+              const isExpanded = expandedId === d.id;
+              const vehicleNo  = d.category === 'Rider' ? d.bike_number : d.car_number;
+              const vehicleExp = d.category === 'Rider' ? d.bike_expiry : d.car_expiry;
+              const vehicleExpired = vehicleExp ? new Date(vehicleExp) < new Date() : false;
+
+              const rowActions = [
+                {
+                  label: 'Edit',
+                  icon: <Pencil className="w-4 h-4" />,
+                  iconCls: 'text-indigo-500',
+                  onClick: () => {
+                    setEditRecord(d);
+                    setForm({
+                      emp_number: d.emp_number, name: d.name, company: d.company,
+                      snoonu_id: d.snoonu_id, snoonu_email: d.snoonu_email, password: d.password ?? '',
+                      qid: d.qid, qid_expiry: d.qid_expiry ?? '',
+                      passport_number: d.passport_number, passport_expiry: d.passport_expiry ?? '',
+                      car_number: d.car_number ?? '', bike_number: d.bike_number ?? '',
+                      bike_expiry: d.bike_expiry ?? '', car_expiry: d.car_expiry ?? '',
+                      mobile_number: d.mobile_number, status: d.status, category: d.category,
+                    });
+                    setIsOpen(true);
+                  },
+                },
+                { kind: 'divider' as const },
+                { kind: 'header' as const, label: 'Documents' },
+                {
+                  label: 'View / Upload Docs',
+                  icon: <FolderOpen className="w-4 h-4" />,
+                  iconCls: 'text-blue-500',
+                  onClick: () => setDocsRecord(d),
+                },
+                { kind: 'divider' as const },
+                { kind: 'header' as const, label: 'Manage Status' },
+                { label: 'Set Active',   icon: <Shield className="w-4 h-4" />, iconCls: 'text-emerald-500', onClick: () => void guardedUpdateStatus(d, 'Active'),   checked: d.status === 'Active' },
+                { label: 'Set Inactive', icon: <Shield className="w-4 h-4" />, iconCls: 'text-slate-400',   onClick: () => void guardedUpdateStatus(d, 'Inactive'), checked: d.status === 'Inactive' },
+                { kind: 'divider' as const },
+                {
+                  label: 'Delete',
+                  icon: <Trash2 className="w-4 h-4" />,
+                  iconCls: user?.role === 'owner' ? 'text-rose-500' : 'text-slate-300',
+                  disabled: user?.role !== 'owner',
+                  onClick: () => {
+                    if (user?.role !== 'owner') return;
+                    if (confirm(`Delete ${d.name}? This cannot be undone.`)) {
+                      void (async () => {
+                        const ok = await deleteDelivery(d.id);
+                        if (ok && user?.id) await writeAuditLog('DELETE', 'deliveries', d.id, `Deleted ${d.category}: ${d.name} (${d.emp_number})`);
+                      })();
+                    }
+                  },
+                },
+              ];
+
+              return (
+                <div key={d.id}>
+                  {/* ── Compact summary row ── */}
+                  <div
+                    onClick={() => setExpandedId(isExpanded ? null : d.id)}
+                    className="flex items-center gap-3 px-5 py-3.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors select-none"
+                  >
+                    {/* Index */}
+                    <span className="text-xs font-medium text-slate-400 w-5 shrink-0">{index + 1}</span>
+
+                    {/* Avatar */}
+                    <div className={cn(
+                      'w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0',
+                      d.category === 'Rider' ? 'bg-blue-600' : 'bg-indigo-600'
+                    )}>
+                      {d.name.charAt(0).toUpperCase()}
+                    </div>
+
+                    {/* Name + code */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{d.name}</p>
+                      <p className="text-xs text-slate-400 font-mono">{d.emp_number} · {d.delivery_code}</p>
+                    </div>
+
+                    {/* Company */}
+                    <span className="hidden sm:block text-sm text-slate-500 dark:text-slate-400 min-w-0 truncate max-w-[120px]">{d.company}</span>
+
+                    {/* Vehicle */}
+                    <div className="hidden md:flex items-center gap-1.5 text-sm font-semibold min-w-[90px]">
+                      {d.category === 'Rider'
+                        ? <><Bike className="w-3.5 h-3.5 text-blue-500" /><span className="text-blue-600 dark:text-blue-400">{d.bike_number || '—'}</span></>
+                        : <><Car className="w-3.5 h-3.5 text-indigo-500" /><span className="text-indigo-600 dark:text-indigo-400">{d.car_number || '—'}</span></>
+                      }
+                    </div>
+
+                    {/* Mobile */}
+                    <span className="hidden lg:block text-sm text-slate-500 dark:text-slate-400 font-mono min-w-[110px]">{d.mobile_number || '—'}</span>
+
+                    {/* Status */}
+                    <span className={cn(
+                      'inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shrink-0',
+                      d.status === 'Active'
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-500'
+                    )}>{d.status}</span>
+
+                    {/* Chevron */}
+                    <ChevronDown className={cn(
+                      'w-4 h-4 text-slate-400 transition-transform duration-150 shrink-0',
+                      isExpanded && 'rotate-180'
+                    )} />
+
+                    {/* 3-dot menu — stop propagation so click doesn't toggle row */}
+                    <div onClick={e => e.stopPropagation()}>
+                      <RowMenu actions={rowActions} />
+                    </div>
+                  </div>
+
+                  {/* ── Expanded detail panel ── */}
+                  {isExpanded && (
+                    <div className="px-5 pb-5 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4 pt-4">
+
+                        {/* Row 1 */}
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">QID</p>
+                          <p className="text-sm font-mono text-slate-800 dark:text-slate-200">{d.qid || '—'}</p>
+                          {d.qid_expiry && <p className={cn('text-[10px] font-bold mt-0.5', new Date(d.qid_expiry) < new Date() ? 'text-rose-500' : 'text-slate-400')}>Exp: {d.qid_expiry}</p>}
                         </div>
-                      </td>
-                      <td className="px-5 py-4 font-bold text-emerald-600 dark:text-emerald-400">{d.emp_number}</td>
-                      <td className="px-5 py-4">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-slate-900 dark:text-white">{d.name}</span>
-                          <span className="text-[10px] text-slate-500 uppercase tracking-tight">{d.category}</span>
+
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Passport</p>
+                          <p className="text-sm font-mono text-slate-800 dark:text-slate-200">{d.passport_number || '—'}</p>
+                          {d.passport_expiry && <p className={cn('text-[10px] font-bold mt-0.5', new Date(d.passport_expiry) < new Date() ? 'text-rose-500' : 'text-slate-400')}>Exp: {d.passport_expiry}</p>}
                         </div>
-                      </td>
-                      <td className="px-5 py-4 text-slate-600 dark:text-slate-300">{d.company}</td>
-                      <td className="px-5 py-4 text-slate-600 dark:text-slate-300 font-mono text-xs">{d.snoonu_id}</td>
-                      <td className="px-5 py-4 text-slate-500 dark:text-slate-400 text-xs">{d.snoonu_email}</td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-xs text-slate-600 dark:text-slate-300 select-none">
-                            {d.password ? (revealedPasswords.has(d.id) ? d.password : '••••••••') : '—'}
-                          </span>
-                          {d.password && (
-                            <button
-                              type="button"
-                              onClick={() => toggleRevealPassword(d.id)}
-                              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                            >
-                              {revealedPasswords.has(d.id)
-                                ? <EyeOff className="w-3.5 h-3.5" />
-                                : <Eye className="w-3.5 h-3.5" />}
-                            </button>
-                          )}
+
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">{d.category === 'Rider' ? 'Bike No.' : 'Car No.'}</p>
+                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{vehicleNo || '—'}</p>
+                          {vehicleExp && <p className={cn('text-[10px] font-bold mt-0.5', vehicleExpired ? 'text-rose-500' : 'text-slate-400')}>Exp: {vehicleExp}</p>}
                         </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-slate-600 dark:text-slate-300 font-mono text-xs">{d.qid}</span>
-                          {d.qid_expiry && <span className="text-[10px] text-rose-500 font-bold mt-0.5">Exp: {d.qid_expiry}</span>}
+
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Mobile</p>
+                          <p className="text-sm text-slate-800 dark:text-slate-200">{d.mobile_number || '—'}</p>
                         </div>
-                      </td>
-                      <td className="px-5 py-4 text-slate-600 dark:text-slate-300 font-mono text-xs">{d.qid_expiry || '—'}</td>
-                      <td className="px-5 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-slate-600 dark:text-slate-300 font-mono text-xs">{d.passport_number}</span>
-                          {d.passport_expiry && <span className="text-[10px] text-amber-600 font-bold mt-0.5">Exp: {d.passport_expiry}</span>}
+
+                        {/* Row 2 */}
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Snoonu ID</p>
+                          <p className="text-sm font-mono text-slate-800 dark:text-slate-200">{d.snoonu_id || '—'}</p>
                         </div>
-                      </td>
-                      <td className="px-5 py-4 text-slate-600 dark:text-slate-300 font-mono text-xs">{d.passport_expiry || '—'}</td>
-                      <td className="px-5 py-4">
-                        {d.category === 'Rider' ? (
-                          <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-semibold">
-                            <Bike className="w-3.5 h-3.5" /> {d.bike_number}
+
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Email</p>
+                          <p className="text-sm text-slate-800 dark:text-slate-200 break-all">{d.snoonu_email || '—'}</p>
+                        </div>
+
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Password</p>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-mono text-slate-800 dark:text-slate-200 select-none">
+                              {d.password ? (revealedPasswords.has(d.id) ? d.password : '••••••••') : '—'}
+                            </span>
+                            {d.password && (
+                              <button
+                                onClick={e => { e.stopPropagation(); toggleRevealPassword(d.id); }}
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                              >
+                                {revealedPasswords.has(d.id) ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </button>
+                            )}
                           </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-semibold">
-                            <Car className="w-3.5 h-3.5" /> {d.car_number}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-5 py-4 font-mono text-xs">
-                        {(() => {
-                          const expiry = d.category === 'Rider' ? d.bike_expiry : d.car_expiry;
-                          if (!expiry) return <span className="text-slate-400">—</span>;
-                          return (
-                            <span className={cn(
-                              new Date(expiry) < new Date()
-                                ? 'text-rose-500 font-bold'
-                                : 'text-slate-600 dark:text-slate-300'
-                            )}>{expiry}</span>
-                          );
-                        })()}
-                      </td>
-                      <td className="px-5 py-4 text-slate-600 dark:text-slate-300">{d.mobile_number}</td>
-                      <td className="px-5 py-4">
-                        <span className={cn(
-                          'inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider',
-                          d.status === 'Active'
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-500'
-                        )}>
-                          {d.status}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        <RowMenu
-                          actions={[
-                            {
-                              label: 'Edit',
-                              icon: <Pencil className="w-4 h-4" />,
-                              iconCls: 'text-indigo-500',
-                              onClick: () => {
-                                setEditRecord(d);
-                                setForm({
-                                  emp_number: d.emp_number,
-                                  name: d.name,
-                                  company: d.company,
-                                  snoonu_id: d.snoonu_id,
-                                  snoonu_email: d.snoonu_email,
-                                  password: d.password ?? '',
-                                  qid: d.qid,
-                                  qid_expiry: d.qid_expiry ?? '',
-                                  passport_number: d.passport_number,
-                                  passport_expiry: d.passport_expiry ?? '',
-                                  car_number: d.car_number ?? '',
-                                  bike_number: d.bike_number ?? '',
-                                  bike_expiry: d.bike_expiry ?? '',
-                                  car_expiry: d.car_expiry ?? '',
-                                  mobile_number: d.mobile_number,
-                                  status: d.status,
-                                  category: d.category,
-                                });
-                                setIsOpen(true);
-                              },
-                            },
-                            { kind: 'divider' },
-                            { kind: 'header', label: 'Documents' },
-                            {
-                              label: 'View / Upload Docs',
-                              icon: <FolderOpen className="w-4 h-4" />,
-                              iconCls: 'text-blue-500',
-                              onClick: () => setDocsRecord(d),
-                            },
-                            { kind: 'divider' },
-                            { kind: 'header', label: 'Manage Status' },
-                            {
-                              label: 'Set Active',
-                              icon: <Shield className="w-4 h-4" />,
-                              iconCls: 'text-emerald-500',
-                              onClick: () => void guardedUpdateStatus(d, 'Active'),
-                              checked: d.status === 'Active'
-                            },
-                            {
-                              label: 'Set Inactive',
-                              icon: <Shield className="w-4 h-4" />,
-                              iconCls: 'text-slate-400',
-                              onClick: () => void guardedUpdateStatus(d, 'Inactive'),
-                              checked: d.status === 'Inactive'
-                            },
-                            { kind: 'divider' },
-                            {
-                              label: 'Delete',
-                              icon: <Trash2 className="w-4 h-4" />,
-                              iconCls: user?.role === 'owner' ? 'text-rose-500' : 'text-slate-300',
-                              disabled: user?.role !== 'owner',
-                              onClick: () => {
-                                if (user?.role !== 'owner') return;
-                                if (confirm(`Delete ${d.name}? This cannot be undone.`)) {
-                                  void (async () => {
-                                    const ok = await deleteDelivery(d.id);
-                                    if (ok && user?.id) {
-                                      await writeAuditLog('DELETE', 'deliveries', d.id, `Deleted ${d.category}: ${d.name} (${d.emp_number})`);
-                                    }
-                                  })();
-                                }
-                              }
-                            }
-                          ]}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-                {filtered.length === 0 && (
-                  <tr>
-                    <td colSpan={17} className="px-5 py-20 text-center">
-                      <div className="flex flex-col items-center gap-2 text-slate-400">
-                        <Search className="w-8 h-8 opacity-20" />
-                        <p className="font-medium">No matching records found</p>
+                        </div>
+
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Company</p>
+                          <p className="text-sm text-slate-800 dark:text-slate-200">{d.company || '—'}</p>
+                        </div>
                       </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+
+                      {/* Quick action buttons */}
+                      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <button
+                          onClick={e => { e.stopPropagation(); setDocsRecord(d); }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 rounded-lg transition-colors"
+                        >
+                          <FolderOpen className="w-3.5 h-3.5" /> Documents
+                        </button>
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            setEditRecord(d);
+                            setForm({
+                              emp_number: d.emp_number, name: d.name, company: d.company,
+                              snoonu_id: d.snoonu_id, snoonu_email: d.snoonu_email, password: d.password ?? '',
+                              qid: d.qid, qid_expiry: d.qid_expiry ?? '',
+                              passport_number: d.passport_number, passport_expiry: d.passport_expiry ?? '',
+                              car_number: d.car_number ?? '', bike_number: d.bike_number ?? '',
+                              bike_expiry: d.bike_expiry ?? '', car_expiry: d.car_expiry ?? '',
+                              mobile_number: d.mobile_number, status: d.status, category: d.category,
+                            });
+                            setIsOpen(true);
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 rounded-lg transition-colors"
+                        >
+                          <Pencil className="w-3.5 h-3.5" /> Edit
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
