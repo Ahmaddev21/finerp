@@ -146,6 +146,7 @@ export function useFinanceWorkflow() {
     title:        string;
     category:     FWCategory;
     description?: string;
+    notes?:       string;
     file?:        File;
   }) => {
     const newId = `FWF-${Date.now().toString(36).toUpperCase().slice(-4)}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
@@ -162,7 +163,7 @@ export function useFinanceWorkflow() {
       fileSize:        w.file?.size ?? null,
       uploadedBy:      user?.id ?? null,
       assignedTo:      null,
-      notes:           null,
+      notes:           w.notes ?? null,
       transactionRef:  null,
       destinationType: null,
       destinationId:   null,
@@ -192,6 +193,7 @@ export function useFinanceWorkflow() {
       category:    w.category,
       description: w.description || null,
       status:      'pending',
+      notes:       w.notes      ?? null,
       file_path:   filePath,
       file_name:   w.file?.name ?? null,
       file_size:   w.file?.size ?? null,

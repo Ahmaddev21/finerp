@@ -111,14 +111,16 @@ function NotesView({
   workflows,
   isOwner,
   updateWorkflow,
+  addWorkflow,
   onOpenWorkflow,
 }: {
   workflows:      FW[];
   isOwner:        boolean;
   updateWorkflow: (id: string, updates: any) => Promise<void>;
+  addWorkflow:    (data: { title: string; category: FWCategory; notes?: string }) => Promise<void>;
   onOpenWorkflow: (wf: FW) => void;
 }) {
-  const [selectedWfId, setSelectedWfId] = useState(workflows[0]?.id ?? '');
+  const [selectedWfId, setSelectedWfId] = useState('');
   const [newText,      setNewText]      = useState('');
   const [editId,       setEditId]       = useState<string | null>(null);
   const [editWfId,     setEditWfId]     = useState<string | null>(null);
@@ -137,12 +139,20 @@ function NotesView({
   [workflows]);
 
   const addNote = async () => {
-    if (!newText.trim() || !selectedWfId) return;
-    const wf = workflows.find(w => w.id === selectedWfId);
-    if (!wf) return;
+    if (!newText.trim()) return;
     setSaving(true);
     const entry: NoteEntry = { id: crypto.randomUUID(), text: newText.trim(), createdAt: new Date().toISOString() };
-    await updateWorkflow(selectedWfId, { notes: JSON.stringify([...parseNotes(wf.notes), entry]) });
+
+    if (selectedWfId) {
+      const wf = workflows.find(w => w.id === selectedWfId);
+      if (wf) {
+        await updateWorkflow(selectedWfId, { notes: JSON.stringify([...parseNotes(wf.notes), entry]) });
+      }
+    } else {
+      const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      await addWorkflow({ title: `Note — ${dateStr}`, category: 'Other', notes: JSON.stringify([entry]) });
+    }
+
     setNewText('');
     setSaving(false);
   };
@@ -173,21 +183,18 @@ function NotesView({
 
           <div>
             <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
-              Attach to Document *
+              Attach to Document <span className="font-normal normal-case text-slate-400">(optional)</span>
             </label>
-            {workflows.length === 0 ? (
-              <p className="text-xs text-slate-400 italic">No documents uploaded yet.</p>
-            ) : (
-              <select
-                value={selectedWfId}
-                onChange={e => setSelectedWfId(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-all"
-              >
-                {workflows.map(wf => (
-                  <option key={wf.id} value={wf.id}>{wf.title} · {wf.category}</option>
-                ))}
-              </select>
-            )}
+            <select
+              value={selectedWfId}
+              onChange={e => setSelectedWfId(e.target.value)}
+              className="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-all"
+            >
+              <option value="">— Standalone note (no document) —</option>
+              {workflows.map(wf => (
+                <option key={wf.id} value={wf.id}>{wf.title} · {wf.category}</option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -203,7 +210,7 @@ function NotesView({
 
           <button
             onClick={addNote}
-            disabled={!newText.trim() || !selectedWfId || saving}
+            disabled={!newText.trim() || saving}
             className="flex items-center gap-2 px-5 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-colors shadow-sm"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -217,7 +224,7 @@ function NotesView({
         <div className="text-center py-16 text-slate-400 bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-slate-800">
           <StickyNote className="w-12 h-12 mx-auto mb-3 opacity-30" />
           <p className="text-sm font-medium">No notes yet</p>
-          {isOwner && <p className="text-xs mt-1">Select a document above and write your first note.</p>}
+          {isOwner && <p className="text-xs mt-1">Write your first note above — no document required.</p>}
         </div>
       ) : (
         <div className="space-y-3">
@@ -1260,6 +1267,7 @@ export default function FinanceWorkflow() {
           workflows={workflows}
           isOwner={isOwner}
           updateWorkflow={updateWorkflow}
+          addWorkflow={addWorkflow}
           onOpenWorkflow={wf => setSelected(wf)}
         />
       )}
