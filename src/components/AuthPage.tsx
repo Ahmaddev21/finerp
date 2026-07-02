@@ -199,39 +199,46 @@ export default function AuthPage() {
         <div className="relative z-10 flex flex-col h-full px-14 pt-12 pb-10">
 
           {/* ── Full Company Logo ── */}
-          <div className="flex flex-col items-start gap-3 mb-10">
-            {/* Icon mark + FinERP inline */}
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-white shadow-md border border-slate-100 flex items-center justify-center p-2">
-                <img src="/logo-transparent.png" alt="Rafi Al Aftab" className="w-full h-full object-contain" />
-              </div>
-              <div>
-                {/* Arabic name */}
-                <p className="text-right font-bold text-[#2f3b9e] text-sm leading-snug" dir="rtl" style={{ fontFamily: 'Arial, sans-serif' }}>
-                  رافي الافتاب للتجارة والمقاولات ذ.م.م
-                </p>
-                {/* English name */}
-                <p className="text-[11px] font-black text-[#2f3b9e] tracking-wide leading-snug uppercase">
-                  Rafi Al Aftab Trading & Contracting Co. W.L.L
-                </p>
-              </div>
+          <div className="flex flex-col items-start gap-2 mb-8">
+            {/* Icon mark on top */}
+            <div className="w-[72px] h-[72px] rounded-2xl bg-white shadow-md border border-slate-100 flex items-center justify-center p-2.5 mb-1">
+              <img src="/logo-transparent.png" alt="Rafi Al Aftab" className="w-full h-full object-contain" />
             </div>
-            {/* FinERP pill */}
-            <div className="flex items-center gap-2 bg-[#2f3b9e]/10 border border-[#2f3b9e]/20 rounded-full px-4 py-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#2f3b9e]" />
-              <span className="text-xs font-black text-[#2f3b9e] tracking-widest uppercase">FinERP · Powered by AI</span>
-            </div>
+            {/* Arabic name */}
+            <p className="font-bold text-[#2f3b9e] text-[15px] leading-snug" dir="rtl" style={{ fontFamily: 'Arial, sans-serif' }}>
+              رافي الافتاب للتجارة والمقاولات ذ.م.م
+            </p>
+            {/* English name */}
+            <p className="text-[10.5px] font-black text-[#2f3b9e]/80 tracking-[0.06em] leading-snug uppercase">
+              Rafi Al Aftab Trading &amp; Contracting Co. W.L.L
+            </p>
           </div>
 
-          {/* ── Headline ── */}
-          <div className="mb-8">
+          {/* ── Headline + module list ── */}
+          <div className="mb-6">
             <h1 className="text-4xl font-black text-slate-900 leading-[1.1] tracking-tight">
               Smart Operations.<br />
               <span className="text-[#2f3b9e]">One Platform.</span>
             </h1>
-            <p className="text-slate-500 text-sm mt-3 max-w-xs leading-relaxed">
-              Complete financial & operations management built for Rafi Al Aftab's growing teams.
+            <p className="text-slate-500 text-sm mt-3 leading-relaxed max-w-sm">
+              An all-in-one ERP for Rafi Al Aftab — managing delivery fleets, company finances,
+              contracts, employee documents, and team attendance from a single workspace.
             </p>
+            {/* Module chips */}
+            <div className="flex flex-wrap gap-2 mt-4">
+              {[
+                { label: 'Delivery & Fleet' },
+                { label: 'Finance & Invoicing' },
+                { label: 'Contracts' },
+                { label: 'Documents' },
+                { label: 'Time & Attendance' },
+              ].map(m => (
+                <span key={m.label} className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 text-[11px] font-semibold px-3 py-1 rounded-full shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#2f3b9e]/60 shrink-0" />
+                  {m.label}
+                </span>
+              ))}
+            </div>
           </div>
 
           {/* ── 3D Dashboard Mockup ── */}
