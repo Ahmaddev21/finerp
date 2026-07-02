@@ -187,11 +187,21 @@ function SidebarContent({ onClose, accountingBadge }: { onClose: () => void; acc
   const [erpOpen, setErpOpen] = useState(true);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileName, setProfileName] = useState(user?.name || '');
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(profile?.avatar_url || null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [resolvedAvatarUrl, setResolvedAvatarUrl] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState('');
   const navigate = useNavigate();
+
+  // Resolve storage: paths → signed URLs whenever the profile avatar changes
+  useEffect(() => {
+    const val = profile?.avatar_url;
+    if (!val) { setResolvedAvatarUrl(null); return; }
+    import('../services/auth').then(({ resolveAvatarUrl }) => {
+      resolveAvatarUrl(val).then(url => setResolvedAvatarUrl(url));
+    });
+  }, [profile?.avatar_url]);
 
   if (!user) return null;
 
@@ -300,13 +310,13 @@ function SidebarContent({ onClose, accountingBadge }: { onClose: () => void; acc
 
         {/* User info — clickable to open profile edit */}
         <button
-          onClick={() => { setProfileOpen(true); setProfileName(user.name || ''); setAvatarPreview(profile?.avatar_url || null); }}
+          onClick={() => { setProfileOpen(true); setProfileName(user.name || ''); setAvatarPreview(resolvedAvatarUrl); }}
           className="w-full text-left px-3 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 mb-3 hover:border-blue-300 dark:hover:border-blue-700 transition-colors group cursor-pointer"
         >
           <div className="flex items-center gap-2.5">
             {/* Avatar */}
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 ring-2 ring-slate-200 dark:ring-slate-700" />
+            {resolvedAvatarUrl ? (
+              <img src={resolvedAvatarUrl} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 ring-2 ring-slate-200 dark:ring-slate-700" />
             ) : (
               <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
                 {user?.name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || 'U'}

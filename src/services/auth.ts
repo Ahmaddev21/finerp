@@ -308,19 +308,33 @@ export async function updateProfile(userId: string, updates: { username?: string
 
 export async function uploadAvatar(userId: string, file: File): Promise<string> {
   const ext = file.name.split('.').pop() || 'png';
-  const path = `avatars/${userId}.${ext}`;
+  const storagePath = `avatars/${userId}.${ext}`;
 
   const { error: uploadErr } = await supabase.storage
     .from('finance_attachments')
-    .upload(path, file, { upsert: true });
+    .upload(storagePath, file, { upsert: true });
 
   if (uploadErr) throw uploadErr;
 
-  const { data: urlData } = supabase.storage
-    .from('finance_attachments')
-    .getPublicUrl(path);
+  // Store the path with a prefix rather than a public URL.
+  // getPublicUrl() returns a URL even on private buckets, but that URL
+  // returns 403 when the browser tries to load it. resolveAvatarUrl()
+  // generates a fresh signed URL each session instead.
+  return `storage:${storagePath}`;
+}
 
-  return urlData.publicUrl;
+// Converts a stored avatar value to a displayable URL.
+// Handles "storage:path" (new) and raw https:// URLs (legacy).
+export async function resolveAvatarUrl(value: string | null | undefined): Promise<string | null> {
+  if (!value) return null;
+  if (value.startsWith('storage:')) {
+    const path = value.slice(8);
+    const { data } = await supabase.storage
+      .from('finance_attachments')
+      .createSignedUrl(path, 3600); // 1-hour signed URL — refreshed each page load
+    return data?.signedUrl ?? null;
+  }
+  return value; // legacy full URL — return as-is
 }
 
 export interface JoinCodeResult {
