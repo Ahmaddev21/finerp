@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, ArrowRight, Loader2, Building2, Shield, Users, CheckCircle2, Eye, EyeOff, TrendingUp, Truck } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Loader2, Building2, Shield, Users, CheckCircle2, Eye, EyeOff, TrendingUp, Truck, DollarSign, FileText, FolderOpen, Clock } from 'lucide-react';
 import { login, signup } from '../services/auth';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/auth';
@@ -9,25 +9,36 @@ type AuthMode = 'login' | 'signup-create' | 'signup-join' | 'forgot-password';
 
 const inputCls = 'w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all placeholder:text-slate-400 text-sm shadow-sm';
 
-/* ── 3-D Dashboard mockup (pure CSS) ─────────────────── */
+const MODULES = [
+  { label: 'Delivery & Fleet',    Icon: Truck,       from: '#3b82f6', to: '#2563eb', glow: 'rgba(59,130,246,0.35)' },
+  { label: 'Finance & Invoicing', Icon: DollarSign,  from: '#10b981', to: '#059669', glow: 'rgba(16,185,129,0.35)' },
+  { label: 'Contracts',           Icon: FileText,    from: '#8b5cf6', to: '#7c3aed', glow: 'rgba(139,92,246,0.35)' },
+  { label: 'Documents',           Icon: FolderOpen,  from: '#f59e0b', to: '#d97706', glow: 'rgba(245,158,11,0.35)' },
+  { label: 'Time & Attendance',   Icon: Clock,       from: '#ef4444', to: '#dc2626', glow: 'rgba(239,68,68,0.35)'  },
+];
+
+/* ── 3-D Dashboard mockup ──────────────────────────────── */
 function DashboardMockup() {
   return (
-    <div className="relative w-full flex items-center justify-center py-6 select-none" style={{ perspective: '900px' }}>
+    <div
+      className="relative w-full flex items-center justify-center select-none"
+      style={{ perspective: '900px' }}
+    >
       {/* Main card */}
       <div
-        className="w-[340px] bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-100"
+        className="w-[300px] bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-100"
         style={{ transform: 'rotateX(8deg) rotateY(-6deg) rotateZ(1deg)', transformStyle: 'preserve-3d' }}
       >
         {/* Card header */}
-        <div className="bg-gradient-to-r from-[#2f3b9e] to-[#4a5bc7] px-5 py-3.5 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-[#2f3b9e] to-[#4a5bc7] px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/logo-transparent.png" alt="" className="h-5 w-auto brightness-0 invert opacity-90" />
-            <span className="text-white text-xs font-bold tracking-wide">FinERP Dashboard</span>
+            <img src="/logo-transparent.png" alt="" className="h-4 w-auto brightness-0 invert opacity-90" />
+            <span className="text-white text-[11px] font-bold tracking-wide">FinERP Dashboard</span>
           </div>
-          <div className="flex gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
-            <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
-            <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+          <div className="flex gap-1">
+            <div className="w-2 h-2 rounded-full bg-white/30" />
+            <div className="w-2 h-2 rounded-full bg-white/30" />
+            <div className="w-2 h-2 rounded-full bg-white/30" />
           </div>
         </div>
 
@@ -38,10 +49,10 @@ function DashboardMockup() {
             { label: 'Expenses', value: 'QR 31.5K', color: 'text-rose-500',    up: false },
             { label: 'Profit',   value: 'QR 52.7K', color: 'text-blue-600',    up: true  },
           ].map(k => (
-            <div key={k.label} className="bg-white px-3 py-3 text-center">
-              <p className={cn('text-sm font-black tabular-nums', k.color)}>{k.value}</p>
-              <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">{k.label}</p>
-              <div className={cn('text-[9px] font-bold mt-0.5', k.up ? 'text-emerald-500' : 'text-rose-400')}>
+            <div key={k.label} className="bg-white px-2 py-2.5 text-center">
+              <p className={cn('text-xs font-black tabular-nums', k.color)}>{k.value}</p>
+              <p className="text-[8px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">{k.label}</p>
+              <div className={cn('text-[8px] font-bold mt-0.5', k.up ? 'text-emerald-500' : 'text-rose-400')}>
                 {k.up ? '▲ +12%' : '▼ -3%'}
               </div>
             </div>
@@ -49,69 +60,69 @@ function DashboardMockup() {
         </div>
 
         {/* Mini chart bars */}
-        <div className="px-4 py-3 bg-white">
-          <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-2">Monthly Overview</p>
-          <div className="flex items-end gap-1.5 h-12">
+        <div className="px-4 py-2.5 bg-white">
+          <p className="text-[8px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Monthly Overview</p>
+          <div className="flex items-end gap-1 h-9">
             {[40, 65, 45, 80, 60, 90, 55, 75, 85, 70, 95, 72].map((h, i) => (
               <div key={i} className="flex-1 rounded-sm" style={{
                 height: `${h}%`,
                 background: i === 10
                   ? 'linear-gradient(to top, #2f3b9e, #4a5bc7)'
-                  : i >= 9 ? 'rgba(47,59,158,0.2)' : 'rgba(47,59,158,0.12)'
+                  : i >= 9 ? 'rgba(47,59,158,0.22)' : 'rgba(47,59,158,0.1)'
               }} />
             ))}
           </div>
           <div className="flex justify-between mt-1">
             {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(m => (
-              <span key={m} className="text-[7px] text-slate-300 font-medium">{m.slice(0,1)}</span>
+              <span key={m} className="text-[6px] text-slate-300 font-medium">{m.slice(0,1)}</span>
             ))}
           </div>
         </div>
 
         {/* Recent rows */}
-        <div className="border-t border-slate-50 px-4 pb-3">
-          <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 pt-2.5 mb-2">Recent Activity</p>
+        <div className="border-t border-slate-50 px-4 pb-2.5">
+          <p className="text-[8px] font-bold uppercase tracking-wider text-slate-400 pt-2 mb-1.5">Recent Activity</p>
           {[
-            { name: 'Invoice #1042', amount: '+QR 4,200', color: 'text-emerald-600' },
-            { name: 'Delivery · DEL-829', amount: 'Active', color: 'text-blue-600' },
+            { name: 'Invoice #1042',    amount: '+QR 4,200', color: 'text-emerald-600' },
+            { name: 'Delivery · DEL-829', amount: 'Active', color: 'text-blue-600'    },
             { name: 'Contract · CTR-18',  amount: 'QR 12K', color: 'text-indigo-600' },
           ].map(r => (
-            <div key={r.name} className="flex items-center justify-between py-1.5 border-b border-slate-50 last:border-0">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                <span className="text-[10px] text-slate-600 font-medium">{r.name}</span>
+            <div key={r.name} className="flex items-center justify-between py-1 border-b border-slate-50 last:border-0">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1 h-1 rounded-full bg-slate-300" />
+                <span className="text-[9px] text-slate-600 font-medium">{r.name}</span>
               </div>
-              <span className={cn('text-[10px] font-bold', r.color)}>{r.amount}</span>
+              <span className={cn('text-[9px] font-bold', r.color)}>{r.amount}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Floating stat chip — top right */}
+      {/* Floating chip — top right */}
       <div
-        className="absolute top-4 right-4 bg-white rounded-xl shadow-xl border border-slate-100 px-3 py-2 flex items-center gap-2"
-        style={{ transform: 'rotateX(8deg) rotateY(-6deg) translateZ(20px)' }}
+        className="absolute top-2 right-6 bg-white rounded-xl shadow-xl border border-slate-100 px-2.5 py-1.5 flex items-center gap-1.5"
+        style={{ transform: 'rotateX(8deg) rotateY(-6deg) translateZ(18px)' }}
       >
-        <div className="w-6 h-6 bg-emerald-100 rounded-lg flex items-center justify-center">
-          <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+        <div className="w-5 h-5 bg-emerald-100 rounded-lg flex items-center justify-center">
+          <TrendingUp className="w-3 h-3 text-emerald-600" />
         </div>
         <div>
-          <p className="text-[9px] text-slate-400 font-semibold">Net Profit</p>
-          <p className="text-xs font-black text-emerald-600">+24.8%</p>
+          <p className="text-[8px] text-slate-400 font-semibold leading-none">Net Profit</p>
+          <p className="text-[11px] font-black text-emerald-600 leading-tight">+24.8%</p>
         </div>
       </div>
 
-      {/* Floating stat chip — bottom left */}
+      {/* Floating chip — bottom left */}
       <div
-        className="absolute bottom-4 left-4 bg-white rounded-xl shadow-xl border border-slate-100 px-3 py-2 flex items-center gap-2"
-        style={{ transform: 'rotateX(8deg) rotateY(-6deg) translateZ(20px)' }}
+        className="absolute bottom-2 left-6 bg-white rounded-xl shadow-xl border border-slate-100 px-2.5 py-1.5 flex items-center gap-1.5"
+        style={{ transform: 'rotateX(8deg) rotateY(-6deg) translateZ(18px)' }}
       >
-        <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
-          <Truck className="w-3.5 h-3.5 text-blue-600" />
+        <div className="w-5 h-5 bg-blue-100 rounded-lg flex items-center justify-center">
+          <Truck className="w-3 h-3 text-blue-600" />
         </div>
         <div>
-          <p className="text-[9px] text-slate-400 font-semibold">Fleet Active</p>
-          <p className="text-xs font-black text-blue-600">48 Riders</p>
+          <p className="text-[8px] text-slate-400 font-semibold leading-none">Fleet Active</p>
+          <p className="text-[11px] font-black text-blue-600 leading-tight">48 Riders</p>
         </div>
       </div>
     </div>
@@ -183,100 +194,105 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
+    /* h-screen + overflow-hidden = no page scroll */
+    <div className="h-screen flex overflow-hidden bg-slate-50">
 
       {/* ── LEFT PANEL ─────────────────────────────────── */}
-      <div className="hidden lg:flex lg:w-[58%] flex-col relative overflow-hidden"
+      <div
+        className="hidden lg:flex lg:w-[58%] flex-col h-screen overflow-hidden relative"
         style={{ background: 'linear-gradient(160deg, #ffffff 0%, #f0f3ff 50%, #e8edff 100%)' }}
       >
-        {/* Subtle decorative blobs */}
+        {/* Decorative blobs */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-[-5%]  right-[-5%] w-72 h-72 bg-blue-100/60   rounded-full blur-[80px]"  />
-          <div className="absolute bottom-[-5%] left-[-5%]  w-80 h-80 bg-indigo-100/50 rounded-full blur-[80px]"  />
-          <div className="absolute top-[45%]  left-[40%]   w-48 h-48 bg-violet-100/40  rounded-full blur-[60px]"  />
+          <div className="absolute top-[-5%]  right-[-5%] w-72 h-72 bg-blue-100/60   rounded-full blur-[80px]" />
+          <div className="absolute bottom-[-5%] left-[-5%] w-80 h-80 bg-indigo-100/50 rounded-full blur-[80px]" />
+          <div className="absolute top-[45%]   left-[40%]  w-48 h-48 bg-violet-100/40 rounded-full blur-[60px]" />
         </div>
 
-        <div className="relative z-10 flex flex-col h-full px-14 pt-12 pb-10">
+        <div className="relative z-10 flex flex-col h-full px-10 pt-8 pb-5">
 
-          {/* ── Full Company Logo ── */}
-          <div className="flex flex-col items-start gap-2 mb-8">
-            {/* Icon mark on top */}
-            <div className="w-[72px] h-[72px] rounded-2xl bg-white shadow-md border border-slate-100 flex items-center justify-center p-2.5 mb-1">
+          {/* ── Company Logo ── */}
+          <div className="flex flex-col items-start gap-1.5 mb-5">
+            <div className="w-12 h-12 rounded-2xl bg-white shadow-md border border-slate-100 flex items-center justify-center p-2 mb-1">
               <img src="/logo-transparent.png" alt="Rafi Al Aftab" className="w-full h-full object-contain" />
             </div>
-            {/* Arabic name */}
-            <p className="font-bold text-[#2f3b9e] text-[15px] leading-snug" dir="rtl" style={{ fontFamily: 'Arial, sans-serif' }}>
+            <p className="font-bold text-[#2f3b9e] text-sm leading-snug" dir="rtl" style={{ fontFamily: 'Arial, sans-serif' }}>
               رافي الافتاب للتجارة والمقاولات ذ.م.م
             </p>
-            {/* English name */}
-            <p className="text-[10.5px] font-black text-[#2f3b9e]/80 tracking-[0.06em] leading-snug uppercase">
+            <p className="text-[10px] font-black text-[#2f3b9e]/80 tracking-[0.06em] uppercase leading-snug">
               Rafi Al Aftab Trading &amp; Contracting Co. W.L.L
             </p>
           </div>
 
-          {/* ── Headline + module list ── */}
-          <div className="mb-6">
-            <h1 className="text-4xl font-black text-slate-900 leading-[1.1] tracking-tight">
+          {/* ── Headline ── */}
+          <div className="mb-4">
+            <h1 className="text-3xl font-black text-slate-900 leading-[1.1] tracking-tight">
               Smart Operations.<br />
               <span className="text-[#2f3b9e]">One Platform.</span>
             </h1>
-            <p className="text-slate-500 text-sm mt-3 leading-relaxed max-w-sm">
-              An all-in-one ERP for Rafi Al Aftab — managing delivery fleets, company finances,
-              contracts, employee documents, and team attendance from a single workspace.
+            <p className="text-slate-500 text-xs mt-2 leading-relaxed max-w-sm">
+              All-in-one ERP for Rafi Al Aftab — delivery fleets, finance, contracts, documents &amp; attendance in one workspace.
             </p>
-            {/* Module chips */}
-            <div className="flex flex-wrap gap-2 mt-4">
-              {[
-                { label: 'Delivery & Fleet' },
-                { label: 'Finance & Invoicing' },
-                { label: 'Contracts' },
-                { label: 'Documents' },
-                { label: 'Time & Attendance' },
-              ].map(m => (
-                <span key={m.label} className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 text-[11px] font-semibold px-3 py-1 rounded-full shadow-sm">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#2f3b9e]/60 shrink-0" />
-                  {m.label}
+
+            {/* Module chips with 3D icons */}
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {MODULES.map(({ label, Icon, from, to, glow }) => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-2 bg-white border border-slate-100 text-slate-700 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl"
+                  style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+                >
+                  <span
+                    className="w-5 h-5 rounded-md flex items-center justify-center shrink-0"
+                    style={{
+                      background: `linear-gradient(135deg, ${from}, ${to})`,
+                      boxShadow: `0 3px 8px ${glow}`,
+                    }}
+                  >
+                    <Icon className="w-3 h-3 text-white" />
+                  </span>
+                  {label}
                 </span>
               ))}
             </div>
           </div>
 
-          {/* ── 3D Dashboard Mockup ── */}
-          <div className="flex-1 flex items-center justify-center">
+          {/* ── 3D Dashboard Mockup — flex-1 + min-h-0 so it shrinks to fit ── */}
+          <div className="flex-1 min-h-0 flex items-center justify-center">
             <DashboardMockup />
           </div>
 
           {/* ── Footer ── */}
-          <div className="pt-6 border-t border-slate-200/80 flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-500">
-              © 2025 Rafi Al Aftab Trading & Contracting Co. W.L.L
+          <div className="pt-4 border-t border-slate-200/80 flex items-center justify-between shrink-0">
+            <p className="text-[11px] font-semibold text-slate-500">
+              © 2025 Rafi Al Aftab Trading &amp; Contracting Co. W.L.L
             </p>
-            <p className="text-xs font-semibold text-slate-400">Qatar · All rights reserved</p>
+            <p className="text-[11px] font-semibold text-slate-400">Qatar · All rights reserved</p>
           </div>
         </div>
       </div>
 
-      {/* ── RIGHT PANEL — form ──────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
+      {/* ── RIGHT PANEL — scrollable so signup form never clips ── */}
+      <div className="flex-1 h-screen overflow-y-auto flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-sm">
 
           {/* Mobile logo */}
           <div className="flex lg:hidden flex-col items-center gap-2 mb-10">
             <img src="/logo-transparent.png" alt="Rafi Al Aftab" className="h-12 w-auto object-contain" />
-            <p className="text-xs font-black text-[#2f3b9e] tracking-wide text-center uppercase">Rafi Al Aftab Trading & Contracting</p>
+            <p className="text-xs font-black text-[#2f3b9e] tracking-wide text-center uppercase">Rafi Al Aftab Trading &amp; Contracting</p>
           </div>
 
           {/* Title */}
           <div className="mb-8">
             <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-              {mode === 'login'          ? 'Welcome back'      :
-               mode === 'signup-create' ? 'Create company'    :
-               mode === 'signup-join'   ? 'Join your team'    : 'Reset password'}
+              {mode === 'login'          ? 'Welcome back'   :
+               mode === 'signup-create' ? 'Create company' :
+               mode === 'signup-join'   ? 'Join your team' : 'Reset password'}
             </h2>
             <p className="text-slate-400 text-sm mt-1">
-              {mode === 'login'          ? 'Sign in to your FinERP workspace'          :
-               mode === 'signup-create' ? 'Set up your company workspace'             :
-               mode === 'signup-join'   ? 'Enter your invite code to get started'     :
+              {mode === 'login'          ? 'Sign in to your FinERP workspace'      :
+               mode === 'signup-create' ? 'Set up your company workspace'         :
+               mode === 'signup-join'   ? 'Enter your invite code to get started' :
                                           "We'll email you a secure reset link"}
             </p>
           </div>
@@ -381,7 +397,7 @@ export default function AuthPage() {
 
                 <button
                   type="submit" disabled={loading}
-                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 mt-1 active:scale-[0.98] shadow-lg"
+                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 mt-1 active:scale-[0.98]"
                   style={{ background: 'linear-gradient(135deg, #2f3b9e 0%, #4a5bc7 100%)', boxShadow: '0 8px 24px rgba(47,59,158,0.25)' }}
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
@@ -394,7 +410,7 @@ export default function AuthPage() {
               </form>
 
               {/* Divider */}
-              <div className="relative my-6">
+              <div className="relative my-5">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
                 <div className="relative flex justify-center"><span className="bg-white px-3 text-xs text-slate-400">or continue with</span></div>
               </div>
@@ -417,8 +433,8 @@ export default function AuthPage() {
                 )}
               </div>
 
-              <p className="text-center text-[11px] text-slate-400 mt-8">
-                Secured by Rafi Al Aftab Trading & Contracting Co. W.L.L
+              <p className="text-center text-[11px] text-slate-400 mt-7">
+                Secured by Rafi Al Aftab Trading &amp; Contracting Co. W.L.L
               </p>
             </>
           )}
