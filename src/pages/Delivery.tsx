@@ -369,12 +369,12 @@ export default function Delivery() {
                     {/* Index */}
                     <span className="text-xs font-medium text-slate-400 w-5 shrink-0">{index + 1}</span>
 
-                    {/* Avatar */}
+                    {/* EMP number badge */}
                     <div className={cn(
-                      'w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0',
+                      'h-9 px-2.5 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0 min-w-[2.25rem]',
                       d.category === 'Rider' ? 'bg-blue-600' : 'bg-indigo-600'
                     )}>
-                      {d.name.charAt(0).toUpperCase()}
+                      {d.emp_number}
                     </div>
 
                     {/* Name + code */}
