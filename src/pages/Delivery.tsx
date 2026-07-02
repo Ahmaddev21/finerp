@@ -380,7 +380,7 @@ export default function Delivery() {
 
                     {/* Name + code */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{d.name}</p>
+                      <p className="font-bold text-slate-900 dark:text-white text-sm truncate select-text">{d.name}</p>
                       <p className="text-xs text-slate-400 font-mono">{d.emp_number} · {d.delivery_code}</p>
                     </div>
 
@@ -422,6 +422,12 @@ export default function Delivery() {
                   {isExpanded && (
                     <div className="px-5 pb-5 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800">
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4 pt-4">
+
+                        {/* Name — full width so it's always copyable */}
+                        <div className="col-span-2 sm:col-span-3 lg:col-span-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Full Name</p>
+                          <p className="text-sm font-bold text-slate-800 dark:text-slate-200 select-text">{d.name}</p>
+                        </div>
 
                         {/* Row 1 */}
                         <div>
