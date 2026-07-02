@@ -227,16 +227,16 @@ function SidebarContent({ onClose, accountingBadge }: { onClose: () => void; acc
     setSaving(true);
     setProfileMsg('');
     try {
-      const { updateProfile, uploadAvatar } = await import('../services/auth');
+      const { updateProfile, uploadAvatar, resolveAvatarUrl } = await import('../services/auth');
       let avatarUrl = profile?.avatar_url || undefined;
 
       if (avatarFile) {
-        try {
-          avatarUrl = await uploadAvatar(user.id, avatarFile);
-        } catch (uploadErr: any) {
-          console.warn('Avatar upload failed (storage may not be configured):', uploadErr.message);
-          // Continue without avatar — don't block name save
-        }
+        // Errors propagate — no silent swallow so user knows if upload failed
+        avatarUrl = await uploadAvatar(user.id, avatarFile);
+
+        // Show photo immediately without waiting for useEffect async cycle
+        const signed = await resolveAvatarUrl(avatarUrl);
+        setResolvedAvatarUrl(signed ?? avatarPreview);
       }
 
       const updates: { username?: string; avatar_url?: string } = {};
@@ -251,7 +251,7 @@ function SidebarContent({ onClose, accountingBadge }: { onClose: () => void; acc
         const updated = await updateProfile(user.id, updates);
         setAuth(
           { ...user, name: updated.username || user.name },
-          { ...profile!, username: updated.username || profile!.username, avatar_url: updated.avatar_url || profile?.avatar_url },
+          { ...profile!, username: updated.username || profile!.username, avatar_url: updated.avatar_url || avatarUrl || profile?.avatar_url },
           company ?? null
         );
         setProfileMsg('Profile updated!');
@@ -261,7 +261,7 @@ function SidebarContent({ onClose, accountingBadge }: { onClose: () => void; acc
       setAvatarFile(null);
       setTimeout(() => setProfileMsg(''), 2000);
     } catch (err: any) {
-      setProfileMsg(err.message || 'Failed to update profile.');
+      setProfileMsg(err.message || 'Failed to save profile.');
     } finally {
       setSaving(false);
     }
