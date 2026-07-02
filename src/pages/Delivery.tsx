@@ -360,7 +360,7 @@ export default function Delivery() {
               ];
 
               return (
-                <div key={d.id} className={cn(isExpanded && 'ring-2 ring-blue-500/40 rounded-xl mx-2 my-1 overflow-hidden')}>
+                <div key={d.id} className={cn(isExpanded && 'border-2 border-blue-500 dark:border-blue-400 rounded-xl mx-2 my-1 overflow-hidden shadow-lg shadow-blue-500/10')}>
                   {/* ── Compact summary row ── */}
                   <div
                     onClick={() => setExpandedId(isExpanded ? null : d.id)}
@@ -369,12 +369,13 @@ export default function Delivery() {
                     {/* Index */}
                     <span className="text-xs font-medium text-slate-400 w-5 shrink-0">{index + 1}</span>
 
-                    {/* EMP number badge */}
-                    <div className={cn(
-                      'h-9 px-2.5 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0 min-w-[2.25rem]',
-                      d.category === 'Rider' ? 'bg-blue-600' : 'bg-indigo-600'
-                    )}>
-                      {d.emp_number}
+                    {/* EMP label */}
+                    <div className="flex flex-col items-center shrink-0">
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">EMP</span>
+                      <span className={cn(
+                        'text-xs font-black',
+                        d.category === 'Rider' ? 'text-blue-600 dark:text-blue-400' : 'text-indigo-600 dark:text-indigo-400'
+                      )}>{d.emp_number}</span>
                     </div>
 
                     {/* Name + code */}
