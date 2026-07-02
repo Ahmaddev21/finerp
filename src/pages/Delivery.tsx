@@ -309,12 +309,9 @@ export default function Delivery() {
             <span className="w-5 shrink-0">#</span>
             <span className="shrink-0 w-10">EMP</span>
             <span className="flex-1">Name</span>
-            <span className="hidden sm:block w-[120px] shrink-0">Company</span>
-            <span className="hidden md:block min-w-[90px] shrink-0">Vehicle</span>
-            <span className="hidden lg:block min-w-[110px] shrink-0">Mobile</span>
-            <span className="hidden lg:block min-w-[80px] shrink-0">Snoonu ID</span>
-            <span className="hidden xl:block w-[160px] shrink-0">Email</span>
-            <span className="hidden xl:block min-w-[90px] shrink-0">Password</span>
+            <span className="hidden sm:block min-w-[90px] shrink-0">Snoonu ID</span>
+            <span className="hidden md:block min-w-[160px] shrink-0">Email</span>
+            <span className="hidden lg:block min-w-[100px] shrink-0">Password</span>
             <span className="shrink-0 w-[62px]">Status</span>
             <span className="w-4 shrink-0" />
             <span className="w-7 shrink-0" />
@@ -400,28 +397,14 @@ export default function Delivery() {
                       <p className="text-xs text-slate-400 font-mono">{d.emp_number} · {d.delivery_code}</p>
                     </div>
 
-                    {/* Company */}
-                    <span className="hidden sm:block text-sm text-slate-500 dark:text-slate-400 min-w-0 truncate max-w-[120px]">{d.company}</span>
-
-                    {/* Vehicle */}
-                    <div className="hidden md:flex items-center gap-1.5 text-sm font-semibold min-w-[90px]">
-                      {d.category === 'Rider'
-                        ? <><Bike className="w-3.5 h-3.5 text-blue-500" /><span className="text-blue-600 dark:text-blue-400">{d.bike_number || '—'}</span></>
-                        : <><Car className="w-3.5 h-3.5 text-indigo-500" /><span className="text-indigo-600 dark:text-indigo-400">{d.car_number || '—'}</span></>
-                      }
-                    </div>
-
-                    {/* Mobile */}
-                    <span className="hidden lg:block text-sm text-slate-500 dark:text-slate-400 font-mono min-w-[110px]">{d.mobile_number || '—'}</span>
-
                     {/* Snoonu ID */}
-                    <span className="hidden lg:block text-xs font-mono text-slate-600 dark:text-slate-400 min-w-[80px] shrink-0">{d.snoonu_id || '—'}</span>
+                    <span className="hidden sm:block text-xs font-mono text-slate-600 dark:text-slate-400 min-w-[90px] shrink-0">{d.snoonu_id || '—'}</span>
 
                     {/* Snoonu Email */}
-                    <span className="hidden xl:block text-xs text-slate-500 dark:text-slate-400 truncate max-w-[160px] shrink-0">{d.snoonu_email || '—'}</span>
+                    <span className="hidden md:block text-xs text-slate-500 dark:text-slate-400 truncate min-w-[160px] max-w-[200px] shrink-0">{d.snoonu_email || '—'}</span>
 
                     {/* Password */}
-                    <div className="hidden xl:flex items-center gap-1.5 min-w-[90px] shrink-0" onClick={e => e.stopPropagation()}>
+                    <div className="hidden lg:flex items-center gap-1.5 min-w-[100px] shrink-0" onClick={e => e.stopPropagation()}>
                       <span className={cn('text-xs font-mono text-slate-600 dark:text-slate-400', revealedPasswords.has(d.id) && 'select-text cursor-text')}>
                         {d.password ? (revealedPasswords.has(d.id) ? d.password : '••••••') : '—'}
                       </span>

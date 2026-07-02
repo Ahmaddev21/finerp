@@ -128,8 +128,14 @@ export async function logout() {
 
 // ── Get Current User ───────────────────────────────
 export async function getMe() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  // getSession() reads Supabase's own localStorage entry and auto-refreshes
+  // expired access tokens via the refresh token, so users stay logged in
+  // across refreshes. getUser() (the previous implementation) validates the
+  // access token against the server and returns null if it expired — even
+  // when the refresh token is still valid — causing unwanted logouts.
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return null;
+  const user = session.user;
 
   const [profile, { company, role }] = await Promise.all([
     fetchProfile(user.id),
