@@ -360,7 +360,7 @@ export default function Delivery() {
               ];
 
               return (
-                <div key={d.id}>
+                <div key={d.id} className={cn(isExpanded && 'ring-2 ring-blue-500/40 rounded-xl mx-2 my-1 overflow-hidden')}>
                   {/* ── Compact summary row ── */}
                   <div
                     onClick={() => setExpandedId(isExpanded ? null : d.id)}
