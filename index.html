@@ -4,6 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FinERP — Financial & Operations Platform</title>
+    <!-- Redirect deployment-preview URLs (finerp-abc123.vercel.app) to the
+         production domain so users always see the latest build on refresh. -->
+    <script>
+      (function () {
+        var h = location.hostname;
+        if (h !== 'finerp.vercel.app' && h !== 'localhost' && /\.vercel\.app$/.test(h)) {
+          location.replace('https://finerp.vercel.app' + location.pathname + location.search + location.hash);
+        }
+      })();
+    </script>
     <meta name="description" content="FinERP: Multi-tenant financial management, invoicing, expense tracking, petty cash ledger, contracting, and consultancy ERP." />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
