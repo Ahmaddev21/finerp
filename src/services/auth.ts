@@ -306,35 +306,41 @@ export async function updateProfile(userId: string, updates: { username?: string
   return data as UserProfile;
 }
 
-export async function uploadAvatar(userId: string, file: File): Promise<string> {
-  const ext = file.name.split('.').pop() || 'png';
-  const storagePath = `avatars/${userId}.${ext}`;
-
-  const { error: uploadErr } = await supabase.storage
-    .from('finance_attachments')
-    .upload(storagePath, file, { upsert: true });
-
-  if (uploadErr) throw uploadErr;
-
-  // Store the path with a prefix rather than a public URL.
-  // getPublicUrl() returns a URL even on private buckets, but that URL
-  // returns 403 when the browser tries to load it. resolveAvatarUrl()
-  // generates a fresh signed URL each session instead.
-  return `storage:${storagePath}`;
+// Resizes and compresses the image client-side (max 220×220 px, JPEG 85%)
+// then returns a data URL stored directly in profiles.avatar_url.
+// Bypasses Supabase Storage entirely — no bucket RLS, no signed-URL expiry.
+export async function uploadAvatar(_userId: string, file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const MAX = 220;
+      const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.round(img.width  * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Could not read image file.')); };
+    img.src = objectUrl;
+  });
 }
 
-// Converts a stored avatar value to a displayable URL.
-// Handles "storage:path" (new) and raw https:// URLs (legacy).
+// data URLs and plain https URLs are already displayable — return as-is.
+// The "storage:" prefix is legacy from a previous approach.
 export async function resolveAvatarUrl(value: string | null | undefined): Promise<string | null> {
   if (!value) return null;
   if (value.startsWith('storage:')) {
+    // Legacy: try signed URL; may fail if bucket RLS blocks it
     const path = value.slice(8);
     const { data } = await supabase.storage
       .from('finance_attachments')
-      .createSignedUrl(path, 7 * 24 * 3600); // 7-day URL — refreshed on focus
+      .createSignedUrl(path, 7 * 24 * 3600);
     return data?.signedUrl ?? null;
   }
-  return value; // legacy full URL — return as-is
+  return value;
 }
 
 export interface JoinCodeResult {
