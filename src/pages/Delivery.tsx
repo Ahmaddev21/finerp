@@ -303,6 +303,22 @@ export default function Delivery() {
           </div>
         ) : (
           /* ── Rider / Driver expandable card list ──────── */
+          <>
+          {/* ── Column header ── */}
+          <div className="flex items-center gap-3 px-5 py-2.5 bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 select-none">
+            <span className="w-5 shrink-0">#</span>
+            <span className="shrink-0 w-10">EMP</span>
+            <span className="flex-1">Name</span>
+            <span className="hidden sm:block w-[120px] shrink-0">Company</span>
+            <span className="hidden md:block min-w-[90px] shrink-0">Vehicle</span>
+            <span className="hidden lg:block min-w-[110px] shrink-0">Mobile</span>
+            <span className="hidden lg:block min-w-[80px] shrink-0">Snoonu ID</span>
+            <span className="hidden xl:block w-[160px] shrink-0">Email</span>
+            <span className="hidden xl:block min-w-[90px] shrink-0">Password</span>
+            <span className="shrink-0 w-[62px]">Status</span>
+            <span className="w-4 shrink-0" />
+            <span className="w-7 shrink-0" />
+          </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {filtered.map((d, index) => {
               const isExpanded = expandedId === d.id;
@@ -540,6 +556,7 @@ export default function Delivery() {
               );
             })}
           </div>
+          </>
         )}
       </div>
 
