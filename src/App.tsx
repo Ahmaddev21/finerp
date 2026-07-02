@@ -9,6 +9,8 @@ import Layout from './components/Layout';
 import AuthPage from './components/AuthPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
+declare const __BUILD_ID__: string;
+
 // Wraps React.lazy with auto-reload on stale chunk errors (post-deployment)
 function lazyPage<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>
@@ -284,6 +286,24 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
+
+  // Stale-deployment guard: when a new Vercel deploy goes live, old bundles
+  // reference chunk filenames that no longer exist → 404 → HTML returned as JS.
+  // Fix: compare this bundle's BUILD_ID against /version.json on tab focus
+  // and every 5 min. Mismatch means a new deploy is live → hard reload.
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const res = await fetch('/version.json?t=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) return;
+        const { buildId } = await res.json() as { buildId: string };
+        if (buildId && buildId !== __BUILD_ID__) window.location.reload();
+      } catch { /* network offline — ignore */ }
+    };
+    window.addEventListener('focus', check);
+    const timer = setInterval(check, 5 * 60 * 1000);
+    return () => { window.removeEventListener('focus', check); clearInterval(timer); };
+  }, []);
 
   // Restore session on mount and react to auth state changes (live mode only)
   useEffect(() => {
