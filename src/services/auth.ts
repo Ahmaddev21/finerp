@@ -331,7 +331,7 @@ export async function resolveAvatarUrl(value: string | null | undefined): Promis
     const path = value.slice(8);
     const { data } = await supabase.storage
       .from('finance_attachments')
-      .createSignedUrl(path, 3600); // 1-hour signed URL — refreshed each page load
+      .createSignedUrl(path, 7 * 24 * 3600); // 7-day URL — refreshed on focus
     return data?.signedUrl ?? null;
   }
   return value; // legacy full URL — return as-is

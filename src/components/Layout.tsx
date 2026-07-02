@@ -194,13 +194,21 @@ function SidebarContent({ onClose, accountingBadge }: { onClose: () => void; acc
   const [profileMsg, setProfileMsg] = useState('');
   const navigate = useNavigate();
 
-  // Resolve storage: paths → signed URLs whenever the profile avatar changes
+  // Resolve storage: paths → signed URLs. Refreshes on focus so the URL
+  // never expires regardless of how long the tab stays open.
   useEffect(() => {
     const val = profile?.avatar_url;
     if (!val) { setResolvedAvatarUrl(null); return; }
-    import('../services/auth').then(({ resolveAvatarUrl }) => {
-      resolveAvatarUrl(val).then(url => setResolvedAvatarUrl(url));
-    });
+
+    const refresh = () => {
+      import('../services/auth').then(({ resolveAvatarUrl }) => {
+        resolveAvatarUrl(val).then(url => setResolvedAvatarUrl(url));
+      });
+    };
+
+    refresh();
+    window.addEventListener('focus', refresh);
+    return () => window.removeEventListener('focus', refresh);
   }, [profile?.avatar_url]);
 
   if (!user) return null;
