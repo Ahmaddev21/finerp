@@ -6,7 +6,7 @@ import { useThemeStore } from '../store/theme';
 import {
   LayoutDashboard, Briefcase, Calculator, Layers,
   CheckSquare, ShieldAlert, LogOut, ChevronDown,
-  Menu, X, Sun, Moon, FileText, Truck, Users, Settings, Loader2, Car, UserPlus, Package, Clock, FolderOpen, Lock
+  Menu, X, Sun, Moon, FileText, Truck, Users, Settings, Loader2, Car, UserPlus, Package, Clock, FolderOpen, Lock, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { canAccess } from '../lib/permissions';
@@ -459,7 +459,18 @@ export default function Layout() {
   const { user, isInitialized, isLoading } = useAuthStore();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => localStorage.getItem('finerp-sidebar') === 'collapsed'
+  );
   const [notifKey, setNotifKey] = useState(0);
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('finerp-sidebar', next ? 'collapsed' : 'expanded');
+      return next;
+    });
+  };
   const now = useClock();
   usePresenceHeartbeat(!!user);
 
@@ -522,7 +533,10 @@ export default function Layout() {
     <div className="min-h-screen bg-slate-50 dark:bg-gray-950 flex">
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-56 bg-white dark:bg-gray-900 border-r border-slate-200 dark:border-slate-800 flex-col fixed inset-y-0 z-30">
+      <aside className={cn(
+        'hidden md:flex bg-white dark:bg-gray-900 border-r border-slate-200 dark:border-slate-800 flex-col fixed inset-y-0 z-30 transition-all duration-200 overflow-hidden',
+        sidebarCollapsed ? 'w-0' : 'w-56'
+      )}>
         <SidebarContent onClose={() => {}} accountingBadge={accountingAlerts} />
       </aside>
 
@@ -543,7 +557,10 @@ export default function Layout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col md:pl-56 min-w-0">
+      <main className={cn(
+        'flex-1 flex flex-col min-w-0 transition-all duration-200',
+        sidebarCollapsed ? 'md:pl-0' : 'md:pl-56'
+      )}>
 
         {/* Header — Classic toolbar style */}
         <header className="sticky top-0 z-20 h-12 bg-white dark:bg-gray-900 border-b border-slate-200 dark:border-slate-800 flex items-center px-4 sm:px-6 gap-4">
@@ -554,6 +571,17 @@ export default function Layout() {
             className="md:hidden p-1.5 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400 transition-colors"
           >
             <Menu className="w-4 h-4" />
+          </button>
+
+          {/* Desktop sidebar toggle */}
+          <button
+            onClick={toggleSidebar}
+            title={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
+            className="hidden md:flex p-1.5 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400 transition-colors"
+          >
+            {sidebarCollapsed
+              ? <PanelLeftOpen className="w-4 h-4" />
+              : <PanelLeftClose className="w-4 h-4" />}
           </button>
 
           {/* Page title — classic breadcrumb style */}
