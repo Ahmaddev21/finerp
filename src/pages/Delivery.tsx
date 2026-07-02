@@ -380,7 +380,7 @@ export default function Delivery() {
 
                     {/* Name + code */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-slate-900 dark:text-white text-sm truncate select-text">{d.name}</p>
+                      <p className="font-bold text-slate-900 dark:text-white text-sm truncate select-text cursor-text" onClick={e => e.stopPropagation()}>{d.name}</p>
                       <p className="text-xs text-slate-400 font-mono">{d.emp_number} · {d.delivery_code}</p>
                     </div>
 
@@ -397,6 +397,25 @@ export default function Delivery() {
 
                     {/* Mobile */}
                     <span className="hidden lg:block text-sm text-slate-500 dark:text-slate-400 font-mono min-w-[110px]">{d.mobile_number || '—'}</span>
+
+                    {/* Snoonu ID */}
+                    <span className="hidden lg:block text-xs font-mono text-slate-600 dark:text-slate-400 min-w-[80px] shrink-0">{d.snoonu_id || '—'}</span>
+
+                    {/* Snoonu Email */}
+                    <span className="hidden xl:block text-xs text-slate-500 dark:text-slate-400 truncate max-w-[160px] shrink-0">{d.snoonu_email || '—'}</span>
+
+                    {/* Password */}
+                    <div className="hidden xl:flex items-center gap-1.5 min-w-[90px] shrink-0" onClick={e => e.stopPropagation()}>
+                      <span className={cn('text-xs font-mono text-slate-600 dark:text-slate-400', revealedPasswords.has(d.id) && 'select-text cursor-text')}>
+                        {d.password ? (revealedPasswords.has(d.id) ? d.password : '••••••') : '—'}
+                      </span>
+                      {d.password && (
+                        <button onClick={e => { e.stopPropagation(); toggleRevealPassword(d.id); }}
+                          className="text-slate-300 hover:text-slate-500 dark:hover:text-slate-300 transition-colors shrink-0">
+                          {revealedPasswords.has(d.id) ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                        </button>
+                      )}
+                    </div>
 
                     {/* Status */}
                     <span className={cn(
