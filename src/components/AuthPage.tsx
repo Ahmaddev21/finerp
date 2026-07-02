@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, ArrowRight, Loader2, Building2, Shield, Users, CheckCircle2, Eye, EyeOff, BarChart3, FileText, Truck, Clock } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Loader2, Building2, Shield, Users, CheckCircle2, Eye, EyeOff, TrendingUp, Truck } from 'lucide-react';
 import { login, signup } from '../services/auth';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/auth';
@@ -7,14 +7,116 @@ import { cn } from '../lib/utils';
 
 type AuthMode = 'login' | 'signup-create' | 'signup-join' | 'forgot-password';
 
-const inputCls = 'w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all placeholder:text-slate-400 text-sm';
+const inputCls = 'w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all placeholder:text-slate-400 text-sm shadow-sm';
 
-const features = [
-  { icon: BarChart3, label: 'Financial Dashboard',  desc: 'Real-time P&L, invoicing & ledger' },
-  { icon: FileText,  label: 'Contracts & Workflow', desc: 'End-to-end document management'    },
-  { icon: Truck,     label: 'Delivery Management',  desc: 'Fleet, riders & document tracking'  },
-  { icon: Clock,     label: 'Time & Attendance',    desc: 'Shift tracking across all staff'    },
-];
+/* ── 3-D Dashboard mockup (pure CSS) ─────────────────── */
+function DashboardMockup() {
+  return (
+    <div className="relative w-full flex items-center justify-center py-6 select-none" style={{ perspective: '900px' }}>
+      {/* Main card */}
+      <div
+        className="w-[340px] bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-100"
+        style={{ transform: 'rotateX(8deg) rotateY(-6deg) rotateZ(1deg)', transformStyle: 'preserve-3d' }}
+      >
+        {/* Card header */}
+        <div className="bg-gradient-to-r from-[#2f3b9e] to-[#4a5bc7] px-5 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <img src="/logo-transparent.png" alt="" className="h-5 w-auto brightness-0 invert opacity-90" />
+            <span className="text-white text-xs font-bold tracking-wide">FinERP Dashboard</span>
+          </div>
+          <div className="flex gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+            <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+            <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+          </div>
+        </div>
+
+        {/* KPI row */}
+        <div className="grid grid-cols-3 gap-px bg-slate-100 border-b border-slate-100">
+          {[
+            { label: 'Revenue',  value: 'QR 84.2K', color: 'text-emerald-600', up: true  },
+            { label: 'Expenses', value: 'QR 31.5K', color: 'text-rose-500',    up: false },
+            { label: 'Profit',   value: 'QR 52.7K', color: 'text-blue-600',    up: true  },
+          ].map(k => (
+            <div key={k.label} className="bg-white px-3 py-3 text-center">
+              <p className={cn('text-sm font-black tabular-nums', k.color)}>{k.value}</p>
+              <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">{k.label}</p>
+              <div className={cn('text-[9px] font-bold mt-0.5', k.up ? 'text-emerald-500' : 'text-rose-400')}>
+                {k.up ? '▲ +12%' : '▼ -3%'}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Mini chart bars */}
+        <div className="px-4 py-3 bg-white">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-2">Monthly Overview</p>
+          <div className="flex items-end gap-1.5 h-12">
+            {[40, 65, 45, 80, 60, 90, 55, 75, 85, 70, 95, 72].map((h, i) => (
+              <div key={i} className="flex-1 rounded-sm" style={{
+                height: `${h}%`,
+                background: i === 10
+                  ? 'linear-gradient(to top, #2f3b9e, #4a5bc7)'
+                  : i >= 9 ? 'rgba(47,59,158,0.2)' : 'rgba(47,59,158,0.12)'
+              }} />
+            ))}
+          </div>
+          <div className="flex justify-between mt-1">
+            {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(m => (
+              <span key={m} className="text-[7px] text-slate-300 font-medium">{m.slice(0,1)}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent rows */}
+        <div className="border-t border-slate-50 px-4 pb-3">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 pt-2.5 mb-2">Recent Activity</p>
+          {[
+            { name: 'Invoice #1042', amount: '+QR 4,200', color: 'text-emerald-600' },
+            { name: 'Delivery · DEL-829', amount: 'Active', color: 'text-blue-600' },
+            { name: 'Contract · CTR-18',  amount: 'QR 12K', color: 'text-indigo-600' },
+          ].map(r => (
+            <div key={r.name} className="flex items-center justify-between py-1.5 border-b border-slate-50 last:border-0">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                <span className="text-[10px] text-slate-600 font-medium">{r.name}</span>
+              </div>
+              <span className={cn('text-[10px] font-bold', r.color)}>{r.amount}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Floating stat chip — top right */}
+      <div
+        className="absolute top-4 right-4 bg-white rounded-xl shadow-xl border border-slate-100 px-3 py-2 flex items-center gap-2"
+        style={{ transform: 'rotateX(8deg) rotateY(-6deg) translateZ(20px)' }}
+      >
+        <div className="w-6 h-6 bg-emerald-100 rounded-lg flex items-center justify-center">
+          <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+        </div>
+        <div>
+          <p className="text-[9px] text-slate-400 font-semibold">Net Profit</p>
+          <p className="text-xs font-black text-emerald-600">+24.8%</p>
+        </div>
+      </div>
+
+      {/* Floating stat chip — bottom left */}
+      <div
+        className="absolute bottom-4 left-4 bg-white rounded-xl shadow-xl border border-slate-100 px-3 py-2 flex items-center gap-2"
+        style={{ transform: 'rotateX(8deg) rotateY(-6deg) translateZ(20px)' }}
+      >
+        <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
+          <Truck className="w-3.5 h-3.5 text-blue-600" />
+        </div>
+        <div>
+          <p className="text-[9px] text-slate-400 font-semibold">Fleet Active</p>
+          <p className="text-xs font-black text-blue-600">48 Riders</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function AuthPage() {
   const { setAuth } = useAuthStore();
@@ -83,93 +185,91 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex bg-slate-50">
 
-      {/* ── LEFT PANEL — branding ───────────────────────── */}
-      <div className="hidden lg:flex lg:w-[58%] relative flex-col justify-between p-14 overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950">
-
-        {/* Subtle texture blobs */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-5%]  w-[50%] h-[50%] bg-blue-600/20   rounded-full blur-[120px]" />
-          <div className="absolute bottom-[-10%] right-[-5%] w-[45%] h-[45%] bg-indigo-500/20 rounded-full blur-[120px]" />
-          <div className="absolute top-[40%] left-[30%]   w-[30%] h-[30%] bg-violet-600/10  rounded-full blur-[80px]"  />
+      {/* ── LEFT PANEL ─────────────────────────────────── */}
+      <div className="hidden lg:flex lg:w-[58%] flex-col relative overflow-hidden"
+        style={{ background: 'linear-gradient(160deg, #ffffff 0%, #f0f3ff 50%, #e8edff 100%)' }}
+      >
+        {/* Subtle decorative blobs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-[-5%]  right-[-5%] w-72 h-72 bg-blue-100/60   rounded-full blur-[80px]"  />
+          <div className="absolute bottom-[-5%] left-[-5%]  w-80 h-80 bg-indigo-100/50 rounded-full blur-[80px]"  />
+          <div className="absolute top-[45%]  left-[40%]   w-48 h-48 bg-violet-100/40  rounded-full blur-[60px]"  />
         </div>
 
-        {/* Grid lines overlay — subtle */}
-        <div className="absolute inset-0 opacity-[0.03]"
-          style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '60px 60px' }}
-        />
+        <div className="relative z-10 flex flex-col h-full px-14 pt-12 pb-10">
 
-        {/* Top — logo + company */}
-        <div className="relative z-10">
-          <div className="flex items-center gap-4 mb-16">
-            <img
-              src="/logo-transparent.png"
-              alt="Rafi Al Aftab"
-              className="h-12 w-auto object-contain brightness-0 invert"
-            />
-            <div>
-              <p className="text-white font-black text-xl tracking-tight leading-none">FinERP</p>
-              <p className="text-blue-300 text-xs font-medium tracking-wider">RAFI AL AFTAB</p>
+          {/* ── Full Company Logo ── */}
+          <div className="flex flex-col items-start gap-3 mb-10">
+            {/* Icon mark + FinERP inline */}
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-white shadow-md border border-slate-100 flex items-center justify-center p-2">
+                <img src="/logo-transparent.png" alt="Rafi Al Aftab" className="w-full h-full object-contain" />
+              </div>
+              <div>
+                {/* Arabic name */}
+                <p className="text-right font-bold text-[#2f3b9e] text-sm leading-snug" dir="rtl" style={{ fontFamily: 'Arial, sans-serif' }}>
+                  رافي الافتاب للتجارة والمقاولات ذ.م.م
+                </p>
+                {/* English name */}
+                <p className="text-[11px] font-black text-[#2f3b9e] tracking-wide leading-snug uppercase">
+                  Rafi Al Aftab Trading & Contracting Co. W.L.L
+                </p>
+              </div>
+            </div>
+            {/* FinERP pill */}
+            <div className="flex items-center gap-2 bg-[#2f3b9e]/10 border border-[#2f3b9e]/20 rounded-full px-4 py-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#2f3b9e]" />
+              <span className="text-xs font-black text-[#2f3b9e] tracking-widest uppercase">FinERP · Powered by AI</span>
             </div>
           </div>
 
-          {/* Headline */}
-          <h1 className="text-5xl font-black text-white leading-[1.1] tracking-tight mb-4">
-            Your Business.<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-violet-400">
-              One Platform.
-            </span>
-          </h1>
-          <p className="text-slate-400 text-lg leading-relaxed max-w-sm">
-            The complete financial &amp; operations system built for growing teams in Qatar.
-          </p>
-        </div>
+          {/* ── Headline ── */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-black text-slate-900 leading-[1.1] tracking-tight">
+              Smart Operations.<br />
+              <span className="text-[#2f3b9e]">One Platform.</span>
+            </h1>
+            <p className="text-slate-500 text-sm mt-3 max-w-xs leading-relaxed">
+              Complete financial & operations management built for Rafi Al Aftab's growing teams.
+            </p>
+          </div>
 
-        {/* Middle — feature pills */}
-        <div className="relative z-10 space-y-3">
-          {features.map(({ icon: Icon, label, desc }) => (
-            <div key={label} className="flex items-center gap-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl px-5 py-4 hover:bg-white/8 transition-colors">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
-                <Icon className="w-5 h-5 text-blue-300" />
-              </div>
-              <div>
-                <p className="text-white font-semibold text-sm">{label}</p>
-                <p className="text-slate-500 text-xs">{desc}</p>
-              </div>
-              <ArrowRight className="w-4 h-4 text-slate-600 ml-auto shrink-0" />
-            </div>
-          ))}
-        </div>
+          {/* ── 3D Dashboard Mockup ── */}
+          <div className="flex-1 flex items-center justify-center">
+            <DashboardMockup />
+          </div>
 
-        {/* Bottom */}
-        <div className="relative z-10">
-          <p className="text-slate-600 text-xs">© 2025 Rafi Al Aftab. All rights reserved.</p>
+          {/* ── Footer ── */}
+          <div className="pt-6 border-t border-slate-200/80 flex items-center justify-between">
+            <p className="text-xs font-semibold text-slate-500">
+              © 2025 Rafi Al Aftab Trading & Contracting Co. W.L.L
+            </p>
+            <p className="text-xs font-semibold text-slate-400">Qatar · All rights reserved</p>
+          </div>
         </div>
       </div>
 
       {/* ── RIGHT PANEL — form ──────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-sm">
 
           {/* Mobile logo */}
-          <div className="flex lg:hidden items-center gap-3 mb-10">
-            <img src="/logo-transparent.png" alt="Rafi Al Aftab" className="h-9 w-auto object-contain" />
-            <div>
-              <p className="font-black text-slate-900 text-lg leading-none">FinERP</p>
-              <p className="text-blue-600 text-[10px] font-bold tracking-wider">RAFI AL AFTAB</p>
-            </div>
+          <div className="flex lg:hidden flex-col items-center gap-2 mb-10">
+            <img src="/logo-transparent.png" alt="Rafi Al Aftab" className="h-12 w-auto object-contain" />
+            <p className="text-xs font-black text-[#2f3b9e] tracking-wide text-center uppercase">Rafi Al Aftab Trading & Contracting</p>
           </div>
 
           {/* Title */}
           <div className="mb-8">
             <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-              {mode === 'login'          ? 'Sign in'          :
-               mode === 'signup-create' ? 'Create company'   :
-               mode === 'signup-join'   ? 'Join your team'   : 'Reset password'}
+              {mode === 'login'          ? 'Welcome back'      :
+               mode === 'signup-create' ? 'Create company'    :
+               mode === 'signup-join'   ? 'Join your team'    : 'Reset password'}
             </h2>
-            <p className="text-slate-500 text-sm mt-1">
-              {mode === 'login'          ? 'Welcome back — enter your credentials'       :
-               mode === 'signup-create' ? 'Set up your company workspace'               :
-               mode === 'signup-join'   ? 'Enter your invite code to get started'       :
+            <p className="text-slate-400 text-sm mt-1">
+              {mode === 'login'          ? 'Sign in to your FinERP workspace'          :
+               mode === 'signup-create' ? 'Set up your company workspace'             :
+               mode === 'signup-join'   ? 'Enter your invite code to get started'     :
                                           "We'll email you a secure reset link"}
             </p>
           </div>
@@ -191,9 +291,9 @@ export default function AuthPage() {
                 </div>
                 <div>
                   <p className="font-bold text-slate-900">Check your inbox</p>
-                  <p className="text-slate-500 text-sm mt-1">Reset link sent to <span className="text-blue-600 font-medium">{form.email}</span></p>
+                  <p className="text-slate-500 text-sm mt-1">Reset link sent to <span className="text-[#2f3b9e] font-medium">{form.email}</span></p>
                 </div>
-                <button onClick={() => switchMode('login')} className="text-sm text-slate-500 hover:text-blue-600 transition-colors">
+                <button onClick={() => switchMode('login')} className="text-sm text-slate-500 hover:text-[#2f3b9e] transition-colors">
                   ← Back to sign in
                 </button>
               </div>
@@ -203,14 +303,14 @@ export default function AuthPage() {
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                   <input type="email" placeholder="Email address" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className={inputCls} required autoFocus />
                 </div>
-                <button type="submit" disabled={loading} className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm mt-2">
+                <button type="submit" disabled={loading} className="w-full font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm text-white active:scale-[0.98]"
+                  style={{ background: 'linear-gradient(135deg, #2f3b9e 0%, #4a5bc7 100%)' }}>
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Send reset link <ArrowRight className="w-4 h-4" /></>}
                 </button>
-                <button type="button" onClick={() => switchMode('login')} className="w-full text-sm text-slate-500 hover:text-slate-700 transition-colors py-1">← Back to sign in</button>
+                <button type="button" onClick={() => switchMode('login')} className="w-full text-sm text-slate-400 hover:text-slate-700 transition-colors py-1">← Back to sign in</button>
               </form>
             )
           ) : (
-            /* ── Login / Signup ── */
             <>
               <form onSubmit={handleSubmit} className="space-y-3">
 
@@ -227,7 +327,8 @@ export default function AuthPage() {
                       <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                       <input type="text" placeholder="Company name" value={form.companyName} onChange={e => setForm({ ...form, companyName: e.target.value })} className={inputCls} required />
                     </div>
-                    <select value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl py-3.5 px-4 text-slate-700 text-sm outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all appearance-none cursor-pointer">
+                    <select value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })}
+                      className="w-full bg-white border border-slate-200 rounded-xl py-3.5 px-4 text-slate-700 text-sm outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all appearance-none cursor-pointer shadow-sm">
                       <option value="QR">QR (﷼) — Qatari Riyal</option>
                       <option value="USD">USD ($) — US Dollar</option>
                       <option value="EUR">EUR (€) — Euro</option>
@@ -242,11 +343,9 @@ export default function AuthPage() {
                   <div className="relative">
                     <Shield className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                     <input
-                      type="text"
-                      placeholder="INVITE CODE"
-                      value={form.joinCode}
-                      onChange={e => setForm({ ...form, joinCode: e.target.value.toUpperCase() })}
-                      className="w-full bg-white border-2 border-dashed border-blue-300 rounded-xl py-3.5 pl-12 pr-4 text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all tracking-[0.3em] font-mono text-center text-sm uppercase placeholder:text-slate-400 placeholder:tracking-normal"
+                      type="text" placeholder="INVITE CODE"
+                      value={form.joinCode} onChange={e => setForm({ ...form, joinCode: e.target.value.toUpperCase() })}
+                      className="w-full bg-white border-2 border-dashed border-[#2f3b9e]/30 rounded-xl py-3.5 pl-12 pr-4 text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all tracking-[0.3em] font-mono text-center text-sm uppercase placeholder:text-slate-400 placeholder:tracking-normal shadow-sm"
                       required maxLength={6}
                     />
                   </div>
@@ -266,17 +365,17 @@ export default function AuthPage() {
                 </div>
 
                 {mode === 'login' && (
-                  <div className="text-right pt-0.5">
-                    <button type="button" onClick={() => switchMode('forgot-password')} className="text-xs text-slate-400 hover:text-blue-600 transition-colors">
+                  <div className="text-right">
+                    <button type="button" onClick={() => switchMode('forgot-password')} className="text-xs text-slate-400 hover:text-[#2f3b9e] transition-colors">
                       Forgot password?
                     </button>
                   </div>
                 )}
 
                 <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 mt-2 active:scale-[0.98]"
+                  type="submit" disabled={loading}
+                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 mt-1 active:scale-[0.98] shadow-lg"
+                  style={{ background: 'linear-gradient(135deg, #2f3b9e 0%, #4a5bc7 100%)', boxShadow: '0 8px 24px rgba(47,59,158,0.25)' }}
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                     <>
@@ -290,26 +389,30 @@ export default function AuthPage() {
               {/* Divider */}
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
-                <div className="relative flex justify-center"><span className="bg-slate-50 px-3 text-xs text-slate-400">or</span></div>
+                <div className="relative flex justify-center"><span className="bg-white px-3 text-xs text-slate-400">or continue with</span></div>
               </div>
 
               {/* Mode switcher */}
               <div className="space-y-2">
                 {mode === 'login' ? (
                   <>
-                    <button onClick={() => switchMode('signup-create')} className="w-full py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-all flex items-center justify-center gap-2">
-                      <Building2 className="w-4 h-4 text-blue-500" /> Create a new company
+                    <button onClick={() => switchMode('signup-create')} className="w-full py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-center gap-2">
+                      <Building2 className="w-4 h-4 text-[#2f3b9e]" /> Create a new company
                     </button>
-                    <button onClick={() => switchMode('signup-join')} className="w-full py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-all flex items-center justify-center gap-2">
+                    <button onClick={() => switchMode('signup-join')} className="w-full py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-center gap-2">
                       <Users className="w-4 h-4 text-emerald-500" /> Join with invite code
                     </button>
                   </>
                 ) : (
-                  <button onClick={() => switchMode('login')} className="w-full py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-all">
+                  <button onClick={() => switchMode('login')} className="w-full py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all">
                     Already have an account? Sign in
                   </button>
                 )}
               </div>
+
+              <p className="text-center text-[11px] text-slate-400 mt-8">
+                Secured by Rafi Al Aftab Trading & Contracting Co. W.L.L
+              </p>
             </>
           )}
         </div>
