@@ -157,6 +157,15 @@ function NotesView({
     setSaving(false);
   };
 
+  const deleteNote = async (noteId: string, workflowId: string) => {
+    const wf = workflows.find(w => w.id === workflowId);
+    if (!wf) return;
+    setSaving(true);
+    const remaining = parseNotes(wf.notes).filter(n => n.id !== noteId);
+    await updateWorkflow(workflowId, { notes: remaining.length ? JSON.stringify(remaining) : null });
+    setSaving(false);
+  };
+
   const saveEdit = async () => {
     if (!editId || !editWfId || !editText.trim()) return;
     const wf = workflows.find(w => w.id === editWfId);
@@ -288,12 +297,21 @@ function NotesView({
                         )}
                       </div>
                       {isOwner && (
-                        <button
-                          onClick={() => { setEditId(n.id); setEditWfId(n.workflowId); setEditText(n.text); }}
-                          className="flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200 transition-colors shrink-0"
-                        >
-                          <Pencil className="w-3 h-3" /> Edit
-                        </button>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => { setEditId(n.id); setEditWfId(n.workflowId); setEditText(n.text); }}
+                            className="flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200 transition-colors"
+                          >
+                            <Pencil className="w-3 h-3" /> Edit
+                          </button>
+                          <button
+                            onClick={() => { if (window.confirm('Delete this note?')) deleteNote(n.id, n.workflowId); }}
+                            disabled={saving}
+                            className="flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200 transition-colors disabled:opacity-40"
+                          >
+                            <Trash2 className="w-3 h-3" /> Delete
+                          </button>
+                        </div>
                       )}
                     </div>
                   </>
