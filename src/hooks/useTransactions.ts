@@ -266,26 +266,35 @@ export function useTransactions() {
   }, [updateTransaction]);
 
   const approveTransaction = useCallback(async (id: number) => {
-    const role = user?.role;
-    if (!isAdminRole(role)) {
+    // Verify role from the server-validated JWT, not the localStorage cache
+    const { data: { user: verifiedUser } } = await supabase.auth.getUser();
+    if (!verifiedUser) { setError('Session expired. Please sign in again.'); return; }
+    const { data: cu } = await supabase
+      .from('company_users').select('role')
+      .eq('user_id', verifiedUser.id).eq('company_id', company?.id).single();
+    if (!isAdminRole(cu?.role)) {
       setError('Only owners and admins can approve transactions.');
       return;
     }
     await updateTransaction(id, {
       status: 'approved',
-      approved_by: user?.id,
+      approved_by: verifiedUser.id,
       approved_at: new Date().toISOString(),
     });
-  }, [updateTransaction, user]);
+  }, [updateTransaction, company?.id]);
 
   const rejectTransaction = useCallback(async (id: number) => {
-    const role = user?.role;
-    if (!isAdminRole(role)) {
+    const { data: { user: verifiedUser } } = await supabase.auth.getUser();
+    if (!verifiedUser) { setError('Session expired. Please sign in again.'); return; }
+    const { data: cu } = await supabase
+      .from('company_users').select('role')
+      .eq('user_id', verifiedUser.id).eq('company_id', company?.id).single();
+    if (!isAdminRole(cu?.role)) {
       setError('Only owners and admins can reject transactions.');
       return;
     }
     await updateTransaction(id, { status: 'rejected' });
-  }, [updateTransaction, user]);
+  }, [updateTransaction, company?.id]);
 
   const markAsPaid = useCallback(async (id: number) => {
     const tx = transactions.find(t => t.id === id);

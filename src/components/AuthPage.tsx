@@ -162,9 +162,10 @@ export default function AuthPage() {
     if (msg.includes('Invalid login credentials')) return 'Incorrect email or password.';
     if (msg.includes('User already registered'))   return 'This email is already registered. Please sign in.';
     if (msg.includes('Invalid join code'))          return 'The join code you entered is invalid or expired.';
-    if (msg.includes('Password should be'))         return 'Password must be at least 6 characters.';
+    if (msg.includes('Password should be'))         return 'Password must be at least 12 characters.';
     if (msg.includes('Email not confirmed'))        return 'Please check your email to confirm your account.';
-    return msg;
+    // Never expose raw Supabase error strings — they can reveal account existence
+    return 'Something went wrong. Please try again.';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

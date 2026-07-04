@@ -146,23 +146,41 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
 
   const handleDownloadExcel = async () => {
     try {
-      const { utils, writeFile } = await import('xlsx');
-      const data = [{
-        'Date':        tx.date,
-        'Invoice #':   tx.invoice_number || '',
-        'Type':        tx.type,
-        'Description': tx.desc,
-        'Project':     tx.project,
-        'Client':      tx.client_name || '',
-        'Amount':      Math.abs(tx.amount),
-        'Currency':    currency,
-        'Status':      tx.status,
-        'Due Date':    tx.due_date || '',
-      }];
-      const ws = utils.json_to_sheet(data);
-      const wb = utils.book_new();
-      utils.book_append_sheet(wb, ws, 'Transaction');
-      writeFile(wb, `${tx.invoice_number || tx.type}-${tx.id}.xlsx`);
+      const ExcelJS = await import('exceljs');
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet('Transaction');
+      ws.columns = [
+        { header: 'Date',        key: 'date',     width: 14 },
+        { header: 'Invoice #',   key: 'invoice',  width: 18 },
+        { header: 'Type',        key: 'type',     width: 12 },
+        { header: 'Description', key: 'desc',     width: 32 },
+        { header: 'Project',     key: 'project',  width: 22 },
+        { header: 'Client',      key: 'client',   width: 22 },
+        { header: 'Amount',      key: 'amount',   width: 14 },
+        { header: 'Currency',    key: 'currency', width: 10 },
+        { header: 'Status',      key: 'status',   width: 12 },
+        { header: 'Due Date',    key: 'dueDate',  width: 14 },
+      ];
+      ws.addRow({
+        date:     tx.date,
+        invoice:  tx.invoice_number || '',
+        type:     tx.type,
+        desc:     tx.desc,
+        project:  tx.project,
+        client:   tx.client_name || '',
+        amount:   Math.abs(tx.amount),
+        currency,
+        status:   tx.status,
+        dueDate:  tx.due_date || '',
+      });
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${tx.invoice_number || tx.type}-${tx.id}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Excel generation failed:', err);
     }
