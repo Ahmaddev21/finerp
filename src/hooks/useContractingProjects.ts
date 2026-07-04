@@ -15,14 +15,16 @@ export interface ContractingProject {
   /** FK to main projects(id) — set to link this ERP project to a business project */
   mainProjectId: string | null;
   attachment_url?: string;
+  /** JSON array of SiteReportEntry — stored in site_progress_reports TEXT column */
+  siteProgressReports?: string | null;
 }
 
 const seed: ContractingProject[] = [
-  { id: 'CPRJ-001', contractId: 'CTR-001', name: 'Snoonu Fleet Management', client: 'Snoonu', value: 450000, status: 'Active', startDate: '2026-01-01', endDate: '2026-12-31', description: 'Full fleet management and rider supply', mainProjectId: null },
-  { id: 'CPRJ-002', contractId: 'CTR-002', name: 'TechCorp Infrastructure SLA', client: 'TechCorp Inc.', value: 120000, status: 'Active', startDate: '2026-02-15', endDate: '2026-08-14', description: 'Infrastructure service level agreement', mainProjectId: null },
-  { id: 'CPRJ-003', contractId: 'CTR-003', name: 'Urban Eats Delivery Expansion', client: 'Urban Eats', value: 85000, status: 'Planning', startDate: '2026-04-01', endDate: '2026-09-30', description: 'Expansion of delivery operations', mainProjectId: null },
-  { id: 'CPRJ-004', contractId: 'CTR-005', name: 'Q3 Rider Contracting Block', client: 'Snoonu', value: 280000, status: 'Active', startDate: '2026-03-01', endDate: '2026-09-30', description: 'Bulk rider contracting for Q3', mainProjectId: null },
-  { id: 'CPRJ-005', contractId: null, name: 'Warehouse Fit-Out Phase 2', client: 'LogisTech', value: 95000, status: 'On Hold', startDate: '2026-04-10', endDate: '2026-10-09', description: 'Warehouse optimization and fit-out', mainProjectId: null },
+  { id: 'CPRJ-001', contractId: 'CTR-001', name: 'Snoonu Fleet Management', client: 'Snoonu', value: 450000, status: 'Active', startDate: '2026-01-01', endDate: '2026-12-31', description: 'Full fleet management and rider supply', mainProjectId: null, siteProgressReports: null },
+  { id: 'CPRJ-002', contractId: 'CTR-002', name: 'TechCorp Infrastructure SLA', client: 'TechCorp Inc.', value: 120000, status: 'Active', startDate: '2026-02-15', endDate: '2026-08-14', description: 'Infrastructure service level agreement', mainProjectId: null, siteProgressReports: null },
+  { id: 'CPRJ-003', contractId: 'CTR-003', name: 'Urban Eats Delivery Expansion', client: 'Urban Eats', value: 85000, status: 'Planning', startDate: '2026-04-01', endDate: '2026-09-30', description: 'Expansion of delivery operations', mainProjectId: null, siteProgressReports: null },
+  { id: 'CPRJ-004', contractId: 'CTR-005', name: 'Q3 Rider Contracting Block', client: 'Snoonu', value: 280000, status: 'Active', startDate: '2026-03-01', endDate: '2026-09-30', description: 'Bulk rider contracting for Q3', mainProjectId: null, siteProgressReports: null },
+  { id: 'CPRJ-005', contractId: null, name: 'Warehouse Fit-Out Phase 2', client: 'LogisTech', value: 95000, status: 'On Hold', startDate: '2026-04-10', endDate: '2026-10-09', description: 'Warehouse optimization and fit-out', mainProjectId: null, siteProgressReports: null },
 ];
 
 function mapRow(row: any): ContractingProject {
@@ -38,6 +40,7 @@ function mapRow(row: any): ContractingProject {
     description: row.description ?? '',
     mainProjectId: row.main_project_id ?? null,
     attachment_url: row.attachment_url ?? undefined,
+    siteProgressReports: row.site_progress_reports ?? null,
   };
 }
 
@@ -68,7 +71,7 @@ export function useContractingProjects() {
 
   const addProject = useCallback(async (p: Omit<ContractingProject, 'id'>) => {
     const newId = `CPRJ-${Date.now().toString(36).toUpperCase().slice(-4)}${Math.floor(Math.random()*1000).toString().padStart(3,'0')}`;
-    const optimistic: ContractingProject = { ...p, id: newId };
+    const optimistic: ContractingProject = { ...p, id: newId, siteProgressReports: p.siteProgressReports ?? null };
     setProjects(prev => [optimistic, ...prev]);
 
     if (!isSupabaseConfigured) return;
@@ -117,6 +120,7 @@ export function useContractingProjects() {
     if (updates.description !== undefined) payload.description = updates.description;
     if (updates.contractId !== undefined) payload.contract_id = updates.contractId;
     if (updates.mainProjectId !== undefined) payload.main_project_id = updates.mainProjectId;
+    if (updates.siteProgressReports !== undefined) payload.site_progress_reports = updates.siteProgressReports ?? null;
     const { error } = await supabase.from('contracting_projects').update(payload).eq('id', id);
     if (error) { setError(error.message); fetch(); return; }
   }, [fetch]);

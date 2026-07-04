@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   FileText, AlertTriangle, CheckCircle, Clock, Plus, X, Loader2,
   Briefcase, Receipt, CreditCard, Send, ShieldCheck, Ban, Users2,
   ArrowDownLeft, ArrowUpRight, Building2, Pencil, Trash2, Paperclip,
+  ClipboardList,
 } from 'lucide-react';
 import { cn, formatCurrency } from '../lib/utils';
 import { useContracts, Contract } from '../hooks/useContracts';
@@ -18,6 +19,244 @@ import { RowMenu } from '../components/RowMenu';
 import DocumentAttachmentModal from '../components/DocumentAttachmentModal';
 
 const inputCls = 'w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 transition-all';
+
+/* ── Site Progress Tab component ──────────────── */
+function SiteProgressTab({
+  projects,
+  updateProject,
+}: {
+  projects: import('../hooks/useContractingProjects').ContractingProject[];
+  updateProject: (id: string, updates: any) => Promise<void>;
+}) {
+  const today = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  })();
+
+  const [selectedProjectId, setSelectedProjectId] = useState(projects[0]?.id ?? '');
+  const [reportText,        setReportText]        = useState('');
+  const [reportDate,        setReportDate]        = useState(today);
+  const [saving,            setSaving]            = useState(false);
+  const [editId,            setEditId]            = useState<string | null>(null);
+  const [editProjectId,     setEditProjectId]     = useState<string | null>(null);
+  const [editText,          setEditText]          = useState('');
+
+  type FlatReport = SiteReportEntry & { projectId: string; projectName: string; projectStatus: string };
+
+  const allReports: FlatReport[] = useMemo(() =>
+    projects.flatMap(p =>
+      parseSiteReports(p.siteProgressReports).map(r => ({
+        ...r,
+        projectId:     p.id,
+        projectName:   p.name,
+        projectStatus: p.status,
+      }))
+    ).sort((a, b) => new Date(b.reportDate).getTime() - new Date(a.reportDate).getTime() || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+  [projects]);
+
+  const statusColors: Record<string, string> = {
+    Active: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300',
+    Planning: 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300',
+    Completed: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
+    'On Hold': 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300',
+  };
+
+  const addReport = async () => {
+    if (!reportText.trim() || !selectedProjectId) return;
+    const project = projects.find(p => p.id === selectedProjectId);
+    if (!project) return;
+    setSaving(true);
+    const entry: SiteReportEntry = {
+      id: crypto.randomUUID(),
+      text: reportText.trim(),
+      reportDate,
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [...parseSiteReports(project.siteProgressReports), entry];
+    await updateProject(selectedProjectId, { siteProgressReports: JSON.stringify(updated) });
+    setReportText('');
+    setSaving(false);
+  };
+
+  const saveEdit = async () => {
+    if (!editId || !editProjectId || !editText.trim()) return;
+    const project = projects.find(p => p.id === editProjectId);
+    if (!project) return;
+    setSaving(true);
+    const updated = parseSiteReports(project.siteProgressReports).map(r =>
+      r.id === editId ? { ...r, text: editText.trim(), editedAt: new Date().toISOString() } : r
+    );
+    await updateProject(editProjectId, { siteProgressReports: JSON.stringify(updated) });
+    setEditId(null); setEditProjectId(null); setEditText('');
+    setSaving(false);
+  };
+
+  const deleteReport = async (reportId: string, projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+    setSaving(true);
+    const remaining = parseSiteReports(project.siteProgressReports).filter(r => r.id !== reportId);
+    await updateProject(projectId, { siteProgressReports: remaining.length ? JSON.stringify(remaining) : null });
+    setSaving(false);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Compose */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-3">
+        <p className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+          <ClipboardList className="w-4 h-4 text-indigo-500" /> New Site Progress Report
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
+              Project <span className="text-rose-400">*</span>
+            </label>
+            {projects.length === 0 ? (
+              <p className="text-xs text-slate-400 italic">No projects yet. Create a project first.</p>
+            ) : (
+              <select
+                value={selectedProjectId}
+                onChange={e => setSelectedProjectId(e.target.value)}
+                className="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+              >
+                <option value="">— Select project —</option>
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.name} · {p.client}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
+              Report Date
+            </label>
+            <input
+              type="date"
+              value={reportDate}
+              onChange={e => setReportDate(e.target.value)}
+              className="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
+            Progress Report
+          </label>
+          <textarea
+            value={reportText}
+            onChange={e => setReportText(e.target.value)}
+            rows={4}
+            placeholder="Describe site progress, milestones reached, issues encountered…"
+            className="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all resize-none"
+          />
+        </div>
+
+        <button
+          onClick={addReport}
+          disabled={!reportText.trim() || !selectedProjectId || saving}
+          className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-colors shadow-sm"
+        >
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ClipboardList className="w-4 h-4" />}
+          {saving ? 'Saving…' : 'Submit Report'}
+        </button>
+      </div>
+
+      {/* Reports list */}
+      {allReports.length === 0 ? (
+        <div className="text-center py-16 text-slate-400 bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <ClipboardList className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p className="text-sm font-medium">No site progress reports yet</p>
+          <p className="text-xs mt-1">Select a project above and submit the first report.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">
+            {allReports.length} report{allReports.length !== 1 ? 's' : ''}
+          </p>
+          {allReports.map(r => {
+            const isEditing = editId === r.id && editProjectId === r.projectId;
+            return (
+              <div key={`${r.projectId}-${r.id}`} className="bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-3">
+                {/* Project tag */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate max-w-xs">
+                    {r.projectName}
+                  </span>
+                  <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0', statusColors[r.projectStatus] ?? statusColors['On Hold'])}>
+                    {r.projectStatus}
+                  </span>
+                  <span className="ml-auto text-xs font-semibold text-indigo-600 dark:text-indigo-400 shrink-0">
+                    {new Date(r.reportDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                </div>
+
+                {/* Report body */}
+                {isEditing ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={editText}
+                      onChange={e => setEditText(e.target.value)}
+                      rows={4}
+                      autoFocus
+                      className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-indigo-300 dark:border-indigo-700 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none resize-none"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={saveEdit}
+                        disabled={saving || !editText.trim()}
+                        className="px-4 py-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg disabled:opacity-50 transition-colors"
+                      >
+                        {saving ? 'Saving…' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => { setEditId(null); setEditProjectId(null); setEditText(''); }}
+                        className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">{r.text}</p>
+                    <div className="flex items-end justify-between gap-2">
+                      <div>
+                        <p className="text-xs text-slate-400">{fmtReportDate(r.createdAt)}</p>
+                        {r.editedAt && (
+                          <p className="text-[10px] text-slate-400 italic">edited · {fmtReportDate(r.editedAt)}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => { setEditId(r.id); setEditProjectId(r.projectId); setEditText(r.text); }}
+                          className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200 transition-colors"
+                        >
+                          <Pencil className="w-3 h-3" /> Edit
+                        </button>
+                        <button
+                          onClick={() => { if (window.confirm('Delete this report?')) deleteReport(r.id, r.projectId); }}
+                          disabled={saving}
+                          className="flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200 transition-colors disabled:opacity-40"
+                        >
+                          <Trash2 className="w-3 h-3" /> Delete
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ── Status badge helper ───────────────────────── */
 function StatusBadge({ status }: { status: string }) {
@@ -72,12 +311,38 @@ function Modal({ title, onClose, children, accent = 'indigo' }: { title: string;
   );
 }
 
+/* ── Site Progress Report helpers ──────────────── */
+interface SiteReportEntry {
+  id: string;
+  text: string;
+  reportDate: string;
+  createdAt: string;
+  editedAt?: string;
+}
+
+function parseSiteReports(raw: string | null | undefined): SiteReportEntry[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+  } catch {}
+  return [];
+}
+
+function fmtReportDate(iso: string) {
+  return new Date(iso).toLocaleString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric',
+    year: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+}
+
 /* ── Tab types ─────────────────────────────────── */
-type TabID = 'contracts' | 'projects' | 'quotations' | 'invoices-out' | 'invoices-in' | 'payments' | 'subcontractors';
+type TabID = 'contracts' | 'projects' | 'quotations' | 'invoices-out' | 'invoices-in' | 'payments' | 'subcontractors' | 'site-progress';
 
 const tabs: { id: TabID; label: string; icon: any }[] = [
   { id: 'contracts', label: 'Contracts', icon: FileText },
   { id: 'projects', label: 'Projects', icon: Briefcase },
+  { id: 'site-progress', label: 'Site Progress', icon: ClipboardList },
   { id: 'subcontractors', label: 'Subcontractors', icon: Building2 },
   { id: 'quotations', label: 'Quotations', icon: Send },
   { id: 'invoices-out', label: 'Invoices → Clients', icon: ArrowUpRight },
@@ -245,7 +510,7 @@ export default function Contracting() {
   const addLabel: Record<TabID, string> = {
     contracts: 'New Contract', projects: 'New Project', subcontractors: 'New Subcontractor',
     quotations: 'New Quotation', 'invoices-out': 'New Invoice', 'invoices-in': 'Record Invoice',
-    payments: 'Record Payment',
+    payments: 'Record Payment', 'site-progress': '',
   };
 
   return (
@@ -256,7 +521,7 @@ export default function Contracting() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Contracting</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage contracts, projects, invoices, and payments.</p>
         </div>
-        {!isEngineer && (
+        {!isEngineer && activeTab !== 'site-progress' && (
           <button onClick={() => {
             // Clear edit state when opening new entry
             if (activeTab === 'contracts') { setEditCtrId(null); setCtrForm({ title: '', client: '', value: '', startDate: '', endDate: '' }); }
@@ -615,6 +880,14 @@ export default function Contracting() {
             )}
           </div>
         </>
+      )}
+
+      {/* ═══ SITE PROGRESS TAB ═══ */}
+      {activeTab === 'site-progress' && (
+        <SiteProgressTab
+          projects={projects}
+          updateProject={updateProject}
+        />
       )}
 
       {/* ═══ MODALS ═══ */}
