@@ -14,10 +14,12 @@ function downloadCSV(filename: string, csvContent: string) {
 
 function escapeCSV(val: any): string {
   const str = String(val ?? '');
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-    return `"${str.replace(/"/g, '""')}"`;
+  // Prefix formula-trigger characters so spreadsheet apps treat them as literals
+  const safe = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+  if (safe.includes(',') || safe.includes('"') || safe.includes('\n')) {
+    return `"${safe.replace(/"/g, '""')}"`;
   }
-  return str;
+  return safe;
 }
 
 export function exportTransactionsCSV(transactions: Transaction[]) {

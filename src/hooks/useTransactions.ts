@@ -254,7 +254,9 @@ export function useTransactions() {
   const deleteTransaction = useCallback(async (id: number) => {
     setTransactions(prev => prev.filter(t => t.id !== id));
     if (!isSupabaseConfigured) return;
-    const { error } = await supabase.from('transactions').update({ is_deleted: true }).eq('id', id);
+    const cid = useAuthStore.getState().company?.id;
+    const q = supabase.from('transactions').update({ is_deleted: true }).eq('id', id);
+    const { error } = cid ? await q.eq('company_id', cid) : await q;
     if (error) { setError(error.message); fetch(); return; }
   }, [fetch]);
 

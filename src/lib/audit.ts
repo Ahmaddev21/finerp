@@ -9,11 +9,13 @@ export async function writeAuditLog(
 ) {
   if (!isSupabaseConfigured) return;
 
-  const user = useAuthStore.getState().user;
+  // Email must come from the server-validated JWT, not the localStorage cache,
+  // so the audit trail cannot be forged by editing localStorage.
+  const { data: { user: verifiedUser } } = await supabase.auth.getUser();
   const company = useAuthStore.getState().company;
   const { error } = await supabase.from('audit_logs').insert({
-    user_id: user?.id ?? null,
-    user_email: user?.email ?? 'unknown',
+    user_id: verifiedUser?.id ?? null,
+    user_email: verifiedUser?.email ?? 'unknown',
     action,
     table_name: tableName,
     record_id: recordId,

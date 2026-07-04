@@ -156,7 +156,7 @@ function ResetPasswordScreen({ onDone }: { onDone: () => void }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirm) { setError('Passwords do not match.'); return; }
-    if (password.length < 6)  { setError('Password must be at least 6 characters.'); return; }
+    if (password.length < 12) { setError('Password must be at least 12 characters.'); return; }
     setLoading(true);
     setError('');
     try {

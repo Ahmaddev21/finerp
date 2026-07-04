@@ -12,10 +12,9 @@ export const api = {
    */
   async getProjects() {
     if (!isSupabaseConfigured) return null;
-    return await supabase
-      .from('projects')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const company = useAuthStore.getState().company;
+    const query = supabase.from('projects').select('*').order('created_at', { ascending: false });
+    return company?.id ? query.eq('company_id', company.id) : query;
   },
 
   async createProject(project: any) {
@@ -32,10 +31,9 @@ export const api = {
    */
   async getTransactions() {
     if (!isSupabaseConfigured) return null;
-    return await supabase
-      .from('transactions')
-      .select('*')
-      .order('date', { ascending: false });
+    const company = useAuthStore.getState().company;
+    const query = supabase.from('transactions').select('*').order('date', { ascending: false });
+    return company?.id ? query.eq('company_id', company.id) : query;
   },
 
   async createTransaction(tx: any) {

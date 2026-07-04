@@ -446,7 +446,7 @@ export default function TeamSettings() {
               <div key={member.id} className="px-6 py-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
                 <div className="flex items-center gap-4 min-w-0">
                   <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-500 font-bold overflow-hidden border-2 border-white dark:border-gray-900 ring-1 ring-slate-100 dark:ring-slate-800">
-                    {member.profiles?.avatar_url ? (
+                    {member.profiles?.avatar_url?.startsWith('https://') || member.profiles?.avatar_url?.startsWith('data:image/') ? (
                       <img src={member.profiles.avatar_url} alt={name} className="w-full h-full object-cover" />
                     ) : (
                       name.charAt(0)
