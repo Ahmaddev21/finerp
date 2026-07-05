@@ -54,7 +54,7 @@ export default function Tasks() {
   const tasks         = hookResult.tasks   ?? [];
   const members       = hookResult.members ?? [];
   const loading       = hookResult.loading ?? false;
-  const { addTask, updateTaskStatus, deleteTask, uploadAttachment, error: hookError } = hookResult;
+  const { addTask, updateTaskStatus, deleteTask, uploadAttachment, getAttachmentSignedUrl, error: hookError } = hookResult;
 
   const [isModalOpen,    setIsModalOpen]    = useState(false);
   const [filterStatus,   setFilterStatus]   = useState<TaskStatus | 'All'>('All');
@@ -100,7 +100,7 @@ export default function Tasks() {
     let attachmentName: string | undefined;
     if (attachmentFile) {
       const result = await uploadAttachment(attachmentFile);
-      if (result) { attachmentUrl = result.url; attachmentName = result.name; }
+      if (result) { attachmentUrl = result.path; attachmentName = result.name; }
     }
 
     const selectedMember = members.find((m: { userId: string }) => m.userId === form.assignedToUserId);
@@ -123,6 +123,12 @@ export default function Tasks() {
   };
 
   const getProjName = (id: string) => projects.find(p => p.id === id)?.name ?? id;
+
+  const handleViewDocument = async (task: Task) => {
+    if (!task.attachmentUrl) return;
+    const signedUrl = await getAttachmentSignedUrl(task.attachmentUrl);
+    if (signedUrl) setViewingAttachment({ url: signedUrl, name: task.attachmentName ?? 'Document' });
+  };
 
   const overdueCount  = allTasks.filter(t => isOverdue(t.dueDate, t.status)).length;
   const openCount     = allTasks.filter(t => t.status === 'To Do').length;
@@ -389,7 +395,7 @@ export default function Tasks() {
                       ...(task.attachmentUrl ? [{
                         label: 'View Document',
                         icon: <Eye className="w-4 h-4" />,
-                        onClick: () => setViewingAttachment({ url: task.attachmentUrl!, name: task.attachmentName ?? 'Document' }),
+                        onClick: () => handleViewDocument(task),
                       } as MenuAction, { kind: 'divider' as const }] : []),
                       {
                         label: 'Delete Task',

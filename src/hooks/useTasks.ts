@@ -213,7 +213,7 @@ export function useTasks() {
     if (err) { setError(err.message); fetch(); }
   }, [fetch]);
 
-  const uploadAttachment = useCallback(async (file: File): Promise<{ url: string; name: string } | null> => {
+  const uploadAttachment = useCallback(async (file: File): Promise<{ path: string; name: string } | null> => {
     if (!isSupabaseConfigured || !company?.id) return null;
     const ext = file.name.split('.').pop() ?? 'bin';
     const path = `${company.id}/tasks/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
@@ -221,9 +221,17 @@ export function useTasks() {
       .from('finance_attachments')
       .upload(path, file, { upsert: false });
     if (error) { setError(`File upload failed: ${error.message}`); return null; }
-    const { data } = supabase.storage.from('finance_attachments').getPublicUrl(path);
-    return { url: data.publicUrl, name: file.name };
+    return { path, name: file.name };
   }, [company?.id]);
 
-  return { tasks, members, loading, error, addTask, updateTaskStatus, deleteTask, uploadAttachment, refetch: fetch };
+  const getAttachmentSignedUrl = useCallback(async (filePath: string): Promise<string | null> => {
+    if (!isSupabaseConfigured) return null;
+    const { data, error } = await supabase.storage
+      .from('finance_attachments')
+      .createSignedUrl(filePath, 3600);
+    if (error) return null;
+    return data.signedUrl;
+  }, []);
+
+  return { tasks, members, loading, error, addTask, updateTaskStatus, deleteTask, uploadAttachment, getAttachmentSignedUrl, refetch: fetch };
 }
