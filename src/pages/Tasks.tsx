@@ -53,7 +53,7 @@ export default function Tasks() {
   const tasks         = hookResult.tasks   ?? [];
   const members       = hookResult.members ?? [];
   const loading       = hookResult.loading ?? false;
-  const { addTask, updateTaskStatus, deleteTask, uploadAttachment } = hookResult;
+  const { addTask, updateTaskStatus, deleteTask, uploadAttachment, error: hookError } = hookResult;
 
   const [isModalOpen,    setIsModalOpen]    = useState(false);
   const [filterStatus,   setFilterStatus]   = useState<TaskStatus | 'All'>('All');
@@ -652,6 +652,13 @@ export default function Tasks() {
                 </label>
               )}
             </div>
+
+            {/* Upload error */}
+            {hookError && hookError.includes('upload') && (
+              <div className="mx-6 mb-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400">
+                {hookError}
+              </div>
+            )}
 
             {/* Modal footer */}
             <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-800">

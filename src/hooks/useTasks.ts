@@ -216,12 +216,12 @@ export function useTasks() {
   const uploadAttachment = useCallback(async (file: File): Promise<{ url: string; name: string } | null> => {
     if (!isSupabaseConfigured || !company?.id) return null;
     const ext = file.name.split('.').pop() ?? 'bin';
-    const path = `${company.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const path = `tasks/${company.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const { error } = await supabase.storage
-      .from('task-attachments')
+      .from('finance_attachments')
       .upload(path, file, { upsert: false });
-    if (error) { setError(`Upload failed: ${error.message}`); return null; }
-    const { data } = supabase.storage.from('task-attachments').getPublicUrl(path);
+    if (error) { setError(`File upload failed: ${error.message}`); return null; }
+    const { data } = supabase.storage.from('finance_attachments').getPublicUrl(path);
     return { url: data.publicUrl, name: file.name };
   }, [company?.id]);
 
