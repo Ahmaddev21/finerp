@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   AlertCircle, CheckCircle2, Circle, Clock, Lock, Loader2, Plus, X, Trash2,
   ListTodo, Zap, CheckSquare, XCircle, CalendarDays, ChevronRight,
-  Paperclip, ChevronDown, ExternalLink, Eye, Download, FileText, Image,
+  Paperclip, ChevronDown, ExternalLink, Eye, Download, FileText,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useProjects } from '../hooks/useProjects';
@@ -449,81 +449,13 @@ export default function Tasks() {
       )}
 
       {/* ── Attachment viewer ── */}
-      {viewingAttachment && (() => {
-        const fileType = getFileType(viewingAttachment.name);
-        return (
-          <div
-            className="fixed inset-0 z-[60] bg-black/85 backdrop-blur-sm flex flex-col animate-fade-in"
-            onClick={e => { if (e.target === e.currentTarget) setViewingAttachment(null); }}
-          >
-            {/* Viewer header */}
-            <div className="flex items-center justify-between px-5 py-3.5 bg-white dark:bg-gray-900 border-b border-slate-200 dark:border-slate-800 shrink-0">
-              <div className="flex items-center gap-2 min-w-0">
-                {fileType === 'image' ? (
-                  <Image className="w-4 h-4 text-slate-400 shrink-0" />
-                ) : fileType === 'pdf' ? (
-                  <FileText className="w-4 h-4 text-red-400 shrink-0" />
-                ) : (
-                  <Paperclip className="w-4 h-4 text-slate-400 shrink-0" />
-                )}
-                <span className="text-sm font-bold text-slate-900 dark:text-white truncate">{viewingAttachment.name}</span>
-              </div>
-              <div className="flex items-center gap-3 shrink-0 ml-4">
-                <a
-                  href={viewingAttachment.url}
-                  download={viewingAttachment.name}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                >
-                  <Download className="w-3.5 h-3.5" /> Download
-                </a>
-                <button
-                  onClick={() => setViewingAttachment(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Viewer body */}
-            <div className="flex-1 overflow-auto flex items-center justify-center p-6">
-              {fileType === 'image' && (
-                <img
-                  src={viewingAttachment.url}
-                  alt={viewingAttachment.name}
-                  className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
-                />
-              )}
-              {fileType === 'pdf' && (
-                <iframe
-                  src={viewingAttachment.url}
-                  title={viewingAttachment.name}
-                  className="w-full h-full rounded-xl shadow-2xl bg-white"
-                  style={{ minHeight: '70vh' }}
-                />
-              )}
-              {fileType === 'other' && (
-                <div className="text-center space-y-4">
-                  <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto">
-                    <FileText className="w-8 h-8 text-slate-400" />
-                  </div>
-                  <div>
-                    <p className="text-white font-bold text-base">{viewingAttachment.name}</p>
-                    <p className="text-slate-400 text-sm mt-1">This file type can't be previewed in the browser.</p>
-                  </div>
-                  <a
-                    href={viewingAttachment.url}
-                    download={viewingAttachment.name}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl transition-colors shadow-md"
-                  >
-                    <Download className="w-4 h-4" /> Download to view
-                  </a>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })()}
+      {viewingAttachment && (
+        <AttachmentViewer
+          url={viewingAttachment.url}
+          name={viewingAttachment.name}
+          onClose={() => setViewingAttachment(null)}
+        />
+      )}
 
       {/* ── New Task modal ── */}
       {isModalOpen && (
@@ -737,6 +669,82 @@ export default function Tasks() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Attachment viewer modal ────────────────────────────────────────────────────
+
+function AttachmentViewer({ url, name, onClose }: { url: string; name: string; onClose: () => void }) {
+  const ext = name.split('.').pop()?.toLowerCase() ?? '';
+  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+  const isPdf   = ext === 'pdf';
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-3.5 bg-white dark:bg-gray-900 border-b border-slate-200 dark:border-slate-800 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          {isImage
+            ? <Paperclip className="w-4 h-4 text-indigo-400 shrink-0" />
+            : <FileText className="w-4 h-4 text-slate-400 shrink-0" />}
+          <span className="text-sm font-bold text-slate-900 dark:text-white truncate">{name}</span>
+        </div>
+        <div className="flex items-center gap-3 shrink-0 ml-4">
+          <a
+            href={url}
+            download={name}
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" /> Download
+          </a>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-auto flex items-center justify-center p-6" onClick={onClose}>
+        {isImage && (
+          <img
+            src={url}
+            alt={name}
+            className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          />
+        )}
+        {isPdf && (
+          <iframe
+            src={url}
+            title={name}
+            className="w-full rounded-xl shadow-2xl bg-white"
+            style={{ height: '80vh' }}
+            onClick={e => e.stopPropagation()}
+          />
+        )}
+        {!isImage && !isPdf && (
+          <div className="text-center space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto">
+              <FileText className="w-8 h-8 text-slate-400" />
+            </div>
+            <div>
+              <p className="text-white font-bold text-base">{name}</p>
+              <p className="text-slate-400 text-sm mt-1">This file type cannot be previewed in the browser.</p>
+            </div>
+            <a
+              href={url}
+              download={name}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl transition-colors shadow-md"
+            >
+              <Download className="w-4 h-4" /> Download to view
+            </a>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
