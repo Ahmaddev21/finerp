@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   AlertCircle, CheckCircle2, Circle, Clock, Lock, Loader2, Plus, X, Trash2,
   ListTodo, Zap, CheckSquare, XCircle, CalendarDays, ChevronRight,
+  Paperclip, ChevronDown, ExternalLink,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useProjects } from '../hooks/useProjects';
@@ -45,14 +46,17 @@ export default function Tasks() {
   const tasks         = hookResult.tasks   ?? [];
   const members       = hookResult.members ?? [];
   const loading       = hookResult.loading ?? false;
-  const { addTask, updateTaskStatus, deleteTask } = hookResult;
+  const { addTask, updateTaskStatus, deleteTask, uploadAttachment } = hookResult;
 
-  const [isModalOpen,  setIsModalOpen]  = useState(false);
-  const [filterStatus, setFilterStatus] = useState<TaskStatus | 'All'>('All');
+  const [isModalOpen,    setIsModalOpen]    = useState(false);
+  const [filterStatus,   setFilterStatus]   = useState<TaskStatus | 'All'>('All');
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [uploading,      setUploading]      = useState(false);
   const [form, setForm] = useState({
     title: '', project: '', assignedToRole: '' as AppRole | '',
     assignedToUserId: '', priority: 'Medium' as Priority,
-    dueDate: '', isPrivate: false,
+    dueDate: '', isPrivate: false, description: '', notes: '',
   });
 
   const todayStr       = new Date().toISOString().split('T')[0];
@@ -73,21 +77,40 @@ export default function Tasks() {
   const isOverdue = (d: string, s: TaskStatus) =>
     s !== 'Finished' && s !== 'Unfinished' && d !== '—' && d < todayStr;
 
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setAttachmentFile(null);
+    setForm({ title: '', project: '', assignedToRole: '', assignedToUserId: '', priority: 'Medium', dueDate: '', isPrivate: false, description: '', notes: '' });
+  };
+
   const handleAdd = async () => {
     if (!form.title.trim() || !form.assignedToRole || !form.dueDate) return;
+    setUploading(true);
+
+    let attachmentUrl: string | undefined;
+    let attachmentName: string | undefined;
+    if (attachmentFile) {
+      const result = await uploadAttachment(attachmentFile);
+      if (result) { attachmentUrl = result.url; attachmentName = result.name; }
+    }
+
     const selectedMember = members.find((m: { userId: string }) => m.userId === form.assignedToUserId);
     const displayName = (selectedMember as { username?: string } | undefined)?.username
       ?? roleLabel(form.assignedToRole as AppRole);
     await addTask({
-      title: form.title.trim(), project: form.project,
+      title: form.title.trim(),
+      description: form.description.trim() || undefined,
+      notes: form.notes.trim() || undefined,
+      attachmentUrl, attachmentName,
+      project: form.project,
       assignee: displayName, assignedToRole: form.assignedToRole as AppRole,
       assignedToUserId: form.assignedToUserId || null,
       createdByUserId: user?.id ?? null, createdByRole: user?.role ?? null,
       priority: form.priority, status: 'To Do',
       dueDate: form.dueDate, isPrivate: isOwnerOrAdmin ? form.isPrivate : false,
     });
-    setIsModalOpen(false);
-    setForm({ title: '', project: '', assignedToRole: '', assignedToUserId: '', priority: 'Medium', dueDate: '', isPrivate: false });
+    setUploading(false);
+    closeModal();
   };
 
   const getProjName = (id: string) => projects.find(p => p.id === id)?.name ?? id;
@@ -232,6 +255,11 @@ export default function Tasks() {
                       </p>
                     </div>
 
+                    {/* Description preview when collapsed */}
+                    {task.description && expandedTaskId !== task.id && (
+                      <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5 leading-snug">{task.description}</p>
+                    )}
+
                     {/* Meta row */}
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                       {/* Role */}
@@ -272,6 +300,13 @@ export default function Tasks() {
                         <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', pc.bg)} />
                         {pc.label}
                       </span>
+
+                      {/* Attachment indicator */}
+                      {task.attachmentUrl && (
+                        <span className="inline-flex items-center text-[10px] text-slate-300 dark:text-slate-600">
+                          <Paperclip className="w-2.5 h-2.5" />
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -330,6 +365,16 @@ export default function Tasks() {
                       </button>
                     )}
 
+                    {/* Expand toggle — only when extra content exists */}
+                    {(task.description || task.notes || task.attachmentUrl) && (
+                      <button
+                        onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                        className="p-1.5 rounded-lg text-slate-300 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', expandedTaskId === task.id && 'rotate-180')} />
+                      </button>
+                    )}
+
                     {/* Delete */}
                     <button
                       onClick={() => deleteTask(task.id)}
@@ -339,6 +384,39 @@ export default function Tasks() {
                     </button>
                   </div>
                 </div>
+
+                {/* Expanded detail panel */}
+                {expandedTaskId === task.id && (task.description || task.notes || task.attachmentUrl) && (
+                  <div className="px-5 pb-4 border-t border-slate-50 dark:border-slate-800/50 pt-3 space-y-3 ml-8">
+                    {task.description && (
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Description</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{task.description}</p>
+                      </div>
+                    )}
+                    {task.notes && (
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Notes</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">{task.notes}</p>
+                      </div>
+                    )}
+                    {task.attachmentUrl && (
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Attachment</p>
+                        <a
+                          href={task.attachmentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200 transition-colors"
+                        >
+                          <Paperclip className="w-3 h-3" />
+                          {task.attachmentName ?? 'Download attachment'}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })
@@ -357,7 +435,7 @@ export default function Tasks() {
       {isModalOpen && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
-          onClick={e => { if (e.target === e.currentTarget) setIsModalOpen(false); }}
+          onClick={e => { if (e.target === e.currentTarget) closeModal(); }}
         >
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
 
@@ -368,7 +446,7 @@ export default function Tasks() {
                 <p className="text-xs text-slate-400 mt-0.5">Fill in the details to assign a task</p>
               </div>
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={closeModal}
                 className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
               >
                 <X className="w-5 h-5" />
@@ -389,6 +467,20 @@ export default function Tasks() {
                   onChange={e => setForm({ ...form, title: e.target.value })}
                   onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }}
                   className={inputCls}
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Description <span className="text-slate-300 dark:text-slate-600 font-normal normal-case">(optional)</span>
+                </label>
+                <textarea
+                  value={form.description}
+                  onChange={e => setForm({ ...form, description: e.target.value })}
+                  rows={2}
+                  placeholder="Brief overview of what this task involves…"
+                  className={cn(inputCls, 'resize-none')}
                 />
               </div>
 
@@ -461,6 +553,56 @@ export default function Tasks() {
                 </div>
               </div>
 
+              {/* Notes */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Notes <span className="text-slate-300 dark:text-slate-600 font-normal normal-case">(optional)</span>
+                </label>
+                <textarea
+                  value={form.notes}
+                  onChange={e => setForm({ ...form, notes: e.target.value })}
+                  rows={3}
+                  placeholder="Additional context, steps, links, or references…"
+                  className={cn(inputCls, 'resize-none')}
+                />
+              </div>
+
+              {/* Attachment */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Attachment <span className="text-slate-300 dark:text-slate-600 font-normal normal-case">(optional · max 10 MB)</span>
+                </label>
+                {attachmentFile ? (
+                  <div className="flex items-center gap-2 px-3.5 py-2.5 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 rounded-xl">
+                    <Paperclip className="w-4 h-4 text-indigo-500 shrink-0" />
+                    <span className="text-sm text-indigo-700 dark:text-indigo-300 flex-1 truncate">{attachmentFile.name}</span>
+                    <button type="button" onClick={() => setAttachmentFile(null)} className="text-slate-400 hover:text-rose-500 transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 px-3.5 py-2.5 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-600 transition-colors group">
+                    <Paperclip className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors shrink-0" />
+                    <span className="text-sm text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                      Click to attach a file
+                    </span>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.docx,.doc,.xlsx,.xls,.txt,.csv"
+                      className="hidden"
+                      onChange={e => {
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        if (f.size > 10 * 1024 * 1024) { alert('File too large — max 10 MB'); return; }
+                        setAttachmentFile(f);
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                )}
+                <p className="text-[10px] text-slate-400 mt-1">PDF, Word, Excel, JPG, PNG, CSV, TXT</p>
+              </div>
+
               {/* Private */}
               {isOwnerOrAdmin && (
                 <label className="flex items-start gap-3 cursor-pointer py-3 px-4 rounded-xl bg-violet-50 dark:bg-violet-950/20 border border-violet-100 dark:border-violet-900/50 select-none">
@@ -482,17 +624,18 @@ export default function Tasks() {
             {/* Modal footer */}
             <div className="flex justify-end gap-3 px-6 pb-6">
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={closeModal}
                 className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAdd}
-                disabled={!form.title.trim() || !form.assignedToRole || !form.dueDate}
+                disabled={!form.title.trim() || !form.assignedToRole || !form.dueDate || uploading}
                 className="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl flex items-center gap-2 transition-all shadow-md shadow-indigo-600/20"
               >
-                <Plus className="w-4 h-4" /> Add Task
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                {uploading ? 'Saving…' : 'Add Task'}
               </button>
             </div>
           </div>

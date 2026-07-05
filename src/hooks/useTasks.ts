@@ -9,6 +9,10 @@ export type AppRole   = 'owner' | 'admin' | 'bdm' | 'engineer' | 'receptionist' 
 export interface Task {
   id: string;
   title: string;
+  description?: string;
+  notes?: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
   project: string;
   assignee: string;           // display name (kept for backward compat)
   assignedToRole: AppRole | null;
@@ -58,6 +62,10 @@ function mapRow(row: any): Task {
   return {
     id:               row.id,
     title:            row.title            ?? '',
+    description:      row.description      ?? undefined,
+    notes:            row.notes            ?? undefined,
+    attachmentUrl:    row.attachment_url   ?? undefined,
+    attachmentName:   row.attachment_name  ?? undefined,
     project:          row.project          ?? row.project_id ?? '',
     assignee:         row.assignee         ?? '',
     assignedToRole:   row.assigned_to_role   ?? null,
@@ -166,6 +174,10 @@ export function useTasks() {
       id:                   newId,
       company_id:           company?.id,
       title:                t.title,
+      description:          t.description       ?? null,
+      notes:                t.notes             ?? null,
+      attachment_url:       t.attachmentUrl     ?? null,
+      attachment_name:      t.attachmentName    ?? null,
       project:              t.project || null,
       assignee:             t.assignee,
       assigned_to_role:     t.assignedToRole     ?? null,
@@ -201,5 +213,17 @@ export function useTasks() {
     if (err) { setError(err.message); fetch(); }
   }, [fetch]);
 
-  return { tasks, members, loading, error, addTask, updateTaskStatus, deleteTask, refetch: fetch };
+  const uploadAttachment = useCallback(async (file: File): Promise<{ url: string; name: string } | null> => {
+    if (!isSupabaseConfigured || !company?.id) return null;
+    const ext = file.name.split('.').pop() ?? 'bin';
+    const path = `${company.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage
+      .from('task-attachments')
+      .upload(path, file, { upsert: false });
+    if (error) { setError(`Upload failed: ${error.message}`); return null; }
+    const { data } = supabase.storage.from('task-attachments').getPublicUrl(path);
+    return { url: data.publicUrl, name: file.name };
+  }, [company?.id]);
+
+  return { tasks, members, loading, error, addTask, updateTaskStatus, deleteTask, uploadAttachment, refetch: fetch };
 }
