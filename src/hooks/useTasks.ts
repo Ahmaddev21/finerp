@@ -216,7 +216,7 @@ export function useTasks() {
   const uploadAttachment = useCallback(async (file: File): Promise<{ url: string; name: string } | null> => {
     if (!isSupabaseConfigured || !company?.id) return null;
     const ext = file.name.split('.').pop() ?? 'bin';
-    const path = `tasks/${company.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const path = `${company.id}/tasks/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const { error } = await supabase.storage
       .from('finance_attachments')
       .upload(path, file, { upsert: false });

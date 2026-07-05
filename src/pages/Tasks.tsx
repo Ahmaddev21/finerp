@@ -9,6 +9,7 @@ import { useProjects } from '../hooks/useProjects';
 import { useAuthStore } from '../store/auth';
 import { useTasks, Task, TaskStatus, Priority, AppRole } from '../hooks/useTasks';
 import { roleLabel } from '../lib/roles';
+import { RowMenu, MenuAction } from '../components/RowMenu';
 
 const ALL_ROLES: AppRole[] = ['owner', 'admin', 'bdm', 'engineer', 'receptionist', 'developer', 'intern'];
 
@@ -309,15 +310,11 @@ export default function Tasks() {
                         {pc.label}
                       </span>
 
-                      {/* Attachment — always-visible View button */}
+                      {/* Attachment indicator */}
                       {task.attachmentUrl && (
-                        <button
-                          onClick={() => setViewingAttachment({ url: task.attachmentUrl!, name: task.attachmentName ?? 'Attachment' })}
-                          className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 transition-colors"
-                        >
-                          <Paperclip className="w-2.5 h-2.5" />
-                          View doc
-                        </button>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                          <Paperclip className="w-2.5 h-2.5" /> Doc attached
+                        </span>
                       )}
                     </div>
                   </div>
@@ -377,8 +374,8 @@ export default function Tasks() {
                       </button>
                     )}
 
-                    {/* Expand toggle — only when extra content exists */}
-                    {(task.description || task.notes || task.attachmentUrl) && (
+                    {/* Expand toggle for description/notes */}
+                    {(task.description || task.notes) && (
                       <button
                         onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
                         className="p-1.5 rounded-lg text-slate-300 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -387,13 +384,20 @@ export default function Tasks() {
                       </button>
                     )}
 
-                    {/* Delete */}
-                    <button
-                      onClick={() => deleteTask(task.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg text-slate-300 dark:text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {/* Three-dot menu */}
+                    <RowMenu actions={[
+                      ...(task.attachmentUrl ? [{
+                        label: 'View Document',
+                        icon: <Eye className="w-4 h-4" />,
+                        onClick: () => setViewingAttachment({ url: task.attachmentUrl!, name: task.attachmentName ?? 'Document' }),
+                      } as MenuAction, { kind: 'divider' as const }] : []),
+                      {
+                        label: 'Delete Task',
+                        icon: <Trash2 className="w-4 h-4" />,
+                        danger: true,
+                        onClick: () => deleteTask(task.id),
+                      },
+                    ]} />
                   </div>
                 </div>
 
