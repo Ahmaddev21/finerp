@@ -309,11 +309,15 @@ export default function Tasks() {
                         {pc.label}
                       </span>
 
-                      {/* Attachment indicator */}
+                      {/* Attachment — always-visible View button */}
                       {task.attachmentUrl && (
-                        <span className="inline-flex items-center text-[10px] text-slate-300 dark:text-slate-600">
+                        <button
+                          onClick={() => setViewingAttachment({ url: task.attachmentUrl!, name: task.attachmentName ?? 'Attachment' })}
+                          className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 transition-colors"
+                        >
                           <Paperclip className="w-2.5 h-2.5" />
-                        </span>
+                          View doc
+                        </button>
                       )}
                     </div>
                   </div>
@@ -430,6 +434,7 @@ export default function Tasks() {
                             <Download className="w-3 h-3" /> Download
                           </a>
                         </div>
+
                       </div>
                     )}
                   </div>
