@@ -90,7 +90,7 @@ export default function RevenueBreakdownModal({ isOpen, onClose, transactions }:
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-4 gap-3 px-5 pt-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-5 pt-4">
           <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/30 rounded-xl">
             <p className="text-sm text-blue-600 dark:text-blue-400 font-semibold">Total Invoiced</p>
             <p className="text-lg font-bold text-blue-700 dark:text-blue-300">{formatCurrency(totalInvoiced)}</p>
@@ -164,6 +164,7 @@ function InvoiceTable({ invoices, isOverdue }: { invoices: Transaction[]; isOver
   };
 
   return (
+    <div className="overflow-x-auto">
     <table className="w-full text-sm">
       <thead className="text-sm text-slate-400">
         <tr>
@@ -191,5 +192,6 @@ function InvoiceTable({ invoices, isOverdue }: { invoices: Transaction[]; isOver
         ))}
       </tbody>
     </table>
+    </div>
   );
 }

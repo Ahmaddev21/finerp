@@ -558,7 +558,7 @@ export default function Contracting() {
       {/* ═══ CONTRACTS TAB ═══ */}
       {activeTab === 'contracts' && (
         <>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <KPI label="Active" value={contracts.filter(c => c.status === 'Active').length} color="kpi-emerald" />
             <KPI label="Pending Signatures" value={contracts.filter(c => c.status === 'Pending Signature').length} color="kpi-blue" />
             <KPI label="Expiring Soon" value={contracts.filter(c => c.status === 'Expiring Soon').length} color="kpi-rose" />
@@ -601,7 +601,7 @@ export default function Contracting() {
       {/* ═══ PROJECTS TAB ═══ */}
       {activeTab === 'projects' && (
         <>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <KPI label="Active" value={projects.filter(p => p.status === 'Active').length} color="kpi-emerald" />
             <KPI label="Planning" value={projects.filter(p => p.status === 'Planning').length} color="kpi-blue" />
             <KPI label="Completed" value={projects.filter(p => p.status === 'Completed').length} color="" />
@@ -646,7 +646,7 @@ export default function Contracting() {
       {/* ═══ SUBCONTRACTORS TAB ═══ */}
       {activeTab === 'subcontractors' && (
         <>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <KPI label="Active" value={subcontractors.filter(s => s.status === 'active').length} color="kpi-emerald" />
             <KPI label="Inactive" value={subcontractors.filter(s => s.status === 'inactive').length} color="" />
             <KPI label="Total" value={subcontractors.length} color="kpi-blue" />
@@ -689,7 +689,7 @@ export default function Contracting() {
       {/* ═══ QUOTATIONS TAB ═══ */}
       {activeTab === 'quotations' && (
         <>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <KPI label="Draft" value={quotations.filter(q => q.status === 'draft').length} color="" />
             <KPI label="Pending" value={quotations.filter(q => q.status === 'pending').length} color="kpi-blue" />
             <KPI label="Approved" value={quotations.filter(q => q.status === 'approved').length} color="kpi-emerald" />
@@ -740,7 +740,7 @@ export default function Contracting() {
       {/* ═══ INVOICES OUT TAB ═══ */}
       {activeTab === 'invoices-out' && (
         <>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <KPI label="Draft" value={invoicesOut.filter(i => i.status === 'draft').length} color="" />
             <KPI label="Pending" value={invoicesOut.filter(i => i.status === 'pending').length} color="kpi-blue" />
             <KPI label="Approved" value={formatCurrency(invoicesOut.filter(i => i.status === 'approved').reduce((s, i) => s + i.amount, 0))} color="kpi-emerald" sub="Revenue pending collection" />
@@ -790,7 +790,7 @@ export default function Contracting() {
       {/* ═══ INVOICES IN TAB ═══ */}
       {activeTab === 'invoices-in' && (
         <>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <KPI label="Pending" value={invoicesIn.filter(i => i.status === 'pending').length} color="kpi-blue" />
             <KPI label="Approved" value={formatCurrency(invoicesIn.filter(i => i.status === 'approved').reduce((s, i) => s + i.amount, 0))} color="kpi-rose" sub="Cost to settle" />
             <KPI label="Paid" value={formatCurrency(invoicesIn.filter(i => i.status === 'paid').reduce((s, i) => s + i.amount, 0))} color="" sub="Settled" />
@@ -840,7 +840,7 @@ export default function Contracting() {
       {/* ═══ PAYMENTS TAB ═══ */}
       {activeTab === 'payments' && (
         <>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <KPI label="Received" value={formatCurrency(payments.filter(p => p.direction === 'in' && p.status === 'completed').reduce((s, p) => s + p.amount, 0))} color="kpi-emerald" sub="From clients" />
             <KPI label="Sent" value={formatCurrency(payments.filter(p => p.direction === 'out' && p.status === 'completed').reduce((s, p) => s + p.amount, 0))} color="kpi-rose" sub="To subcontractors" />
             <KPI label="Pending" value={payments.filter(p => p.status === 'pending').length} color="kpi-blue" />

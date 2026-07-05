@@ -297,7 +297,7 @@ export default function Consultation() {
       {/* ═══ ENGAGEMENTS TAB ═══ */}
       {activeTab === 'engagements' && (
         <>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <KPI label="Active Engagements" value={activeCount} color="kpi-violet" />
             <KPI label="Hours Billed" value={`${totalHours}h`} color="kpi-blue" />
             <KPI label="Billed Revenue" value={formatCurrency(totalRevenue)} color="kpi-emerald" />
@@ -349,7 +349,7 @@ export default function Consultation() {
       {/* ═══ PARTNERS TAB ═══ */}
       {activeTab === 'partners' && (
         <>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <KPI label="Active Partners" value={partners.filter(p => p.status === 'active').length} color="kpi-emerald" />
             <KPI label="Countries" value={new Set(partners.map(p => p.country).filter(Boolean)).size} color="kpi-blue" />
             <KPI label="Total" value={partners.length} color="" />
@@ -396,7 +396,7 @@ export default function Consultation() {
       {/* ═══ CLIENTS TAB ═══ */}
       {activeTab === 'clients' && (
         <>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <KPI label="Active Clients" value={clients.filter(c => c.status === 'active').length} color="kpi-emerald" />
             <KPI label="Industries" value={new Set(clients.map(c => c.industry).filter(Boolean)).size} color="kpi-violet" />
             <KPI label="Total" value={clients.length} color="" />
@@ -439,7 +439,7 @@ export default function Consultation() {
       {/* ═══ INVOICES IN (from partners) TAB ═══ */}
       {activeTab === 'invoices-in' && (
         <>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <KPI label="Pending" value={invoicesIn.filter(i => i.status === 'pending').length} color="kpi-blue" />
             <KPI label="Approved Cost" value={formatCurrency(invoicesIn.filter(i => i.status === 'approved').reduce((s, i) => s + i.convertedAmount, 0))} color="kpi-rose" sub="In QR" />
             <KPI label="Paid" value={formatCurrency(invoicesIn.filter(i => i.status === 'paid').reduce((s, i) => s + i.convertedAmount, 0))} color="" sub="Settled" />
@@ -494,7 +494,7 @@ export default function Consultation() {
       {/* ═══ INVOICES OUT (to clients) TAB ═══ */}
       {activeTab === 'invoices-out' && (
         <>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <KPI label="Draft" value={invoicesOut.filter(i => i.status === 'draft').length} color="" />
             <KPI label="Pending" value={invoicesOut.filter(i => i.status === 'pending').length} color="kpi-blue" />
             <KPI label="Approved" value={formatCurrency(invoicesOut.filter(i => i.status === 'approved').reduce((s, i) => s + i.amount, 0))} color="kpi-emerald" sub="Revenue pending" />
@@ -544,7 +544,7 @@ export default function Consultation() {
       {/* ═══ PAYMENTS TAB ═══ */}
       {activeTab === 'payments' && (
         <>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <KPI label="Collected" value={formatCurrency(payments.filter(p => p.status === 'completed').reduce((s, p) => s + p.amount, 0))} color="kpi-emerald" sub="From clients" />
             <KPI label="Pending" value={payments.filter(p => p.status === 'pending').length} color="kpi-blue" />
             <KPI label="Total Payments" value={payments.length} color="" />
@@ -689,7 +689,7 @@ export default function Consultation() {
             {/* Multi-currency input */}
             <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20 p-4 space-y-3">
               <p className="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Currency Conversion</p>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div><label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Currency</label>
                   <select value={invInForm.currency} onChange={e => setInvInForm({ ...invInForm, currency: e.target.value as SupportedCurrency })} className={inputCls}>
                     <option value="EUR">EUR (€)</option>

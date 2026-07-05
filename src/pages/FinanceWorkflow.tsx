@@ -592,7 +592,7 @@ function CompleteModal({ wf, onClose, onComplete }: CompleteModalProps) {
           </div>
 
           {/* Amount + Date row */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">
                 Amount (QR) *
@@ -643,7 +643,7 @@ function CompleteModal({ wf, onClose, onComplete }: CompleteModalProps) {
 
           {/* Invoice-specific fields */}
           {showInvoiceFields && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">Client</label>
                 <input

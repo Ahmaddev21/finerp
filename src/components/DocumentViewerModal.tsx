@@ -362,7 +362,7 @@ export default function DocumentViewerModal({ isOpen, onClose, transaction }: Pr
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-12 mb-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-12 mb-8 sm:mb-12">
                   <div className="space-y-4">
                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2 mb-4">Details</h4>
                     {tx.invoice_number && (

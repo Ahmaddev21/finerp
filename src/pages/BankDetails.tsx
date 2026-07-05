@@ -307,7 +307,7 @@ function DetailPanel({ rec, showSensitive, onToggleReveal, onClose, onEdit, onDe
 
         <div className="p-6 space-y-5">
           {/* Basic info */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Account Holder</span>
               <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-0.5">
