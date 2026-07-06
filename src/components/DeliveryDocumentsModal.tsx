@@ -126,7 +126,7 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
         className="min-h-full flex items-center justify-center p-4"
         onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       >
-      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-lg w-full border border-slate-100 dark:border-slate-800 max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-100 dark:border-slate-800 max-h-[90vh] flex flex-col">
 
         {/* Header */}
         <div className="flex justify-between items-start p-6 pb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
