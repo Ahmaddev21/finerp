@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import {
   FileText, AlertTriangle, CheckCircle, Clock, Plus, X, Loader2,
   Briefcase, Receipt, CreditCard, Send, ShieldCheck, Ban, Users2,
@@ -298,16 +299,19 @@ function KPI({ label, value, sub, color }: { label: string; value: string | numb
 
 /* ── Modal Shell ───────────────────────────────── */
 function Modal({ title, onClose, children, accent = 'indigo' }: { title: string; onClose: () => void; children: React.ReactNode; accent?: string }) {
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto animate-fade-in">
+      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-slate-100 dark:border-slate-800">
         <div className="flex justify-between items-center mb-5">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h3>
           <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"><X className="w-5 h-5" /></button>
         </div>
         {children}
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 

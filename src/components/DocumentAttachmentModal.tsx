@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { X, Upload, FileText, Trash2, Eye, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { uploadAttachment, getSignedAttachmentUrl } from '../services/auth';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
@@ -101,8 +102,9 @@ export default function DocumentAttachmentModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm overflow-y-auto animate-fade-in">
+      <div className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
         <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
           <h3 className="font-bold text-lg text-slate-800 dark:text-white flex items-center gap-2">
@@ -194,6 +196,8 @@ export default function DocumentAttachmentModal({
           <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileSelect} />
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }

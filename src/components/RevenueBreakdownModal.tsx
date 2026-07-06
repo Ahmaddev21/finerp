@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import { X, Search, TrendingUp, AlertTriangle, DollarSign, Filter } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
 import type { Transaction } from '../hooks/useTransactions';
@@ -71,9 +72,11 @@ export default function RevenueBreakdownModal({ isOpen, onClose, transactions }:
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fade-in" 
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 z-[9999] bg-slate-950/60 backdrop-blur-sm overflow-y-auto animate-fade-in"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="min-h-screen flex items-center justify-center p-4"
+        onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="bg-white dark:bg-gray-900 w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800"
         onClick={e => e.stopPropagation()}>
         {/* Header */}
@@ -150,7 +153,9 @@ export default function RevenueBreakdownModal({ isOpen, onClose, transactions }:
           <p className="text-sm font-bold text-slate-900 dark:text-white">Grand Total: {formatCurrency(totalInvoiced)}</p>
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 

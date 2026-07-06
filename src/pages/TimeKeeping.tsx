@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import {
   Clock, Plus, X, Trash2, Edit2, Loader2, Users,
   CheckCircle2, XCircle, AlertCircle, Coffee, CalendarDays,
@@ -113,10 +114,12 @@ function RecordModal({ mode, form, members, existingKeys, onChange, onSave, onCl
     leaveReason: (s === 'present' || s === 'late') ? '' : form.leaveReason,
   });
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto animate-fade-in"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+      <div className="min-h-screen flex items-center justify-center p-4"
+        onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full border border-slate-100 dark:border-slate-800">
 
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
           <div>
@@ -243,7 +246,9 @@ function RecordModal({ mode, form, members, existingKeys, onChange, onSave, onCl
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 

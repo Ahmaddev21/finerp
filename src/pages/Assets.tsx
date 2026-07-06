@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { Plus, X, Car, Loader2, FileText, Download, AlertCircle, Edit2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAssets, Asset, AssetStatus } from '../hooks/useAssets';
@@ -223,9 +224,10 @@ export default function Assets() {
         )}
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full p-6 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+      {isModalOpen && ReactDOM.createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto animate-fade-in">
+          <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full p-6 border border-slate-100 dark:border-slate-800">
             
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -291,12 +293,15 @@ export default function Assets() {
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        </div>,
+        document.body
       )}
       {/* Edit Asset Modal */}
-      {editingAsset && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-xl w-full p-6 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+      {editingAsset && ReactDOM.createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto animate-fade-in">
+          <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-xl w-full p-6 border border-slate-100 dark:border-slate-800">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Edit2 className="w-5 h-5 text-indigo-600" /> Edit Asset
@@ -362,7 +367,9 @@ export default function Assets() {
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        </div>,
+        document.body
       )}
     </React.Fragment>
   );

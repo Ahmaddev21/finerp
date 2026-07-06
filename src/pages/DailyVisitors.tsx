@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import {
   UserPlus, Calendar, Clock, Phone, MessageSquare, Plus,
   Search, Loader2, X, AlertCircle, Trash2,
@@ -233,9 +234,10 @@ export default function DailyVisitors() {
       </div>
 
       {/* Entry Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-lg w-full p-6 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+      {isModalOpen && ReactDOM.createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto animate-fade-in">
+          <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-lg w-full p-6 border border-slate-100 dark:border-slate-800">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
                 <UserPlus className="w-6 h-6 text-indigo-600" /> Record Visit
@@ -332,7 +334,9 @@ export default function DailyVisitors() {
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        </div>,
+        document.body
       )}
     </React.Fragment>
   );

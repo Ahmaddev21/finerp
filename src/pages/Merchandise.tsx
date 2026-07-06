@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import {
   ShoppingBag, Search, X, Shirt, Shield, HardHat, Layers,
   AlertTriangle, User, Package, Truck, RotateCcw, BarChart2
@@ -43,8 +44,9 @@ interface AllocationModalProps {
 }
 
 function AllocationModal({ employee, form, setForm, saving, onClose, onSave }: AllocationModalProps) {
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto animate-fade-in">
+      <div className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl max-w-2xl w-full border border-slate-100 dark:border-slate-800 flex flex-col">
         <div className="flex justify-between items-center px-8 pt-8 pb-6 shrink-0">
           <div>
@@ -102,7 +104,9 @@ function AllocationModal({ employee, form, setForm, saving, onClose, onSave }: A
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -117,9 +121,10 @@ interface ReceiveStockModalProps {
 }
 
 function ReceiveStockModal({ form, setForm, saving, onClose, onSave }: ReceiveStockModalProps) {
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl max-w-lg w-full p-4 sm:p-8 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto animate-fade-in">
+      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl max-w-lg w-full p-4 sm:p-8 border border-slate-100 dark:border-slate-800">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Receive Stock</h3>
@@ -192,7 +197,9 @@ function ReceiveStockModal({ form, setForm, saving, onClose, onSave }: ReceiveSt
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -213,9 +220,10 @@ function ReturnItemsModal({ employee, form, setForm, notes, setNotes, saving, on
   const m = employee.merchandise;
   const hasItems = m && MERCH_ITEMS.some(item => ((m as unknown as Record<string, number>)[item.field] ?? 0) > 0);
 
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl max-w-lg w-full p-4 sm:p-8 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto animate-fade-in">
+      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl max-w-lg w-full p-4 sm:p-8 border border-slate-100 dark:border-slate-800">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Record Return</h3>
@@ -285,7 +293,9 @@ function ReturnItemsModal({ employee, form, setForm, notes, setNotes, saving, on
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 

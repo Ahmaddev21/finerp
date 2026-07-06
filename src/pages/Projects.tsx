@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Plus, Filter, X, ChevronUp, ChevronDown, Loader2,
@@ -186,8 +187,9 @@ function Modal({ title, sub, children, footer }: {
   title: string; sub?: string; children: React.ReactNode;
   footer: { onClose: () => void; buttons: React.ReactNode };
 }) {
-  return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fade-in">
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 bg-black/40 z-50 overflow-y-auto animate-fade-in">
+      <div className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-900 rounded border border-slate-200 dark:border-slate-700 shadow-xl max-w-2xl w-full flex flex-col" style={{ maxHeight: '90vh' }}>
         {/* pinned header */}
         <div className="flex justify-between items-center px-5 pt-5 pb-4 shrink-0 border-b border-slate-100 dark:border-slate-800">
@@ -211,7 +213,9 @@ function Modal({ title, sub, children, footer }: {
           {footer.buttons}
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 

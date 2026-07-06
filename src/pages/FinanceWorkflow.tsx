@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import {
   useFinanceWorkflow,
   type FinanceWorkflow as FW,
@@ -487,11 +488,13 @@ function UploadModal({ onClose, onSubmit }: UploadModalProps) {
     onClose();
   };
 
-  return (
+  return ReactDOM.createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm overflow-y-auto"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
+      <div className="min-h-screen flex items-center justify-center p-4"
+        onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -603,7 +606,9 @@ function UploadModal({ onClose, onSubmit }: UploadModalProps) {
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -661,11 +666,13 @@ function CompleteModal({ wf, onClose, onComplete }: CompleteModalProps) {
     }
   };
 
-  return (
+  return ReactDOM.createPortal(
     <div
-      className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] bg-slate-950/70 backdrop-blur-sm overflow-y-auto"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
+      <div className="min-h-screen flex items-center justify-center p-4"
+        onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         {/* Header */}
         <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between">
@@ -811,7 +818,9 @@ function CompleteModal({ wf, onClose, onComplete }: CompleteModalProps) {
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -847,11 +856,13 @@ function DeleteConfirmModal({ wf, onClose, onConfirm }: DeleteConfirmModalProps)
     // On success the parent unmounts this modal via setSelected(null)
   };
 
-  return (
+  return ReactDOM.createPortal(
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] bg-slate-950/70 backdrop-blur-sm overflow-y-auto"
       onClick={e => e.target === e.currentTarget && !deleting && onClose()}
     >
+      <div className="min-h-screen flex items-center justify-center p-4"
+        onClick={e => e.target === e.currentTarget && !deleting && onClose()}>
       <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-2xl border border-red-200 dark:border-red-900/50 overflow-hidden">
         {/* Header */}
         <div className="p-5 border-b border-red-100 dark:border-red-900/30 flex items-start gap-3">
@@ -973,7 +984,9 @@ function DeleteConfirmModal({ wf, onClose, onConfirm }: DeleteConfirmModalProps)
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -1015,12 +1028,14 @@ function DetailsModal({ wf, onClose, onUpdate, onComplete, onRequestDelete, getS
 
   const isResolved = wf.status === 'completed' || wf.status === 'rejected';
 
-  return (
+  return ReactDOM.createPortal(
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm overflow-y-auto"
         onClick={e => e.target === e.currentTarget && !showComplete && onClose()}
       >
+        <div className="min-h-screen flex items-center justify-center p-4"
+          onClick={e => e.target === e.currentTarget && !showComplete && onClose()}>
         <div className="bg-white dark:bg-gray-900 w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]">
           {/* Header */}
           <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between shrink-0">
@@ -1241,6 +1256,7 @@ function DetailsModal({ wf, onClose, onUpdate, onComplete, onRequestDelete, getS
             </div>
           </div>
         </div>
+        </div>
       </div>
 
       {/* Completion sub-modal — z-60 stacks above z-50 details modal */}
@@ -1251,7 +1267,8 @@ function DetailsModal({ wf, onClose, onUpdate, onComplete, onRequestDelete, getS
           onComplete={onComplete}
         />
       )}
-    </>
+    </>,
+    document.body
   );
 }
 

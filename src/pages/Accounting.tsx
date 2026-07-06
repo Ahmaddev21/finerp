@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import { useAuthStore } from '../store/auth';
 import { Navigate } from 'react-router-dom';
 import { cn, formatCurrency } from '../lib/utils';
@@ -454,8 +455,9 @@ function Modal({ title, onClose, onConfirm, confirmLabel, saving, children }: {
   title: string; onClose: () => void; onConfirm: () => void;
   confirmLabel?: string; saving?: boolean; children: React.ReactNode;
 }) {
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
+      <div className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-lg border border-slate-200 dark:border-slate-800 shadow-2xl max-h-[92vh] flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <h2 className="text-lg font-black text-slate-900 dark:text-white">{title}</h2>
@@ -474,7 +476,9 @@ function Modal({ title, onClose, onConfirm, confirmLabel, saving, children }: {
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -986,8 +990,9 @@ export default function Accounting() {
       )}
 
       {/* ── Delete Confirm ───────────────────────────────────────────────────── */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      {deleteTarget && ReactDOM.createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
+          <div className="min-h-screen flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full border-2 border-rose-500 shadow-2xl">
             <h2 className="text-xl font-black text-rose-600 mb-2">Delete Permanently?</h2>
             <p className="text-sm text-slate-500 mb-6">
@@ -1001,7 +1006,9 @@ export default function Accounting() {
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Attachment Modal ──────────────────────────────────────────────────── */}

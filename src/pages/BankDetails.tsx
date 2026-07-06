@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import {
   Lock, Search, Plus, X, Eye, EyeOff, Trash2, Edit2,
   AlertTriangle, ShieldCheck, CreditCard, Building2,
@@ -64,9 +65,10 @@ interface FormModalProps {
 }
 
 function FormModal({ isEdit, form, setForm, saving, onClose, onSave }: FormModalProps) {
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-2xl w-full p-4 sm:p-8 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto custom-scrollbar">
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto animate-fade-in">
+      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-2xl w-full p-4 sm:p-8 border border-slate-100 dark:border-slate-800">
 
         {/* Header */}
         <div className="flex justify-between items-start mb-4 sm:mb-8">
@@ -256,7 +258,9 @@ function FormModal({ isEdit, form, setForm, saving, onClose, onSave }: FormModal
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -281,8 +285,9 @@ function DetailPanel({ rec, showSensitive, onToggleReveal, onClose, onEdit, onDe
     { label: 'Card Number',    masked: maskCard(rec.card_number),         raw: rec.card_number,    key: 'card' },
   ];
 
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto animate-fade-in">
+      <div className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-lg w-full border border-slate-100 dark:border-slate-800 overflow-hidden">
         {/* Header */}
         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-blue-50 to-slate-50 dark:from-blue-950/20 dark:to-slate-900">
@@ -404,7 +409,9 @@ function DetailPanel({ rec, showSensitive, onToggleReveal, onClose, onEdit, onDe
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -717,8 +724,9 @@ export default function BankDetails() {
       )}
 
       {/* ── Delete Confirm ──────────────────────────────────────────────── */}
-      {confirmDelete && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+      {confirmDelete && ReactDOM.createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto animate-fade-in">
+          <div className="min-h-screen flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm w-full p-6 border border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 bg-rose-100 dark:bg-rose-900/30 rounded-xl">
@@ -750,7 +758,9 @@ export default function BankDetails() {
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

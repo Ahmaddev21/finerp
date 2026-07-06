@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { cn, formatCurrency } from '../lib/utils';
 import { useProjects, calcProjectFinancials } from '../hooks/useProjects';
@@ -379,9 +380,10 @@ export default function ProjectDetails() {
       </div>
 
       {/* ── Edit Modal ── */}
-      {isEditing && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+      {isEditing && ReactDOM.createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto animate-fade-in">
+          <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-100 dark:border-slate-800">
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">Edit Project</h3>
               <button onClick={handleCancel} className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
@@ -447,7 +449,9 @@ export default function ProjectDetails() {
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );
