@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import {
   AlertCircle, CheckCircle2, Circle, Clock, Lock, Loader2, Plus, X, Trash2,
   ListTodo, Zap, CheckSquare, XCircle, CalendarDays, ChevronRight,
@@ -473,7 +474,7 @@ export default function Tasks() {
       )}
 
       {/* ── New Task modal ── */}
-      {isModalOpen && (
+      {isModalOpen && ReactDOM.createPortal(
         <div
           className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm animate-fade-in"
           onClick={e => { if (e.target === e.currentTarget) closeModal(); }}
@@ -689,7 +690,8 @@ export default function Tasks() {
             </div>
           </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

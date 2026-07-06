@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { X, Upload, FileText, Trash2, ExternalLink, AlertTriangle, Loader2, ImageIcon, File, Download, Share2, IdCard, Car, Shield, BookUser, Briefcase, FolderOpen } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useDeliveryDocuments, DeliveryDocument, DocFolder, formatBytes } from '../hooks/useDeliveryDocuments';
@@ -117,7 +118,7 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
   const activeMeta = FOLDERS.find(f => f.key === activeFolder)!;
   const displayError = localError || error;
 
-  return (
+  return ReactDOM.createPortal(
     <div
       className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto animate-fade-in"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
@@ -302,6 +303,7 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
         </div>
       </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

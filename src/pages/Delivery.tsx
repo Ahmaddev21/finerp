@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { Truck, Search, Plus, X, User, Shield, CreditCard, Smartphone, Mail, Key, MoreVertical, Filter, Bike, Car, Download, Eye, EyeOff, AlertTriangle, Hash, FolderOpen, Trash2, Pencil, ChevronDown } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useDeliveries, DeliveryStatus, DeliveryCategory } from '../hooks/useDeliveries';
@@ -552,7 +553,7 @@ export default function Delivery() {
       )}
 
       {/* Add / Edit Modal */}
-      {isOpen && (
+      {isOpen && ReactDOM.createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto animate-fade-in">
           <div className="min-h-screen flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-2xl w-full p-4 sm:p-8 border border-slate-100 dark:border-slate-800">
@@ -708,7 +709,8 @@ export default function Delivery() {
             </div>
           </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
