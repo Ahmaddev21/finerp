@@ -554,7 +554,7 @@ export default function Delivery() {
       {/* Add / Edit Modal */}
       {isOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto animate-fade-in">
-          <div className="min-h-full flex items-center justify-center p-4">
+          <div className="min-h-screen flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-2xl w-full p-4 sm:p-8 border border-slate-100 dark:border-slate-800">
             <div className="flex justify-between items-center mb-4 sm:mb-8">
               <div>

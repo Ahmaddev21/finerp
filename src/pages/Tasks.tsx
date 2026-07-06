@@ -478,7 +478,7 @@ export default function Tasks() {
           className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm animate-fade-in"
           onClick={e => { if (e.target === e.currentTarget) closeModal(); }}
         >
-          <div className="min-h-full flex items-center justify-center p-4">
+          <div className="min-h-screen flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full border border-slate-100 dark:border-slate-800 my-auto">
 
             {/* Modal header */}

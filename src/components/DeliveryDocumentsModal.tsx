@@ -123,7 +123,7 @@ export default function DeliveryDocumentsModal({ record, onClose }: Props) {
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="min-h-full flex items-center justify-center p-4"
+        className="min-h-screen flex items-center justify-center p-4"
         onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       >
       <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-100 dark:border-slate-800 max-h-[90vh] flex flex-col">
