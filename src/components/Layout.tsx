@@ -6,7 +6,8 @@ import { useThemeStore } from '../store/theme';
 import {
   LayoutDashboard, Briefcase, Calculator, Layers,
   CheckSquare, ShieldAlert, LogOut, ChevronDown,
-  Menu, X, Sun, Moon, FileText, Truck, Users, Settings, Loader2, Car, UserPlus, Package, Clock, FolderOpen, Lock, PanelLeftClose, PanelLeftOpen
+  Menu, X, Sun, Moon, FileText, Truck, Users, Settings, Loader2, Car, UserPlus, Package, Clock, FolderOpen, Lock, PanelLeftClose, PanelLeftOpen,
+  Building2, BookOpen, Globe,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { canAccess } from '../lib/permissions';
@@ -80,18 +81,28 @@ const navItems = [
   { name: 'Time Keeping',     path: '/time-keeping',     icon: Clock,      module: 'time-keeping',     roles: ['owner', 'admin'] },
   { name: 'Finance Workflow', path: '/finance-workflow', icon: FolderOpen, module: 'finance-workflow', roles: ['owner', 'admin'] },
   { name: 'Daily Visitors',   path: '/visitors',         icon: UserPlus,   module: 'visitors',         roles: ['owner', 'admin', 'receptionist'] },
-  { name: 'Bank Details',     path: '/bank-details',     icon: Lock,       module: 'bank-details',     roles: ['owner', 'admin'] },
+  {
+    name: 'Company Details',
+    icon: Building2,
+    roles: ['owner', 'admin'],
+    subItems: [
+      { name: 'Shareup',               path: '/company/shareup',      icon: Globe,     roles: ['owner', 'admin'] },
+      { name: 'RAA Trading',           path: '/company/trading',      icon: Briefcase, roles: ['owner', 'admin'] },
+      { name: 'RAA Consultancy',       path: '/company/consultancy',  icon: BookOpen,  roles: ['owner', 'admin'] },
+      { name: 'Bank Details',          path: '/bank-details',         icon: Lock,      module: 'bank-details', roles: ['owner', 'admin'] },
+    ],
+  },
   { name: 'Audit Logs',       path: '/audit-logs',       icon: ShieldAlert,module: 'audit-logs',       roles: ['owner', 'admin'] },
   { name: 'Permissions',      path: '/permissions',      icon: ShieldAlert,roles: ['owner', 'admin'] },
   { name: 'Workspace Settings', path: '/settings',       icon: Settings,   roles: ['owner'] },
 ];
 
 /* ── Sidebar Nav Item ───────────────────────────────── */
-function NavItem({ item, user, erpOpen, onErpToggle, onClose, badge }: {
+function NavItem({ item, user, openGroups, onGroupToggle, onClose, badge }: {
   item: typeof navItems[0];
   user: { role: string | null };
-  erpOpen: boolean;
-  onErpToggle: () => void;
+  openGroups: Record<string, boolean>;
+  onGroupToggle: (name: string) => void;
   onClose: () => void;
   badge?: number;
 }) {
@@ -113,7 +124,7 @@ function NavItem({ item, user, erpOpen, onErpToggle, onClose, badge }: {
       <div>
         {/* Group header */}
         <button
-          onClick={onErpToggle}
+          onClick={() => onGroupToggle(item.name)}
           className={cn(
             'w-full flex items-center justify-between px-3 py-2 text-sm font-medium transition-colors',
             isSubActive
@@ -125,10 +136,10 @@ function NavItem({ item, user, erpOpen, onErpToggle, onClose, badge }: {
             <item.icon className="w-4 h-4 shrink-0" />
             <span>{item.name}</span>
           </div>
-          <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-150 text-slate-400', erpOpen && 'rotate-180')} />
+          <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-150 text-slate-400', openGroups[item.name] && 'rotate-180')} />
         </button>
 
-        {erpOpen && (
+        {openGroups[item.name] && (
           <div className="ml-4 pl-2.5 border-l-2 border-slate-200 dark:border-slate-700 mt-0.5 space-y-px">
             {allowed.map(sub => {
               const active = location.pathname === sub.path;
@@ -184,7 +195,7 @@ function NavItem({ item, user, erpOpen, onErpToggle, onClose, badge }: {
 /* ── Sidebar ─────────────────────────────────────────── */
 function SidebarContent({ onClose, accountingBadge }: { onClose: () => void; accountingBadge?: number }) {
   const { user, profile, loginAs, logout, setAuth, company } = useAuthStore();
-  const [erpOpen, setErpOpen] = useState(true);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ 'ERP': true, 'Company Details': false });
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileName, setProfileName] = useState(user?.name || '');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -303,8 +314,8 @@ function SidebarContent({ onClose, accountingBadge }: { onClose: () => void; acc
               <NavItem
                 item={item as any}
                 user={user}
-                erpOpen={erpOpen}
-                onErpToggle={() => setErpOpen(o => !o)}
+                openGroups={openGroups}
+                onGroupToggle={name => setOpenGroups(prev => ({ ...prev, [name]: !prev[name] }))}
                 onClose={onClose}
                 badge={item.name === 'Accounting' ? accountingBadge : undefined}
               />
