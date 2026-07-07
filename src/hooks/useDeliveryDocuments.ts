@@ -47,7 +47,11 @@ export function useDeliveryDocuments(deliveryId: string | null) {
   const [error, setError] = useState<string | null>(null);
 
   const fetch = useCallback(async () => {
-    if (!isSupabaseConfigured || !deliveryId || !company?.id) return;
+    console.log('[docs:fetch] deliveryId=', deliveryId, 'company.id=', company?.id, 'configured=', isSupabaseConfigured);
+    if (!isSupabaseConfigured || !deliveryId || !company?.id) {
+      console.warn('[docs:fetch] EARLY RETURN — missing guard value');
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase
       .from('delivery_documents')
@@ -56,6 +60,7 @@ export function useDeliveryDocuments(deliveryId: string | null) {
       .eq('company_id', company.id)
       .order('created_at', { ascending: false });
     setLoading(false);
+    console.log('[docs:fetch] rows=', data?.length ?? 'null', 'error=', error?.message ?? 'none', 'raw data=', data);
     if (error) { setError(error.message); return; }
     setDocuments(data ? data.map(mapRow) : []);
   }, [deliveryId, company?.id]);
