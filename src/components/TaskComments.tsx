@@ -16,16 +16,18 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function Avatar({ name }: { name: string }) {
-  const colors = [
-    'bg-violet-500', 'bg-blue-500', 'bg-emerald-500',
-    'bg-rose-500',   'bg-amber-500', 'bg-indigo-500',
-  ];
-  const idx = name.charCodeAt(0) % colors.length;
+const AVATAR_COLORS = [
+  'bg-violet-500', 'bg-blue-500', 'bg-emerald-500',
+  'bg-rose-500',   'bg-amber-500', 'bg-indigo-500', 'bg-cyan-500',
+];
+
+function Avatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' }) {
+  const color = AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
   return (
     <div className={cn(
-      'w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0',
-      colors[idx]
+      'rounded-full flex items-center justify-center text-white font-bold shrink-0',
+      color,
+      size === 'sm' ? 'w-8 h-8 text-sm' : 'w-9 h-9 text-sm'
     )}>
       {name.charAt(0).toUpperCase()}
     </div>
@@ -41,14 +43,12 @@ interface CommentItemProps {
 }
 
 function CommentItem({ comment, isOwn, isOwner, onEdit, onDelete }: CommentItemProps) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(comment.body);
-  const [saving, setSaving] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [editing, setEditing]   = useState(false);
+  const [draft,   setDraft]     = useState(comment.body);
+  const [saving,  setSaving]    = useState(false);
+  const textareaRef             = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    if (editing) textareaRef.current?.focus();
-  }, [editing]);
+  useEffect(() => { if (editing) textareaRef.current?.focus(); }, [editing]);
 
   const handleSave = async () => {
     if (!draft.trim() || draft.trim() === comment.body) { setEditing(false); return; }
@@ -67,79 +67,85 @@ function CommentItem({ comment, isOwn, isOwner, onEdit, onDelete }: CommentItemP
   const canDelete = isOwn || isOwner;
 
   return (
-    <div className="flex gap-2.5 group">
-      <Avatar name={comment.authorName} />
+    <div className="flex gap-3 group">
+      <Avatar name={comment.authorName} size="sm" />
+
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-            {comment.authorName}
-          </span>
-          <span className="text-[10px] text-slate-400 dark:text-slate-500">
-            {relativeTime(comment.createdAt)}
-            {comment.editedAt && ' · edited'}
-          </span>
-        </div>
-
-        {editing ? (
-          <div className="mt-1">
-            <textarea
-              ref={textareaRef}
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-              onKeyDown={handleKeyDown}
-              rows={2}
-              className="w-full text-xs px-3 py-2 bg-white dark:bg-slate-800 border border-indigo-400 dark:border-indigo-500 rounded-xl text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
-            />
-            <div className="flex items-center gap-2 mt-1.5">
-              <button
-                onClick={handleSave}
-                disabled={saving || !draft.trim()}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors disabled:opacity-50"
-              >
-                {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                Save
-              </button>
-              <button
-                onClick={() => { setEditing(false); setDraft(comment.body); }}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                <X className="w-3 h-3" /> Cancel
-              </button>
-              <span className="text-[10px] text-slate-400">⌘ Enter to save</span>
+        {/* Bubble */}
+        <div className="bg-slate-50 dark:bg-slate-800/70 rounded-2xl rounded-tl-sm px-4 py-3">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                {comment.authorName}
+              </span>
+              <span className="text-xs text-slate-400 dark:text-slate-500">
+                {relativeTime(comment.createdAt)}
+                {comment.editedAt && ' · edited'}
+              </span>
             </div>
-          </div>
-        ) : (
-          <p className="mt-0.5 text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
-            {comment.body}
-          </p>
-        )}
-      </div>
 
-      {/* Action buttons — visible on hover */}
-      {!editing && (canEdit || canDelete) && (
-        <div className="flex items-start gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 pt-0.5">
-          {canEdit && (
-            <button
-              onClick={() => setEditing(true)}
-              title="Edit"
-              className="p-1 rounded-lg text-slate-300 dark:text-slate-600 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-all"
-            >
-              <Pencil className="w-3 h-3" />
-            </button>
-          )}
-          {canDelete && (
-            <button
-              onClick={() => {
-                if (window.confirm('Delete this comment?')) onDelete(comment.id);
-              }}
-              title="Delete"
-              className="p-1 rounded-lg text-slate-300 dark:text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all"
-            >
-              <Trash2 className="w-3 h-3" />
-            </button>
+            {/* Action buttons — visible at 40% opacity, full on hover */}
+            {!editing && (canEdit || canDelete) && (
+              <div className="flex items-center gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
+                {canEdit && (
+                  <button
+                    onClick={() => setEditing(true)}
+                    title="Edit"
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-400 transition-all"
+                  >
+                    <Pencil className="w-3.5 h-3.5" /> Edit
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    onClick={() => { if (window.confirm('Delete this comment?')) onDelete(comment.id); }}
+                    title="Delete"
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition-all"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Body or edit textarea */}
+          {editing ? (
+            <div className="space-y-2">
+              <textarea
+                ref={textareaRef}
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                onKeyDown={handleKeyDown}
+                rows={3}
+                className="w-full text-sm px-3 py-2.5 bg-white dark:bg-slate-900 border-2 border-indigo-400 dark:border-indigo-500 rounded-xl text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all leading-relaxed"
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSave}
+                  disabled={saving || !draft.trim()}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors disabled:opacity-50 shadow-sm"
+                >
+                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  Save
+                </button>
+                <button
+                  onClick={() => { setEditing(false); setDraft(comment.body); }}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" /> Cancel
+                </button>
+                <span className="text-xs text-slate-400">⌘ Enter to save</span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
+              {comment.body}
+            </p>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -155,10 +161,8 @@ export default function TaskComments({ taskId, companyId }: Props) {
     useTaskComments(taskId, companyId);
 
   const [draft, setDraft] = useState('');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const bottomRef   = useRef<HTMLDivElement>(null);
+  const bottomRef         = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom when new comments arrive
   useEffect(() => {
     if (comments.length > 0) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -178,32 +182,41 @@ export default function TaskComments({ taskId, companyId }: Props) {
   const isOwner = user?.role === 'owner';
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4 pt-1">
+
       {/* Section header */}
-      <div className="flex items-center gap-2">
-        <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
-        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-          Comments {comments.length > 0 && `(${comments.length})`}
-        </p>
+      <div className="flex items-center gap-2.5">
+        <MessageSquare className="w-4 h-4 text-indigo-500" />
+        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+          Comments
+        </span>
+        {comments.length > 0 && (
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400">
+            {comments.length}
+          </span>
+        )}
       </div>
 
       {/* Error */}
       {error && (
-        <p className="text-[11px] text-rose-500 font-medium">{error}</p>
+        <div className="px-4 py-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800">
+          <p className="text-sm text-rose-600 dark:text-rose-400 font-medium">{error}</p>
+        </div>
       )}
 
       {/* Thread */}
       {loading ? (
-        <div className="flex items-center gap-2 py-2 text-slate-400">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span className="text-xs">Loading comments…</span>
+        <div className="flex items-center gap-2.5 py-3 text-slate-400">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-sm">Loading comments…</span>
         </div>
       ) : comments.length === 0 ? (
-        <p className="text-xs text-slate-400 dark:text-slate-500 italic py-1">
-          No comments yet. Be the first to comment.
-        </p>
+        <div className="py-4 px-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-700 text-center">
+          <MessageSquare className="w-6 h-6 text-slate-300 dark:text-slate-600 mx-auto mb-1.5" />
+          <p className="text-sm text-slate-400 dark:text-slate-500">No comments yet — start the conversation.</p>
+        </div>
       ) : (
-        <div className="space-y-3 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+        <div className="space-y-3 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
           {comments.map(c => (
             <CommentItem
               key={c.id}
@@ -219,36 +232,35 @@ export default function TaskComments({ taskId, companyId }: Props) {
       )}
 
       {/* Compose */}
-      <div className="flex gap-2 items-end pt-1">
-        {user && <Avatar name={user.name || user.email || '?'} />}
+      <div className="flex gap-3 items-end">
+        {user && <Avatar name={user.name || user.email || '?'} size="sm" />}
         <div className="flex-1 relative">
           <textarea
-            ref={textareaRef}
             value={draft}
             onChange={e => setDraft(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Write a comment…"
-            rows={1}
-            className={cn(
-              'w-full text-xs px-3 py-2 pr-10 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700',
-              'rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400',
-              'focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400',
-              'resize-none transition-all leading-relaxed'
-            )}
+            rows={2}
+            className="w-full text-sm px-4 py-3 pr-12 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none transition-all leading-relaxed shadow-sm"
           />
           <button
             onClick={handlePost}
             disabled={!draft.trim() || posting}
-            className="absolute right-2 bottom-2 p-1 rounded-lg text-slate-300 hover:text-indigo-600 disabled:opacity-40 transition-colors"
             title="Post (⌘ Enter)"
+            className={cn(
+              'absolute right-3 bottom-3 p-2 rounded-xl transition-all',
+              draft.trim() && !posting
+                ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-200 dark:shadow-none'
+                : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+            )}
           >
             {posting
-              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              : <Send className="w-3.5 h-3.5" />}
+              ? <Loader2 className="w-4 h-4 animate-spin" />
+              : <Send className="w-4 h-4" />}
           </button>
         </div>
       </div>
-      <p className="text-[10px] text-slate-400 ml-9">⌘ Enter to post</p>
+      <p className="text-xs text-slate-400 ml-12">⌘ Enter to post</p>
     </div>
   );
 }
