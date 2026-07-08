@@ -11,6 +11,7 @@ import { useAuthStore } from '../store/auth';
 import { useTasks, Task, TaskStatus, Priority, AppRole } from '../hooks/useTasks';
 import { roleLabel } from '../lib/roles';
 import { RowMenu, MenuAction } from '../components/RowMenu';
+import TaskComments from '../components/TaskComments';
 
 const ALL_ROLES: AppRole[] = ['owner', 'admin', 'bdm', 'engineer', 'receptionist', 'developer', 'intern'];
 
@@ -50,7 +51,7 @@ function getFileType(name: string): 'image' | 'pdf' | 'other' {
 
 export default function Tasks() {
   const { projects }  = useProjects();
-  const { user }      = useAuthStore();
+  const { user, company } = useAuthStore();
   const hookResult    = useTasks();
   const tasks         = hookResult.tasks   ?? [];
   const members       = hookResult.members ?? [];
@@ -381,8 +382,8 @@ export default function Tasks() {
                       </button>
                     )}
 
-                    {/* Expand toggle for description/notes */}
-                    {(task.description || task.notes) && (
+                    {/* Expand toggle — always visible for owner/admin (comments), otherwise only when content exists */}
+                    {(task.description || task.notes || isOwnerOrAdmin) && (
                       <button
                         onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
                         className="p-1.5 rounded-lg text-slate-300 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -409,8 +410,8 @@ export default function Tasks() {
                 </div>
 
                 {/* Expanded detail panel */}
-                {expandedTaskId === task.id && (task.description || task.notes || task.attachmentUrl) && (
-                  <div className="px-5 pb-4 border-t border-slate-50 dark:border-slate-800/50 pt-3 space-y-3 ml-8">
+                {expandedTaskId === task.id && (
+                  <div className="px-5 pb-5 border-t border-slate-50 dark:border-slate-800/50 pt-3 space-y-4 ml-8">
                     {task.description && (
                       <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Description</p>
@@ -445,7 +446,13 @@ export default function Tasks() {
                             <Download className="w-3 h-3" /> Download
                           </a>
                         </div>
+                      </div>
+                    )}
 
+                    {/* Comment thread — owner/admin only */}
+                    {isOwnerOrAdmin && company?.id && (
+                      <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
+                        <TaskComments taskId={task.id} companyId={company.id} />
                       </div>
                     )}
                   </div>
