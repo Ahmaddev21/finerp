@@ -6,7 +6,7 @@
 
 CREATE TABLE IF NOT EXISTS public.task_comments (
   id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  task_id     uuid        NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
+  task_id     text        NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
   company_id  uuid        NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
   author_id   uuid        REFERENCES auth.users(id) ON DELETE SET NULL,
   author_name text        NOT NULL,
