@@ -688,6 +688,16 @@ function WPSRow({ rec, isOwnerOrAdmin, onCycleStatus, onDelete }: {
   );
 }
 
+// ── Tab definitions ───────────────────────────────────────────────────────────
+
+type Tab = 'documents' | 'employees' | 'wps';
+
+const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
+  { id: 'documents', label: 'Company Documents', icon: <FileText className="w-4 h-4" /> },
+  { id: 'employees', label: 'Employees',          icon: <Users className="w-4 h-4" /> },
+  { id: 'wps',       label: 'WPS Details',        icon: <Banknote className="w-4 h-4" /> },
+];
+
 // ── Main Page ────────────────────────────────────────────────────────────────
 
 export default function CompanyDocuments() {
@@ -695,16 +705,17 @@ export default function CompanyDocuments() {
   const config = ENTITY_CONFIG[entity] ?? { title: entity, subtitle: '', color: 'bg-slate-600' };
   const { user } = useAuthStore();
   const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'admin';
+  const [activeTab, setActiveTab] = useState<Tab>('documents');
 
   // Pull employee names to power the WPS datalist autocomplete
   const { employees } = useCompanyEmployees(entity);
   const employeeNames = employees.map(e => e.name);
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 space-y-0">
 
       {/* Page header */}
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 mb-6">
         <div className={cn('w-10 h-10 rounded-2xl flex items-center justify-center shrink-0', config.color)}>
           <Building2 className="w-5 h-5 text-white" />
         </div>
@@ -714,14 +725,37 @@ export default function CompanyDocuments() {
         </div>
       </div>
 
-      {/* Section 1: Documents */}
-      <DocumentsSection entity={entity} isOwnerOrAdmin={isOwnerOrAdmin} />
+      {/* Horizontal tab bar */}
+      <div className="border-b border-slate-200 dark:border-slate-700 mb-6">
+        <nav className="flex gap-1 overflow-x-auto">
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                'flex items-center gap-2 px-4 py-2.5 text-sm font-semibold whitespace-nowrap border-b-2 transition-all',
+                activeTab === tab.id
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+              )}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
 
-      {/* Section 2: Employees */}
-      <EmployeesSection entity={entity} isOwnerOrAdmin={isOwnerOrAdmin} />
-
-      {/* Section 3: WPS */}
-      <WPSSection entity={entity} isOwnerOrAdmin={isOwnerOrAdmin} employeeNames={employeeNames} />
+      {/* Tab panels */}
+      {activeTab === 'documents' && (
+        <DocumentsSection entity={entity} isOwnerOrAdmin={isOwnerOrAdmin} />
+      )}
+      {activeTab === 'employees' && (
+        <EmployeesSection entity={entity} isOwnerOrAdmin={isOwnerOrAdmin} />
+      )}
+      {activeTab === 'wps' && (
+        <WPSSection entity={entity} isOwnerOrAdmin={isOwnerOrAdmin} employeeNames={employeeNames} />
+      )}
 
     </div>
   );
