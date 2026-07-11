@@ -3,10 +3,11 @@ import { isAdminRole } from '../lib/roles';
 // FinERP Notification Engine — Client-side alerts
 import { useMemo } from 'react';
 import type { Transaction } from './useTransactions';
+import type { EmployeeForNotif } from './useAllCompanyEmployees';
 
 export interface Notification {
   id: string;
-  type: 'overdue_invoice' | 'pending_approval' | 'task_assigned' | 'contract_expiring' | 'change_request';
+  type: 'overdue_invoice' | 'pending_approval' | 'task_assigned' | 'contract_expiring' | 'change_request' | 'qid_expiring';
   title: string;
   message: string;
   severity: 'low' | 'medium' | 'high';
@@ -38,7 +39,8 @@ export function useNotifications(
   contracts: any[],
   userRole: string,
   userName?: string,
-  pendingChangeRequests = 0
+  pendingChangeRequests = 0,
+  employees: EmployeeForNotif[] = []
 ) {
   const notifications = useMemo(() => {
     const items: Notification[] = [];
@@ -143,10 +145,54 @@ export function useNotifications(
         }
       });
 
+    // 5. QID / Passport Expiry Alerts (owner and admin only, across all company entities)
+    if ((userRole === 'owner' || userRole === 'admin') && employees.length > 0) {
+      employees.forEach(emp => {
+        if (!emp.idExpiryDate) return;
+        const expiry = new Date(emp.idExpiryDate);
+        expiry.setHours(23, 59, 59, 999); // count until end of expiry day
+        const daysLeft = Math.floor((expiry.getTime() - today.getTime()) / 86400000);
+        if (daysLeft < 0) return; // already expired — skip (don't spam after the fact)
+
+        const entityLabel: Record<string, string> = {
+          shareup: 'Shareup',
+          trading: 'RAA Trading',
+          consultancy: 'RAA Consultancy',
+        };
+        const company = entityLabel[emp.entity] ?? emp.entity;
+
+        if (daysLeft <= 7) {
+          const id = `qid-7d-${emp.id}`;
+          if (!dismissed.has(id)) {
+            items.push({
+              id,
+              type: 'qid_expiring',
+              title: 'QID Expiring in 7 Days',
+              message: `${emp.name} (${company}) — QID expires ${daysLeft === 0 ? 'today' : `in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`}`,
+              severity: 'high',
+              link: `/company/${emp.entity}`,
+            });
+          }
+        } else if (daysLeft <= 30) {
+          const id = `qid-30d-${emp.id}`;
+          if (!dismissed.has(id)) {
+            items.push({
+              id,
+              type: 'qid_expiring',
+              title: 'QID Expiring in 30 Days',
+              message: `${emp.name} (${company}) — QID expires in ${daysLeft} days`,
+              severity: 'medium',
+              link: `/company/${emp.entity}`,
+            });
+          }
+        }
+      });
+    }
+
     // Sort by severity (high first)
     const severityOrder = { high: 0, medium: 1, low: 2 };
     return items.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
-  }, [transactions, tasks, contracts, userRole, userName, pendingChangeRequests]);
+  }, [transactions, tasks, contracts, userRole, userName, pendingChangeRequests, employees]);
 
   return notifications;
 }

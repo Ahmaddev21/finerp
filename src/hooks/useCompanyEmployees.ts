@@ -10,6 +10,7 @@ export interface CompanyEmployee {
   position: string | null;
   nationality: string | null;
   idNumber: string | null;
+  idExpiryDate: string | null;
   createdAt: string;
 }
 
@@ -22,6 +23,7 @@ function mapRow(row: any): CompanyEmployee {
     position: row.position ?? null,
     nationality: row.nationality ?? null,
     idNumber: row.id_number ?? null,
+    idExpiryDate: row.id_expiry_date ?? null,
     createdAt: row.created_at,
   };
 }
@@ -31,6 +33,7 @@ export interface NewEmployee {
   position?: string;
   nationality?: string;
   idNumber?: string;
+  idExpiryDate?: string;
 }
 
 export function useCompanyEmployees(entity: string) {
@@ -67,6 +70,7 @@ export function useCompanyEmployees(entity: string) {
         position: emp.position?.trim() || null,
         nationality: emp.nationality?.trim() || null,
         id_number: emp.idNumber?.trim() || null,
+        id_expiry_date: emp.idExpiryDate || null,
       });
     setSaving(false);
     if (error) { setError(error.message); return false; }

@@ -260,15 +260,18 @@ function EmployeesSection({ entity, isOwnerOrAdmin }: { entity: string; isOwnerO
   const [position, setPosition]       = useState('');
   const [nationality, setNationality] = useState('');
   const [idNumber, setIdNumber]       = useState('');
+  const [expiryDate, setExpiryDate]   = useState('');
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  const resetForm = () => { setName(''); setPosition(''); setNationality(''); setIdNumber(''); setShowForm(false); };
+  const resetForm = () => {
+    setName(''); setPosition(''); setNationality(''); setIdNumber(''); setExpiryDate(''); setShowForm(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    const ok = await addEmployee({ name, position, nationality, idNumber });
+    const ok = await addEmployee({ name, position, nationality, idNumber, idExpiryDate: expiryDate });
     if (ok) resetForm();
   };
 
@@ -325,6 +328,15 @@ function EmployeesSection({ entity, isOwnerOrAdmin }: { entity: string; isOwnerO
                     className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all"
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">QID Expiry Date</label>
+                  <input
+                    type="date"
+                    value={expiryDate}
+                    onChange={e => setExpiryDate(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all"
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -369,6 +381,7 @@ function EmployeesSection({ entity, isOwnerOrAdmin }: { entity: string; isOwnerO
                 <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 px-4 py-2.5">Position</th>
                 <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 px-4 py-2.5">Nationality</th>
                 <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 px-4 py-2.5">QID / Passport</th>
+                <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 px-4 py-2.5">QID Expiry</th>
                 <th className="px-4 py-2.5 w-10" />
               </tr>
             </thead>
@@ -384,6 +397,18 @@ function EmployeesSection({ entity, isOwnerOrAdmin }: { entity: string; isOwnerO
   );
 }
 
+function expiryInfo(dateStr: string | null): { label: string; cls: string } {
+  if (!dateStr) return { label: '—', cls: 'text-slate-300 dark:text-slate-600' };
+  const expiry = new Date(dateStr);
+  expiry.setHours(23, 59, 59, 999);
+  const daysLeft = Math.floor((expiry.getTime() - Date.now()) / 86400000);
+  const formatted = expiry.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  if (daysLeft < 0)  return { label: `${formatted} (expired)`,       cls: 'text-rose-500 dark:text-rose-400 font-semibold' };
+  if (daysLeft <= 7) return { label: `${formatted} (${daysLeft}d)`,   cls: 'text-rose-500 dark:text-rose-400 font-semibold' };
+  if (daysLeft <= 30) return { label: `${formatted} (${daysLeft}d)`,  cls: 'text-amber-500 dark:text-amber-400 font-semibold' };
+  return { label: formatted, cls: 'text-slate-500 dark:text-slate-400' };
+}
+
 function EmployeeRow({ emp, isOwnerOrAdmin, onDelete }: { emp: CompanyEmployee; isOwnerOrAdmin: boolean; onDelete: (id: string) => void }) {
   const [deleting, setDeleting] = useState(false);
   const handleDelete = async () => {
@@ -392,12 +417,14 @@ function EmployeeRow({ emp, isOwnerOrAdmin, onDelete }: { emp: CompanyEmployee; 
     await onDelete(emp.id);
     setDeleting(false);
   };
+  const expiry = expiryInfo(emp.idExpiryDate);
   return (
     <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
       <td className="px-5 py-3 font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">{emp.name}</td>
       <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">{emp.position || <span className="text-slate-300 dark:text-slate-600">—</span>}</td>
       <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">{emp.nationality || <span className="text-slate-300 dark:text-slate-600">—</span>}</td>
       <td className="px-4 py-3 font-mono text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{emp.idNumber || <span className="text-slate-300 dark:text-slate-600">—</span>}</td>
+      <td className={cn('px-4 py-3 text-xs whitespace-nowrap', expiry.cls)}>{expiry.label}</td>
       <td className="px-4 py-3">
         {isOwnerOrAdmin && (
           <button onClick={handleDelete} disabled={deleting} title="Remove employee"

@@ -19,6 +19,7 @@ import { useContracts } from '../hooks/useContracts';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { usePresenceHeartbeat } from '../hooks/usePresenceHeartbeat';
 import { useChangeRequests } from '../hooks/useChangeRequests';
+import { useAllCompanyEmployees } from '../hooks/useAllCompanyEmployees';
 import { canAccessAccounting, canAccessDashboard, roleLabel } from '../lib/roles';
 
 /* ── Clock ──────────────────────────────────────────── */
@@ -508,11 +509,13 @@ export default function Layout() {
   const { tasks } = useTasks();
   const { contracts } = useContracts();
   const { pendingCount: pendingChangeRequests } = useChangeRequests();
+  const allEmployees = useAllCompanyEmployees();
   const notifications = useNotifications(
     transactions, tasks, contracts,
     user?.role ?? 'intern',
     user?.name,
-    pendingChangeRequests
+    pendingChangeRequests,
+    allEmployees
   );
 
   const pendingTransactions = (transactions || []).filter(t => t?.status === 'pending').length;
