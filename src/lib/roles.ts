@@ -41,10 +41,6 @@ export function canAccessAccounting(role?: string | null): boolean {
   return role === 'owner' || role === 'admin';
 }
 
-export function canAccessBankDetails(role?: string | null): boolean {
-  return role === 'owner' || role === 'admin';
-}
-
 export function canAccessDashboard(role?: string | null): boolean {
   return role === 'owner' || role === 'admin';
 }

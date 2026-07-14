@@ -6,7 +6,7 @@ import { useThemeStore } from '../store/theme';
 import {
   LayoutDashboard, Briefcase, Calculator, Layers,
   CheckSquare, ShieldAlert, LogOut, ChevronDown,
-  Menu, X, Sun, Moon, FileText, Truck, Users, Settings, Loader2, Car, UserPlus, Package, Clock, FolderOpen, Lock, PanelLeftClose, PanelLeftOpen,
+  Menu, X, Sun, Moon, FileText, Truck, Users, Settings, Loader2, Car, UserPlus, Package, Clock, FolderOpen, PanelLeftClose, PanelLeftOpen,
   Building2, BookOpen, Globe,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -90,7 +90,6 @@ const navItems = [
       { name: 'Shareup',               path: '/company/shareup',      icon: Globe,     roles: ['owner', 'admin'] },
       { name: 'RAA Trading',           path: '/company/trading',      icon: Briefcase, roles: ['owner', 'admin'] },
       { name: 'RAA Consultancy',       path: '/company/consultancy',  icon: BookOpen,  roles: ['owner', 'admin'] },
-      { name: 'Bank Details',          path: '/bank-details',         icon: Lock,      module: 'bank-details', roles: ['owner', 'admin'] },
     ],
   },
   { name: 'Audit Logs',       path: '/audit-logs',       icon: ShieldAlert,module: 'audit-logs',       roles: ['owner', 'admin'] },

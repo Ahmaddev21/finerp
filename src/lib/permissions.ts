@@ -29,7 +29,6 @@ export const MODULES: ModuleDef[] = [
   { key: 'time-keeping',     label: 'Time Keeping',       description: 'Attendance & time records' },
   { key: 'finance-workflow', label: 'Finance Workflow',   description: 'Approval workflows' },
   { key: 'visitors',         label: 'Visitors',           description: 'Daily visitor log' },
-  { key: 'bank-details',     label: 'Bank Details',       description: 'Banking information' },
   { key: 'audit-logs',       label: 'Audit Logs',         description: 'System activity logs' },
 ];
 
@@ -46,7 +45,6 @@ export const DEFAULT_PERMISSIONS: ModulePermissions = {
   'time-keeping':    ['owner', 'admin'],
   'finance-workflow':['owner', 'admin'],
   visitors:          ['owner', 'admin', 'receptionist'],
-  'bank-details':    ['owner', 'admin'],
   'audit-logs':      ['owner', 'admin'],
 };
 

@@ -44,7 +44,6 @@ const Consultation   = lazyPage(() => import('./pages/Consultation'));
 const Merchandise    = lazyPage(() => import('./pages/Merchandise'));
 const TimeKeeping    = lazyPage(() => import('./pages/TimeKeeping'));
 const FinanceWorkflow = lazyPage(() => import('./pages/FinanceWorkflow'));
-const BankDetails      = lazyPage(() => import('./pages/BankDetails'));
 const CompanyDocuments = lazyPage(() => import('./pages/CompanyDocuments'));
 const Permissions      = lazyPage(() => import('./pages/Permissions'));
 
@@ -458,11 +457,6 @@ export default function App() {
           {/* Company Details */}
           <Route element={<RoleGuard allowed={['owner', 'admin']} />}>
             <Route path="company/:entity" element={<CompanyDocuments />} />
-          </Route>
-
-          {/* Bank Details */}
-          <Route element={<RoleGuard module="bank-details" />}>
-            <Route path="bank-details" element={<BankDetails />} />
           </Route>
 
           {/* Audit Logs */}
