@@ -67,6 +67,7 @@ export default function Delivery() {
   });
 
   const isOwner = user?.role === 'owner';
+  const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'admin';
 
   // Filtering & Sorting
   const filtered = deliveries
@@ -359,10 +360,10 @@ export default function Delivery() {
                 {
                   label: 'Delete',
                   icon: <Trash2 className="w-4 h-4" />,
-                  iconCls: user?.role === 'owner' ? 'text-rose-500' : 'text-slate-300',
-                  disabled: user?.role !== 'owner',
+                  iconCls: isOwnerOrAdmin ? 'text-rose-500' : 'text-slate-300',
+                  disabled: !isOwnerOrAdmin,
                   onClick: () => {
-                    if (user?.role !== 'owner') return;
+                    if (!isOwnerOrAdmin) return;
                     if (confirm(`Delete ${d.name}? This cannot be undone.`)) {
                       void (async () => {
                         const ok = await deleteDelivery(d.id);
