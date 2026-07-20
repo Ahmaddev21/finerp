@@ -1300,12 +1300,12 @@ VALUES (
   'finance_attachments',
   false, -- Private bucket (authenticated only)
   false,
-  2097152, -- 2MB limit
+  5242880, -- 5MB limit
   ARRAY['image/jpeg', 'image/png', 'application/pdf']
 )
 ON CONFLICT (id) DO UPDATE SET
   public = false,
-  file_size_limit = 2097152,
+  file_size_limit = 5242880,
   allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'application/pdf'];
 
 -- 2. Storage RLS Policies (company-scoped paths: {company_id}/{type}/{record_id}/{filename})

@@ -43,8 +43,8 @@ export default function DocumentAttachmentModal({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      setError('File must be less than 2 MB');
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File must be less than 5 MB');
       return;
     }
     if (!['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
@@ -88,6 +88,13 @@ export default function DocumentAttachmentModal({
     try {
       setUploading(true);
       if (isSupabaseConfigured) {
+        if (currentAttachmentUrl) {
+          const { error: storageError } = await supabase.storage
+            .from('finance_attachments')
+            .remove([currentAttachmentUrl]);
+          if (storageError) throw storageError;
+        }
+
         const { error: dbError } = await supabase
           .from(tableName)
           .update({ attachment_url: null })
@@ -173,7 +180,7 @@ export default function DocumentAttachmentModal({
               </div>
               <h4 className="text-slate-900 dark:text-white font-bold mb-1">Upload Document</h4>
               <p className="text-slate-500 dark:text-slate-400 text-xs mb-6 max-w-[200px] mx-auto">
-                PDF, JPG, or PNG. Max 2 MB. Securely stored and linked to this record.
+                PDF, JPG, or PNG. Max 5 MB. Securely stored and linked to this record.
               </p>
               {!readonly ? (
                 <button

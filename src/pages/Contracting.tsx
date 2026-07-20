@@ -366,14 +366,23 @@ export default function Contracting() {
   const [modal, setModal] = useState<string | null>(null);
 
   // Data hooks
-  const { contracts, loading: ctrLoading, addContract, updateContract, deleteContract } = useContracts();
-  const { projects, loading: prjLoading, addProject, updateProject, deleteProject } = useContractingProjects();
+  const { contracts, loading: ctrLoading, addContract, updateContract, deleteContract, refetch: refetchContracts } = useContracts();
+  const { projects, loading: prjLoading, addProject, updateProject, deleteProject, refetch: refetchProjects } = useContractingProjects();
   const { projects: mainProjects } = useProjects();
-  const { subcontractors, loading: subLoading, addSubcontractor, updateSubcontractor, deleteSubcontractor } = useSubcontractors();
-  const { quotations, loading: qLoading, addQuotation, updateStatus: updateQuotStatus, updateQuotation, deleteQuotation } = useQuotations();
-  const { invoices: invoicesOut, loading: ioLoading, addInvoice: addInvOut, updateInvoice: updateInvOut, updateStatus: updateInvOutStatus, deleteInvoice: deleteInvOut } = useContractingInvoicesOut();
-  const { invoices: invoicesIn, loading: iiLoading, addInvoice: addInvIn, updateInvoice: updateInvIn, updateStatus: updateInvInStatus, deleteInvoice: deleteInvIn } = useContractingInvoicesIn();
+  const { subcontractors, loading: subLoading, addSubcontractor, updateSubcontractor, deleteSubcontractor, refetch: refetchSubcontractors } = useSubcontractors();
+  const { quotations, loading: qLoading, addQuotation, updateStatus: updateQuotStatus, updateQuotation, deleteQuotation, refetch: refetchQuotations } = useQuotations();
+  const { invoices: invoicesOut, loading: ioLoading, addInvoice: addInvOut, updateInvoice: updateInvOut, updateStatus: updateInvOutStatus, deleteInvoice: deleteInvOut, refetch: refetchInvoicesOut } = useContractingInvoicesOut();
+  const { invoices: invoicesIn, loading: iiLoading, addInvoice: addInvIn, updateInvoice: updateInvIn, updateStatus: updateInvInStatus, deleteInvoice: deleteInvIn, refetch: refetchInvoicesIn } = useContractingInvoicesIn();
   const { payments, loading: payLoading, recordPayment } = useContractingPayments();
+
+  const attachRefetchByTable: Record<string, () => void> = {
+    contracts: refetchContracts,
+    contracting_projects: refetchProjects,
+    contracting_subcontractors: refetchSubcontractors,
+    contracting_quotations: refetchQuotations,
+    contracting_invoices_out: refetchInvoicesOut,
+    contracting_invoices_in: refetchInvoicesIn,
+  };
 
   // Forms
   const [ctrForm, setCtrForm] = useState({ title: '', client: '', value: '', startDate: '', endDate: '' });
@@ -1211,6 +1220,7 @@ export default function Contracting() {
           currentAttachmentUrl={attachTarget.url}
           onUploadSuccess={url => {
             setAttachTarget(prev => prev ? { ...prev, url } : null);
+            attachRefetchByTable[attachTarget.table]?.();
           }}
         />
       )}
