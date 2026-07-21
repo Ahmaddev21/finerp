@@ -385,10 +385,10 @@ export default function Delivery() {
                     <span className="text-xs font-medium text-slate-400 w-5 shrink-0">{index + 1}</span>
 
                     {/* EMP label */}
-                    <div className="flex flex-col items-center shrink-0">
+                    <div className="flex flex-col items-center shrink-0" onClick={e => e.stopPropagation()}>
                       <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">EMP</span>
                       <span className={cn(
-                        'text-xs font-black',
+                        'text-xs font-black select-text cursor-text',
                         d.category === 'Rider' ? 'text-blue-600 dark:text-blue-400' : 'text-indigo-600 dark:text-indigo-400'
                       )}>{d.emp_number}</span>
                     </div>
@@ -400,10 +400,10 @@ export default function Delivery() {
                     </div>
 
                     {/* Snoonu ID */}
-                    <span className="hidden sm:block text-xs font-mono text-slate-600 dark:text-slate-400 min-w-[90px] shrink-0">{d.snoonu_id || '—'}</span>
+                    <span className="hidden sm:block text-xs font-mono text-slate-600 dark:text-slate-400 min-w-[90px] shrink-0 select-text cursor-text" onClick={e => e.stopPropagation()}>{d.snoonu_id || '—'}</span>
 
                     {/* Snoonu Email */}
-                    <span className="hidden md:block text-xs text-slate-500 dark:text-slate-400 truncate min-w-[160px] max-w-[200px] shrink-0">{d.snoonu_email || '—'}</span>
+                    <span className="hidden md:block text-xs text-slate-500 dark:text-slate-400 truncate min-w-[160px] max-w-[200px] shrink-0 select-text cursor-text" onClick={e => e.stopPropagation()}>{d.snoonu_email || '—'}</span>
 
                     {/* Password */}
                     <div className="hidden lg:flex items-center gap-1.5 min-w-[100px] shrink-0" onClick={e => e.stopPropagation()}>
@@ -419,12 +419,14 @@ export default function Delivery() {
                     </div>
 
                     {/* Status */}
-                    <span className={cn(
-                      'inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shrink-0',
-                      d.status === 'Active'
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-500'
-                    )}>{d.status}</span>
+                    <span
+                      onClick={e => e.stopPropagation()}
+                      className={cn(
+                        'inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shrink-0 select-text cursor-text',
+                        d.status === 'Active'
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-500'
+                      )}>{d.status}</span>
 
                     {/* Chevron */}
                     <ChevronDown className={cn(
@@ -487,7 +489,7 @@ export default function Delivery() {
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Password</p>
                           <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-mono text-slate-800 dark:text-slate-200 select-none">
+                            <span className={cn('text-sm font-mono text-slate-800 dark:text-slate-200', revealedPasswords.has(d.id) && 'select-text cursor-text')}>
                               {d.password ? (revealedPasswords.has(d.id) ? d.password : '••••••••') : '—'}
                             </span>
                             {d.password && (
