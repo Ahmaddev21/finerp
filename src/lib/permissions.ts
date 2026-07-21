@@ -28,6 +28,7 @@ export const MODULES: ModuleDef[] = [
   { key: 'assets',           label: 'Assets',             description: 'Asset tracking' },
   { key: 'time-keeping',     label: 'Time Keeping',       description: 'Attendance & time records' },
   { key: 'finance-workflow', label: 'Finance Workflow',   description: 'Approval workflows' },
+  { key: 'money-requisitions', label: 'Money Requisition', description: 'Petty cash / payment requisition approvals' },
   { key: 'visitors',         label: 'Visitors',           description: 'Daily visitor log' },
   { key: 'audit-logs',       label: 'Audit Logs',         description: 'System activity logs' },
 ];
@@ -44,6 +45,7 @@ export const DEFAULT_PERMISSIONS: ModulePermissions = {
   assets:            ['owner', 'admin'],
   'time-keeping':    ['owner', 'admin'],
   'finance-workflow':['owner', 'admin'],
+  'money-requisitions': ['owner', 'admin'],
   visitors:          ['owner', 'admin', 'receptionist'],
   'audit-logs':      ['owner', 'admin'],
 };

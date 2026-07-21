@@ -4,10 +4,11 @@ import { isAdminRole } from '../lib/roles';
 import { useMemo } from 'react';
 import type { Transaction } from './useTransactions';
 import type { EmployeeForNotif } from './useAllCompanyEmployees';
+import type { MoneyRequisition } from './useMoneyRequisitions';
 
 export interface Notification {
   id: string;
-  type: 'overdue_invoice' | 'pending_approval' | 'task_assigned' | 'contract_expiring' | 'change_request' | 'qid_expiring';
+  type: 'overdue_invoice' | 'pending_approval' | 'task_assigned' | 'contract_expiring' | 'change_request' | 'qid_expiring' | 'requisition_pending' | 'requisition_decided';
   title: string;
   message: string;
   severity: 'low' | 'medium' | 'high';
@@ -40,7 +41,9 @@ export function useNotifications(
   userRole: string,
   userName?: string,
   pendingChangeRequests = 0,
-  employees: EmployeeForNotif[] = []
+  employees: EmployeeForNotif[] = [],
+  requisitions: MoneyRequisition[] = [],
+  currentUserId?: string
 ) {
   const notifications = useMemo(() => {
     const items: Notification[] = [];
@@ -189,10 +192,46 @@ export function useNotifications(
       });
     }
 
+    // 6. Money Requisitions — pending approval (for owner/admin approvers)
+    if (isAdminRole(userRole)) {
+      const pendingCount = (requisitions || [])
+        .filter(r => r?.status === 'pending' && r.createdBy !== currentUserId).length;
+      if (pendingCount > 0) {
+        const id = `mrq-pending-${pendingCount}`;
+        if (!dismissed.has(id)) {
+          items.push({
+            id,
+            type: 'requisition_pending',
+            title: 'Money Requisition Pending',
+            message: `${pendingCount} requisition${pendingCount > 1 ? 's' : ''} awaiting your approval`,
+            severity: pendingCount > 3 ? 'high' : 'medium',
+            link: '/money-requisitions',
+          });
+        }
+      }
+    }
+
+    // 7. Money Requisitions — decided (for the requester)
+    (requisitions || [])
+      .filter(r => r?.createdBy === currentUserId && r.status !== 'pending')
+      .forEach(r => {
+        const id = `mrq-decided-${r.id}-${r.status}`;
+        if (!dismissed.has(id)) {
+          items.push({
+            id,
+            type: 'requisition_decided',
+            title: r.status === 'accepted' ? 'Requisition Accepted' : 'Requisition Rejected',
+            message: `Your requisition for ${r.payTo} (QR ${r.amount.toLocaleString()}) was ${r.status}`,
+            severity: r.status === 'rejected' ? 'medium' : 'low',
+            link: '/money-requisitions',
+          });
+        }
+      });
+
     // Sort by severity (high first)
     const severityOrder = { high: 0, medium: 1, low: 2 };
     return items.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
-  }, [transactions, tasks, contracts, userRole, userName, pendingChangeRequests, employees]);
+  }, [transactions, tasks, contracts, userRole, userName, pendingChangeRequests, employees, requisitions, currentUserId]);
 
   return notifications;
 }

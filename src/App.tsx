@@ -44,6 +44,7 @@ const Consultation   = lazyPage(() => import('./pages/Consultation'));
 const Merchandise    = lazyPage(() => import('./pages/Merchandise'));
 const TimeKeeping    = lazyPage(() => import('./pages/TimeKeeping'));
 const FinanceWorkflow = lazyPage(() => import('./pages/FinanceWorkflow'));
+const MoneyRequisition = lazyPage(() => import('./pages/MoneyRequisition'));
 const CompanyDocuments = lazyPage(() => import('./pages/CompanyDocuments'));
 const Permissions      = lazyPage(() => import('./pages/Permissions'));
 
@@ -447,6 +448,11 @@ export default function App() {
           {/* Finance Workflow */}
           <Route element={<RoleGuard module="finance-workflow" />}>
             <Route path="finance-workflow" element={<FinanceWorkflow />} />
+          </Route>
+
+          {/* Money Requisition */}
+          <Route element={<RoleGuard module="money-requisitions" />}>
+            <Route path="money-requisitions" element={<MoneyRequisition />} />
           </Route>
 
           {/* Daily Visitors */}

@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Briefcase, Calculator, Layers,
   CheckSquare, ShieldAlert, LogOut, ChevronDown,
   Menu, X, Sun, Moon, FileText, Truck, Users, Settings, Loader2, Car, UserPlus, Package, Clock, FolderOpen, PanelLeftClose, PanelLeftOpen,
-  Building2, BookOpen, Globe,
+  Building2, BookOpen, Globe, Wallet,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { canAccess } from '../lib/permissions';
@@ -20,6 +20,7 @@ import { isSupabaseConfigured } from '../lib/supabase';
 import { usePresenceHeartbeat } from '../hooks/usePresenceHeartbeat';
 import { useChangeRequests } from '../hooks/useChangeRequests';
 import { useAllCompanyEmployees } from '../hooks/useAllCompanyEmployees';
+import { useMoneyRequisitions } from '../hooks/useMoneyRequisitions';
 import { canAccessAccounting, canAccessDashboard, roleLabel } from '../lib/roles';
 
 /* ── Clock ──────────────────────────────────────────── */
@@ -81,6 +82,7 @@ const navItems = [
   { name: 'Assets',           path: '/assets',           icon: Car,        module: 'assets',           roles: ['owner', 'admin'] },
   { name: 'Time Keeping',     path: '/time-keeping',     icon: Clock,      module: 'time-keeping',     roles: ['owner', 'admin'] },
   { name: 'Finance Workflow', path: '/finance-workflow', icon: FolderOpen, module: 'finance-workflow', roles: ['owner', 'admin'] },
+  { name: 'Money Requisition', path: '/money-requisitions', icon: Wallet, module: 'money-requisitions', roles: ['owner', 'admin'] },
   { name: 'Daily Visitors',   path: '/visitors',         icon: UserPlus,   module: 'visitors',         roles: ['owner', 'admin', 'receptionist'] },
   {
     name: 'Company Details',
@@ -509,12 +511,15 @@ export default function Layout() {
   const { contracts } = useContracts();
   const { pendingCount: pendingChangeRequests } = useChangeRequests();
   const allEmployees = useAllCompanyEmployees();
+  const { requisitions } = useMoneyRequisitions();
   const notifications = useNotifications(
     transactions, tasks, contracts,
     user?.role ?? 'intern',
     user?.name,
     pendingChangeRequests,
-    allEmployees
+    allEmployees,
+    requisitions,
+    user?.id
   );
 
   const pendingTransactions = (transactions || []).filter(t => t?.status === 'pending').length;
