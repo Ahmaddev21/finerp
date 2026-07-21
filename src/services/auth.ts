@@ -222,9 +222,7 @@ async function fetchCompanyAndRole(userId: string): Promise<{ company?: Company;
 // ── Company Management ─────────────────────────────
 export async function fetchCompanyMembers(companyId: string) {
   const { data, error } = await supabase
-    .from('member_profiles')
-    .select('*')
-    .eq('company_id', companyId);
+    .rpc('get_company_member_emails', { p_company_id: companyId });
 
   if (error) throw error;
   
