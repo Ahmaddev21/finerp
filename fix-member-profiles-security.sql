@@ -21,13 +21,19 @@
 -- silently reopen the hole with no RLS backstop.
 --
 -- Real fix (Supabase's own recommended pattern):
---   1. member_profiles goes back to a PLAIN view (security_invoker
---      implied true, no elevated privilege) with the auth.users/email
---      join removed entirely. It now runs under the querying user's
---      own permissions, so normal RLS on company_users (already
---      company-scoped — see "Users can view members of their company"
---      policy) and profiles applies naturally. No linter warning,
---      because the view no longer needs or has elevated access.
+--   1. member_profiles goes back to a PLAIN view, with the
+--      auth.users/email join removed entirely, AND explicitly
+--      WITH (security_invoker = true). Note: omitting security_invoker
+--      does NOT default to invoker-mode — Postgres defaults it to
+--      false (owner/definer privileges) unless set to true explicitly.
+--      An earlier pass here missed this and only removed the old
+--      `security_invoker = false` without adding `= true`, so the
+--      view kept running as its owner and the linter kept flagging
+--      it correctly. With `= true` set, and with the auth.users join
+--      gone, it now runs under the querying user's own permissions,
+--      so normal RLS on company_users (already company-scoped — see
+--      "Users can view members of their company" policy) and profiles
+--      applies naturally.
 --   2. Reading email (which genuinely requires elevated access, since
 --      auth.users is intentionally locked down) moves into a
 --      SECURITY DEFINER *function*, not a view. The function has an
@@ -52,7 +58,9 @@
 --    that earlier versions had — so the old view must be dropped first.
 DROP VIEW IF EXISTS public.member_profiles;
 
-CREATE VIEW public.member_profiles AS
+CREATE VIEW public.member_profiles
+WITH (security_invoker = true)
+AS
 SELECT
   cu.id,
   cu.company_id,
@@ -121,7 +129,9 @@ NOTIFY pgrst, 'reload schema';
 -- Verification
 -- ─────────────────────────────────────────────────────────────────
 
--- member_profiles should now show no reloptions (plain invoker-mode view)
+-- member_profiles should now show reloptions containing security_invoker=true
+-- (this is the actual proof the linter warning is resolved — an empty/null
+-- reloptions here means it's still running in definer-mode, NOT fixed)
 SELECT c.relname, c.reloptions
 FROM pg_class c
 WHERE c.relname = 'member_profiles';
