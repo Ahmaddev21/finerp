@@ -62,6 +62,7 @@ export default function Delivery() {
     bike_expiry: '',
     car_expiry: '',
     mobile_number: '',
+    security: '',
     status: 'Active' as DeliveryStatus,
     category: 'Rider' as DeliveryCategory
   });
@@ -100,7 +101,7 @@ export default function Delivery() {
     emp_number: '', name: '', company: '', snoonu_id: '', snoonu_email: '', password: '',
     qid: '', qid_expiry: '', passport_number: '', passport_expiry: '',
     car_number: '', bike_number: '', bike_expiry: '', car_expiry: '',
-    mobile_number: '', status: 'Active' as DeliveryStatus, category: 'Rider' as DeliveryCategory,
+    mobile_number: '', security: '', status: 'Active' as DeliveryStatus, category: 'Rider' as DeliveryCategory,
   };
 
   const closeModal = () => {
@@ -339,7 +340,7 @@ export default function Delivery() {
                       passport_number: d.passport_number, passport_expiry: d.passport_expiry ?? '',
                       car_number: d.car_number ?? '', bike_number: d.bike_number ?? '',
                       bike_expiry: d.bike_expiry ?? '', car_expiry: d.car_expiry ?? '',
-                      mobile_number: d.mobile_number, status: d.status, category: d.category,
+                      mobile_number: d.mobile_number, security: d.security ?? '', status: d.status, category: d.category,
                     });
                     setIsOpen(true);
                   },
@@ -507,6 +508,12 @@ export default function Delivery() {
                           <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Company</p>
                           <p className="text-sm text-slate-800 dark:text-slate-200">{d.company || '—'}</p>
                         </div>
+
+                        {/* Security — full width, free text */}
+                        <div className="col-span-2 sm:col-span-3 lg:col-span-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Security</p>
+                          <p className="text-sm text-slate-800 dark:text-slate-200 select-text whitespace-pre-wrap">{d.security || '—'}</p>
+                        </div>
                       </div>
 
                       {/* Quick action buttons */}
@@ -528,7 +535,7 @@ export default function Delivery() {
                               passport_number: d.passport_number, passport_expiry: d.passport_expiry ?? '',
                               car_number: d.car_number ?? '', bike_number: d.bike_number ?? '',
                               bike_expiry: d.bike_expiry ?? '', car_expiry: d.car_expiry ?? '',
-                              mobile_number: d.mobile_number, status: d.status, category: d.category,
+                              mobile_number: d.mobile_number, security: d.security ?? '', status: d.status, category: d.category,
                             });
                             setIsOpen(true);
                           }}
@@ -695,6 +702,11 @@ export default function Delivery() {
                   <Smartphone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input type="text" value={form.mobile_number} onChange={e => setForm({ ...form, mobile_number: e.target.value })} placeholder="+974..." className={cn(inputCls, 'pl-10')} />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Security</label>
+                <textarea value={form.security} onChange={e => setForm({ ...form, security: e.target.value })} placeholder="Any security notes…" rows={3} className={inputCls} />
               </div>
             </div>
 

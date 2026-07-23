@@ -27,6 +27,7 @@ export interface Delivery {
   status: DeliveryStatus;
   category: DeliveryCategory;
   description: string;
+  security?: string;
 }
 
 function mapRow(row: any): Delivery {
@@ -58,6 +59,7 @@ function mapRow(row: any): Delivery {
     status: row.status ?? 'Active',
     category,
     description: row.description ?? '',
+    security: row.security ?? '',
   };
 }
 
@@ -132,7 +134,8 @@ export function useDeliveries() {
         mobile_number: d.mobile_number,
         status: d.status,
         category: d.category,
-        description: d.description || `New ${d.category} entry`
+        description: d.description || `New ${d.category} entry`,
+        security: d.security || null,
       });
 
       if (error) throw error;
