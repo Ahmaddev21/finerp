@@ -392,6 +392,10 @@ export default function Contracting() {
   const [invOutForm, setInvOutForm] = useState({ client: '', description: '', amount: '', issuedDate: '', dueDate: '', projectId: '' });
   const [invInForm, setInvInForm] = useState({ subcontractor: '', subcontractorId: '', invoiceRef: '', description: '', amount: '', receivedDate: '', dueDate: '', projectId: '' });
   const [payForm, setPayForm] = useState({ direction: 'in' as 'in' | 'out', amount: '', paymentDate: '', method: 'Bank Transfer', reference: '', notes: '', projectId: '', invoiceId: '' });
+  const [partialPaymentTargetId, setPartialPaymentTargetId] = useState<string | null>(null);
+  const [ppForm, setPpForm] = useState({ amount: '', paymentDate: '', method: 'Bank Transfer', reference: '', notes: '' });
+  const [ppError, setPpError] = useState<string | null>(null);
+  const [ppSaving, setPpSaving] = useState(false);
 
   // Edit IDs
   const [editCtrId, setEditCtrId] = useState<string | null>(null);
@@ -488,6 +492,34 @@ export default function Contracting() {
       status: 'completed'
     });
     setModal(null); setPayForm({ direction: 'in', amount: '', paymentDate: '', method: 'Bank Transfer', reference: '', notes: '', projectId: '', invoiceId: '' });
+  };
+
+  const partialPaymentTarget = projects.find(p => p.id === partialPaymentTargetId) ?? null;
+
+  const handlePartialPayment = async () => {
+    if (!partialPaymentTarget) return;
+    const val = parseFloat(ppForm.amount) || 0;
+    const remaining = partialPaymentTarget.value - partialPaymentTarget.amountPaid;
+
+    if (val <= 0) { setPpError('Enter an amount greater than zero.'); return; }
+    if (val > remaining) { setPpError(`Amount cannot exceed the remaining balance of ${formatCurrency(remaining)}.`); return; }
+
+    setPpError(null);
+    setPpSaving(true);
+    await recordPayment({
+      direction: 'in',
+      amount: val,
+      paymentDate: ppForm.paymentDate || new Date().toISOString().split('T')[0],
+      method: ppForm.method,
+      reference: ppForm.reference,
+      notes: ppForm.notes,
+      projectId: partialPaymentTarget.id,
+      invoiceId: null,
+      status: 'completed',
+    });
+    await refetchProjects(); // pick up the DB trigger's updated amount_paid — partialPaymentTarget re-derives from fresh `projects` on next render
+    setPpSaving(false);
+    setPpForm({ amount: '', paymentDate: '', method: 'Bank Transfer', reference: '', notes: '' });
   };
 
   /* ── Table header class ─────────────────────────── */
@@ -614,18 +646,19 @@ export default function Contracting() {
       {/* ═══ PROJECTS TAB ═══ */}
       {activeTab === 'projects' && (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
             <KPI label="Active" value={projects.filter(p => p.status === 'Active').length} color="kpi-emerald" />
             <KPI label="Planning" value={projects.filter(p => p.status === 'Planning').length} color="kpi-blue" />
             <KPI label="Completed" value={projects.filter(p => p.status === 'Completed').length} color="" />
             <KPI label="Total Value" value={formatCurrency(projects.reduce((s, p) => s + p.value, 0))} color="kpi-violet" />
+            <KPI label="Outstanding Balance" value={formatCurrency(projects.reduce((s, p) => s + (p.value - p.amountPaid), 0))} color="kpi-rose" />
           </div>
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
             {prjLoading ? <LoadingState /> : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left whitespace-nowrap">
                   <thead className="bg-slate-50/60 dark:bg-slate-800/40"><tr>
-                    {['ID', 'Project', 'Client', 'Value', 'Contract', 'Start', 'End', 'Status', 'Actions'].map(h => <th key={h} className={th}>{h}</th>)}
+                    {['ID', 'Project', 'Client', 'Value', 'Balance', 'Contract', 'Start', 'End', 'Status', 'Actions'].map(h => <th key={h} className={th}>{h}</th>)}
                   </tr></thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {projects.map(p => (
@@ -634,6 +667,7 @@ export default function Contracting() {
                         <td className={cn(td, 'font-semibold text-slate-900 dark:text-slate-100')}>{p.name}</td>
                         <td className={cn(td, 'text-slate-600 dark:text-slate-300')}>{p.client}</td>
                         <td className={cn(td, 'font-semibold text-slate-800 dark:text-slate-200 text-right')}>{formatCurrency(p.value)}</td>
+                        <td className={cn(td, 'font-semibold text-right', (p.value - p.amountPaid) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400')}>{formatCurrency(p.value - p.amountPaid)}</td>
                         <td className={cn(td, 'text-xs text-blue-600 dark:text-blue-400 font-mono')}>{p.contractId || '—'}</td>
                         <td className={cn(td, 'text-slate-500 dark:text-slate-400 text-xs')}>{p.startDate || '—'}</td>
                         <td className={cn(td, 'text-slate-500 dark:text-slate-400 text-xs')}>{p.endDate || '—'}</td>
@@ -641,6 +675,7 @@ export default function Contracting() {
                         <td className={td}>
                           <RowMenu actions={[
                             { label: 'Edit', icon: <Pencil className="w-4 h-4" />, iconCls: 'text-indigo-500', onClick: () => { setPrjForm({ name: p.name, client: p.client, value: String(p.value), status: p.status, startDate: p.startDate, endDate: p.endDate, description: p.description, contractId: p.contractId || '', mainProjectId: p.mainProjectId || '' }); setEditPrjId(p.id); setModal('projects'); } },
+                            { label: 'Partial Payment', icon: <CreditCard className="w-4 h-4" />, iconCls: 'text-emerald-500', onClick: () => { setPpError(null); setPpForm({ amount: '', paymentDate: '', method: 'Bank Transfer', reference: '', notes: '' }); setPartialPaymentTargetId(p.id); } },
                             { label: 'Attach File', icon: <Paperclip className="w-4 h-4" />, iconCls: 'text-blue-500', onClick: () => setAttachTarget({ id: p.id, table: 'contracting_projects', url: p.attachment_url }) },
                             { label: 'Delete', icon: <Trash2 className="w-4 h-4" />, iconCls: 'text-red-500', danger: true, onClick: () => { if (window.confirm('Delete this project?')) deleteProject(p.id); } },
                           ]} />
@@ -1111,6 +1146,20 @@ export default function Contracting() {
                   {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select></div>
             </div>
+            {invOutForm.projectId && (() => {
+              const p = projects.find(x => x.id === invOutForm.projectId);
+              if (!p) return null;
+              return (
+                <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                  <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Client</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{p.client}</p></div>
+                  <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Contract Value</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(p.value)}</p></div>
+                  <div className="col-span-2"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Remaining Balance</p>
+                    <p className="text-sm font-bold text-rose-600 dark:text-rose-400">{formatCurrency(p.value - p.amountPaid)}</p></div>
+                </div>
+              );
+            })()}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Issue Date</label>
                 <input type="date" value={invOutForm.issuedDate} onChange={e => setInvOutForm({ ...invOutForm, issuedDate: e.target.value })} className={inputCls} /></div>
@@ -1154,6 +1203,29 @@ export default function Contracting() {
             </div>
             <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Description</label>
               <input type="text" value={invInForm.description} onChange={e => setInvInForm({ ...invInForm, description: e.target.value })} className={inputCls} /></div>
+            <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Project</label>
+              <select
+                value={invInForm.projectId}
+                onChange={e => setInvInForm({ ...invInForm, projectId: e.target.value })}
+                className={inputCls}
+              >
+                <option value="">None</option>
+                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select></div>
+            {invInForm.projectId && (() => {
+              const p = projects.find(x => x.id === invInForm.projectId);
+              if (!p) return null;
+              return (
+                <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                  <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Client</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{p.client}</p></div>
+                  <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Contract Value</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(p.value)}</p></div>
+                  <div className="col-span-2"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Remaining Balance</p>
+                    <p className="text-sm font-bold text-rose-600 dark:text-rose-400">{formatCurrency(p.value - p.amountPaid)}</p></div>
+                </div>
+              );
+            })()}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Received</label>
                 <input type="date" value={invInForm.receivedDate} onChange={e => setInvInForm({ ...invInForm, receivedDate: e.target.value })} className={inputCls} /></div>
@@ -1206,6 +1278,85 @@ export default function Contracting() {
           <div className="mt-5 flex justify-end gap-3">
             <button onClick={() => setModal(null)} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
             <button onClick={handleRecordPayment} disabled={!payForm.amount} className="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl">Record Payment</button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Partial Payment Modal */}
+      {partialPaymentTarget && (
+        <Modal title={`Partial Payment — ${partialPaymentTarget.name}`} onClose={() => setPartialPaymentTargetId(null)}>
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+              <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Total Value</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{formatCurrency(partialPaymentTarget.value)}</p></div>
+              <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Total Paid</p>
+                <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(partialPaymentTarget.amountPaid)}</p></div>
+              <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Remaining Balance</p>
+                <p className="text-sm font-bold text-rose-600 dark:text-rose-400">{formatCurrency(partialPaymentTarget.value - partialPaymentTarget.amountPaid)}</p></div>
+            </div>
+
+            {ppError && (
+              <div className="p-2.5 bg-red-50 dark:bg-red-900/20 text-red-600 text-xs font-bold rounded-lg">{ppError}</div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Partial Payment Amount (QR) <span className="text-rose-400">*</span></label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={ppForm.amount}
+                  onChange={e => {
+                    let val = e.target.value.replace(',', '.');
+                    if (val === '' || /^\d*\.?\d*$/.test(val)) { setPpForm({ ...ppForm, amount: val }); setPpError(null); }
+                  }}
+                  placeholder="0.00"
+                  className={inputCls}
+                /></div>
+              <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Date</label>
+                <input type="date" value={ppForm.paymentDate} onChange={e => setPpForm({ ...ppForm, paymentDate: e.target.value })} className={inputCls} /></div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Method</label>
+                <select value={ppForm.method} onChange={e => setPpForm({ ...ppForm, method: e.target.value })} className={inputCls}>
+                  <option>Bank Transfer</option><option>Cheque</option><option>Cash</option><option>Online</option>
+                </select></div>
+              <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Reference</label>
+                <input type="text" value={ppForm.reference} onChange={e => setPpForm({ ...ppForm, reference: e.target.value })} placeholder="TRF-xxx" className={inputCls} /></div>
+            </div>
+            <div><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Notes</label>
+              <input type="text" value={ppForm.notes} onChange={e => setPpForm({ ...ppForm, notes: e.target.value })} className={inputCls} /></div>
+
+            {/* Payment History */}
+            {(() => {
+              const history = payments
+                .filter(x => x.projectId === partialPaymentTarget.id && x.direction === 'in')
+                .slice()
+                .sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
+              let running = 0;
+              const rows = history.map(x => {
+                running += x.amount;
+                return { ...x, balanceAfter: partialPaymentTarget.value - running };
+              }).reverse();
+              if (rows.length === 0) return null;
+              return (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Payment History</p>
+                  <div className="max-h-40 overflow-y-auto rounded-xl border border-slate-100 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
+                    {rows.map(r => (
+                      <div key={r.id} className="flex items-center justify-between px-3 py-2 text-xs">
+                        <span className="text-slate-500 dark:text-slate-400">{r.paymentDate}</span>
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">+{formatCurrency(r.amount)}</span>
+                        <span className="text-slate-400">Balance: {formatCurrency(r.balanceAfter)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+          <div className="mt-5 flex justify-end gap-3">
+            <button onClick={() => setPartialPaymentTargetId(null)} className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">Cancel</button>
+            <button onClick={handlePartialPayment} disabled={!ppForm.amount || ppSaving} className="px-4 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 rounded-xl">{ppSaving ? 'Saving…' : 'Record Partial Payment'}</button>
           </div>
         </Modal>
       )}

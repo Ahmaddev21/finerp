@@ -14,17 +14,19 @@ export interface ContractingProject {
   description: string;
   /** FK to main projects(id) — set to link this ERP project to a business project */
   mainProjectId: string | null;
+  /** Maintained server-side by a DB trigger on contracting_payments — never set directly */
+  amountPaid: number;
   attachment_url?: string;
   /** JSON array of SiteReportEntry — stored in site_progress_reports TEXT column */
   siteProgressReports?: string | null;
 }
 
 const seed: ContractingProject[] = [
-  { id: 'CPRJ-001', contractId: 'CTR-001', name: 'Snoonu Fleet Management', client: 'Snoonu', value: 450000, status: 'Active', startDate: '2026-01-01', endDate: '2026-12-31', description: 'Full fleet management and rider supply', mainProjectId: null, siteProgressReports: null },
-  { id: 'CPRJ-002', contractId: 'CTR-002', name: 'TechCorp Infrastructure SLA', client: 'TechCorp Inc.', value: 120000, status: 'Active', startDate: '2026-02-15', endDate: '2026-08-14', description: 'Infrastructure service level agreement', mainProjectId: null, siteProgressReports: null },
-  { id: 'CPRJ-003', contractId: 'CTR-003', name: 'Urban Eats Delivery Expansion', client: 'Urban Eats', value: 85000, status: 'Planning', startDate: '2026-04-01', endDate: '2026-09-30', description: 'Expansion of delivery operations', mainProjectId: null, siteProgressReports: null },
-  { id: 'CPRJ-004', contractId: 'CTR-005', name: 'Q3 Rider Contracting Block', client: 'Snoonu', value: 280000, status: 'Active', startDate: '2026-03-01', endDate: '2026-09-30', description: 'Bulk rider contracting for Q3', mainProjectId: null, siteProgressReports: null },
-  { id: 'CPRJ-005', contractId: null, name: 'Warehouse Fit-Out Phase 2', client: 'LogisTech', value: 95000, status: 'On Hold', startDate: '2026-04-10', endDate: '2026-10-09', description: 'Warehouse optimization and fit-out', mainProjectId: null, siteProgressReports: null },
+  { id: 'CPRJ-001', contractId: 'CTR-001', name: 'Snoonu Fleet Management', client: 'Snoonu', value: 450000, status: 'Active', startDate: '2026-01-01', endDate: '2026-12-31', description: 'Full fleet management and rider supply', mainProjectId: null, amountPaid: 0, siteProgressReports: null },
+  { id: 'CPRJ-002', contractId: 'CTR-002', name: 'TechCorp Infrastructure SLA', client: 'TechCorp Inc.', value: 120000, status: 'Active', startDate: '2026-02-15', endDate: '2026-08-14', description: 'Infrastructure service level agreement', mainProjectId: null, amountPaid: 0, siteProgressReports: null },
+  { id: 'CPRJ-003', contractId: 'CTR-003', name: 'Urban Eats Delivery Expansion', client: 'Urban Eats', value: 85000, status: 'Planning', startDate: '2026-04-01', endDate: '2026-09-30', description: 'Expansion of delivery operations', mainProjectId: null, amountPaid: 0, siteProgressReports: null },
+  { id: 'CPRJ-004', contractId: 'CTR-005', name: 'Q3 Rider Contracting Block', client: 'Snoonu', value: 280000, status: 'Active', startDate: '2026-03-01', endDate: '2026-09-30', description: 'Bulk rider contracting for Q3', mainProjectId: null, amountPaid: 0, siteProgressReports: null },
+  { id: 'CPRJ-005', contractId: null, name: 'Warehouse Fit-Out Phase 2', client: 'LogisTech', value: 95000, status: 'On Hold', startDate: '2026-04-10', endDate: '2026-10-09', description: 'Warehouse optimization and fit-out', mainProjectId: null, amountPaid: 0, siteProgressReports: null },
 ];
 
 function mapRow(row: any): ContractingProject {
@@ -39,6 +41,7 @@ function mapRow(row: any): ContractingProject {
     endDate: (row.end_date ?? '').toString(),
     description: row.description ?? '',
     mainProjectId: row.main_project_id ?? null,
+    amountPaid: Number(row.amount_paid ?? 0),
     attachment_url: row.attachment_url ?? undefined,
     siteProgressReports: row.site_progress_reports ?? null,
   };
@@ -69,9 +72,9 @@ export function useContractingProjects() {
 
   useEffect(() => { if (isInitialized && company) fetch(); }, [fetch, isInitialized, company]);
 
-  const addProject = useCallback(async (p: Omit<ContractingProject, 'id'>) => {
+  const addProject = useCallback(async (p: Omit<ContractingProject, 'id' | 'amountPaid'>) => {
     const newId = `CPRJ-${Date.now().toString(36).toUpperCase().slice(-4)}${Math.floor(Math.random()*1000).toString().padStart(3,'0')}`;
-    const optimistic: ContractingProject = { ...p, id: newId, siteProgressReports: p.siteProgressReports ?? null };
+    const optimistic: ContractingProject = { ...p, id: newId, amountPaid: 0, siteProgressReports: p.siteProgressReports ?? null };
     setProjects(prev => [optimistic, ...prev]);
 
     if (!isSupabaseConfigured) return;
